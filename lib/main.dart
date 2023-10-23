@@ -1,54 +1,34 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
+import 'package:dima_project/widget_tree.dart';
+import 'package:dima_project/pages/home_movies.dart';
+import 'package:dima_project/pages/my_lists.dart';
+import 'package:dima_project/pages/friends.dart';
 import 'package:flutter/material.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MyApp extends StatefulWidget {
+  MyApp({super.key});
+
+  final screens = [HomeMovies(), MyLists(), Friends()];
 
   @override
+  MyAppState createState() => MyAppState();
+}
+
+class MyAppState extends State<MyApp> {
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-        home: Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(40.0),
-        child: SearchAnchor(
-          builder: (BuildContext context, SearchController controller) {
-            return SearchBar(
-              controller: controller,
-              onTap: () {
-                controller.openView();
-              },
-              onChanged: (_) {
-                controller.openView();
-              },
-              leading: const Icon(Icons.search),
-            );
-          },
-          suggestionsBuilder:
-              (BuildContext context, SearchController controller) {
-            return List<ListTile>.generate(1, (int index) {
-              const String item = 'test';
-              return const ListTile(title: Text(item));
-            });
-          },
-        ),
-      ),
-      bottomNavigationBar: NavigationBar(destinations: const <Widget>[
-        NavigationDestination(
-          icon: Icon(Icons.home),
-          label: 'Home',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.subscriptions),
-          label: 'My lists',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.people),
-          label: 'Friends',
-        ),
-      ]),
-    ));
+    return const MaterialApp(
+      home: WidgetTree(),
+    );
   }
 }
