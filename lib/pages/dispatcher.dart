@@ -6,8 +6,6 @@ import 'package:flutter/material.dart';
 class Dispatcher extends StatefulWidget {
   Dispatcher({super.key});
 
-  final screens = [HomeMovies(), MyLists(), Friends()];
-
   @override
   DispatcherState createState() => DispatcherState();
 }
