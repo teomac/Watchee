@@ -2,9 +2,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
 import 'package:dima_project/widget_tree.dart';
-import 'package:dima_project/pages/home_movies.dart';
-import 'package:dima_project/pages/my_lists.dart';
-import 'package:dima_project/pages/friends.dart';
 import 'package:flutter/material.dart';
 
 Future<void> main() async {
@@ -17,8 +14,6 @@ Future<void> main() async {
 
 class MyApp extends StatefulWidget {
   MyApp({super.key});
-
-  final screens = [HomeMovies(), MyLists(), Friends()];
 
   @override
   MyAppState createState() => MyAppState();
