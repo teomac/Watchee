@@ -19,9 +19,9 @@ class TrendingSlider extends StatelessWidget {
         child: CarouselSlider.builder(
           itemCount: 10,
           options: CarouselOptions(
-              height: 300,
+              height: 175,
               autoPlay: true,
-              viewportFraction: 0.55,
+              viewportFraction: 0.35,
               enlargeCenterPage: true,
               pageSnapping: true,
               autoPlayCurve: Curves.fastOutSlowIn,
@@ -30,8 +30,8 @@ class TrendingSlider extends StatelessWidget {
             return ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: SizedBox(
-                  height: 300,
-                  width: 200,
+                  height: 175,
+                  width: 110,
                   child: Image.network(
                       filterQuality: FilterQuality.high,
                       fit: BoxFit.cover,
