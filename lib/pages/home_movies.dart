@@ -1,4 +1,5 @@
 import 'package:dima_project/pages/user_info.dart';
+import 'package:dima_project/widgets/movies_slider.dart';
 import 'package:dima_project/widgets/trending_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:dima_project/models/movie.dart';
@@ -11,15 +12,18 @@ class HomeMovies extends StatefulWidget {
 
 class HomeMoviesState extends State<HomeMovies> {
   late Future<List<Movie>> trendingMovies;
+  late Future<List<Movie>> topRatedMovies;
 
   @override
   void initState() {
     super.initState();
     trendingMovies = fetchTrendingMovies();
+    topRatedMovies = fetchTopRatedMovies();
   }
 
   @override
   Widget build(BuildContext context) => Scaffold(
+        backgroundColor: Color.fromARGB(215, 255, 52, 103),
         body: Container(
           padding: const EdgeInsets.all(40.0),
           child: Column(
@@ -64,7 +68,27 @@ class HomeMoviesState extends State<HomeMovies> {
                         return const Center(child: CircularProgressIndicator());
                       }
                     }),
-              )
+              ),
+              const SizedBox(height: 16),
+              const Text('Top rated movies'),
+              const SizedBox(height: 32),
+              SizedBox(
+                child: FutureBuilder(
+                    future: topRatedMovies,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Text(snapshot.error.toString()),
+                        );
+                      } else if (snapshot.hasData) {
+                        return MoviesSlider(
+                          snapshot: snapshot,
+                        );
+                      } else {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                    }),
+              ),
             ],
           ),
         ),
