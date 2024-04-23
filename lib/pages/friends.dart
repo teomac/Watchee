@@ -1,3 +1,4 @@
+import 'package:dima_project/pages/user_info.dart';
 import 'package:flutter/material.dart';
 
 class Friends extends StatelessWidget {
@@ -6,6 +7,10 @@ class Friends extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: Colors.yellow,
           title: Text('Friends page'),
+        ),
+        body: Container(
+          alignment: Alignment.center,
+          child: Column(children: [UserInfo()]),
         ),
       );
 }

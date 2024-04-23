@@ -9,7 +9,8 @@ class Constants {
       'https://api.themoviedb.org/3/trending/movie/day?api_key=$apiKey';
   static String mostPopular =
       'https://api.themoviedb.org/3/movie/popular?api_key=$apiKey';
-  static String comingSoon = '';
+  static String upcoming =
+      'https://api.themoviedb.org/3/movie/upcoming?api_key=$apiKey';
   static String topRated =
       'https://api.themoviedb.org/3/movie/top_rated?api_key=$apiKey';
   static String movieCredits = '';
