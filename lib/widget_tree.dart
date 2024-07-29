@@ -1,6 +1,6 @@
 import 'package:dima_project/pages/auth.dart';
 import 'package:dima_project/pages/dispatcher.dart';
-import 'package:dima_project/pages/login_register.dart';
+import 'package:dima_project/pages/login_page.dart';
 import 'package:flutter/material.dart';
 
 class WidgetTree extends StatefulWidget {
@@ -19,7 +19,7 @@ class _WidgetTreeState extends State<WidgetTree> {
           if (snapshot.hasData) {
             return Dispatcher();
           } else {
-            return const LoginRegisterPage();
+            return const LoginPage();
           }
         });
   }
