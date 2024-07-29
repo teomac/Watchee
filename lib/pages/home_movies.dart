@@ -1,4 +1,4 @@
-import 'package:dima_project/pages/user_info.dart';
+//import 'package:dima_project/pages/user_info.dart';
 import 'package:dima_project/widgets/movies_slider.dart';
 import 'package:dima_project/widgets/trending_slider.dart';
 import 'package:flutter/material.dart';
