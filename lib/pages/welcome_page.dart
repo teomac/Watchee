@@ -1,4 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:dima_project/widgets/my_textfield.dart';
+import 'package:dima_project/widgets/custom_submit_button.dart';
+import 'package:dima_project/pages/genre_selection_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:logger/logger.dart';
 
 class WelcomeScreen extends StatefulWidget {
   @override
@@ -6,73 +16,186 @@ class WelcomeScreen extends StatefulWidget {
 }
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
-  final _formKey = GlobalKey<FormState>();
-  String? _name;
-  String? _surname;
-  int? _age;
+  final TextEditingController _controllerName = TextEditingController();
+  final TextEditingController _controllerBirthdate = TextEditingController();
+  DateTime? _selectedDate;
+  File? _image;
+  var logger = Logger();
+  bool permissionGranted = false;
 
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      // Here you can process the data, e.g., send it to a server or save locally
-      print('Name: $_name, Surname: $_surname, Age: $_age');
-      // Navigate to the next screen or show a confirmation dialog
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedImage =
+        await picker.pickImage(source: ImageSource.gallery);
+    if (pickedImage != null) {
+      setState(() => _image = File(pickedImage.path));
+      logger.d("Image selected: ${_image!.path}");
+    } else {
+      logger.d("No image selected");
+    }
+  }
+
+  Future<String?> _uploadImage() async {
+    if (_image == null) return null;
+
+    try {
+      final String uid = FirebaseAuth.instance.currentUser!.uid;
+      final String fileName = '$uid.png';
+      final Reference ref =
+          FirebaseStorage.instance.ref('profile_pictures').child(fileName);
+
+      logger.d("Starting upload task");
+      UploadTask uploadTask = ref.putFile(_image!);
+
+      // Wait until the file is uploaded then fetch the download URL
+      TaskSnapshot taskSnapshot = await uploadTask;
+      final String downloadUrl = await taskSnapshot.ref.getDownloadURL();
+
+      logger.d("Image uploaded successfully. Download URL: $downloadUrl");
+      return downloadUrl;
+    } catch (e) {
+      logger.e('Error during image upload: $e');
+      return null;
+    }
+  }
+
+  void _submitForm() async {
+    if (_controllerName.text.isEmpty || _selectedDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all required fields')),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(child: CircularProgressIndicator());
+      },
+    );
+
+    try {
+      String uid = FirebaseAuth.instance.currentUser!.uid;
+      String? profilePictureUrl;
+
+      // Only attempt to upload image if one has been selected
+      if (_image != null) {
+        logger.d("Starting image upload");
+        profilePictureUrl = await _uploadImage();
+        logger.d("Image upload completed. URL: $profilePictureUrl");
+      }
+
+      logger.d("Updating user document for UID: $uid");
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'name': _controllerName.text,
+        'birthdate': _selectedDate,
+        if (profilePictureUrl != null) 'profilePicture': profilePictureUrl,
+      });
+
+      logger.d("User document updated successfully");
+
+      if (mounted) {
+        Navigator.of(context).pop(); // Dismiss the loading indicator
+        // Navigate to the genre selection page
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => GenreSelectionPage()),
+        );
+      }
+    } catch (e) {
+      logger.e('Error in _submitForm: $e');
+      if (mounted) {
+        Navigator.of(context).pop(); // Dismiss the loading indicator
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('An error occurred: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+        _controllerBirthdate.text = DateFormat('yyyy-MM-dd').format(picked);
+      });
+      logger.d("Date selected: ${_controllerBirthdate.text}");
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("We're almost there!"),
-      ),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Name'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your name';
-                  }
-                  return null;
-                },
-                onSaved: (value) => _name = value,
-              ),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Surname'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your surname';
-                  }
-                  return null;
-                },
-                onSaved: (value) => _surname = value,
-              ),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Age'),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your age';
-                  }
-                  if (int.tryParse(value) == null) {
-                    return 'Please enter a valid age';
-                  }
-                  return null;
-                },
-                onSaved: (value) => _age = int.parse(value!),
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                child: Text('Submit'),
-                onPressed: _submitForm,
-              ),
-            ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                const SizedBox(height: 20),
+                const Text(
+                  'Welcome',
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 40),
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 60,
+                        backgroundColor: Colors.grey[300],
+                        backgroundImage:
+                            _image != null ? FileImage(_image!) : null,
+                        child: _image == null
+                            ? const Icon(Icons.person,
+                                size: 60, color: Colors.grey)
+                            : null,
+                      ),
+                      const Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: CircleAvatar(
+                          backgroundColor: Colors.blue,
+                          radius: 20,
+                          child: Icon(Icons.add, color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 40),
+                MyTextField(
+                  controller: _controllerName,
+                  title: 'Name *',
+                  obscureText: false,
+                ),
+                const SizedBox(height: 25),
+                GestureDetector(
+                  onTap: () => _selectDate(context),
+                  child: AbsorbPointer(
+                    child: MyTextField(
+                      controller: _controllerBirthdate,
+                      title: 'Birthdate *',
+                      obscureText: false,
+                      suffixIcon: const Icon(Icons.calendar_today),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 35),
+                CustomSubmitButton(
+                  text: 'Next',
+                  onPressed: _submitForm,
+                ),
+              ],
+            ),
           ),
         ),
       ),

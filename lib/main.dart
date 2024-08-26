@@ -23,48 +23,32 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider()..loadThemeMode(),
+      child: MyApp(),
+    ),
+  );
 }
 
-class MyApp extends StatefulWidget {
-  MyApp({super.key});
-
-  @override
-  MyAppState createState() => MyAppState();
-}
-
-class MyAppState extends State<MyApp> {
-  //this for applying theme
-  late ThemeProvider _themeProvider;
-
-  @override
-  void initState() {
-    super.initState();
-    _themeProvider = ThemeProvider();
-    _loadTheme();
-  }
-
-  Future<void> _loadTheme() async {
-    _themeProvider.loadThemeMode();
-    setState(() {});
-  }
-
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-        value: _themeProvider,
-        child:
-            Consumer<ThemeProvider>(builder: (context, themeProvider, child) {
-          return MaterialApp(
-            theme: ThemeData(
-              useMaterial3: true,
-            ), // Customize your light theme here
-            darkTheme:
-                ThemeData(useMaterial3: true, brightness: Brightness.dark),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          theme: ThemeData.light(useMaterial3: true).copyWith(
+            // Customize your light theme here
+            scaffoldBackgroundColor: Colors.white,
+          ),
+          darkTheme: ThemeData.dark(useMaterial3: true).copyWith(
             // Customize your dark theme here
-            themeMode: themeProvider.themeMode,
-            home: WidgetTree(),
-          );
-        }));
+            scaffoldBackgroundColor: Colors.black,
+          ),
+          themeMode: themeProvider.themeMode,
+          home: const WidgetTree(),
+        );
+      },
+    );
   }
 }

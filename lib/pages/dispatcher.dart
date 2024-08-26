@@ -4,7 +4,7 @@ import 'package:dima_project/pages/my_lists.dart';
 import 'package:flutter/material.dart';
 
 class Dispatcher extends StatefulWidget {
-  Dispatcher({super.key});
+  const Dispatcher({Key? key}) : super(key: key);
 
   @override
   DispatcherState createState() => DispatcherState();
@@ -18,9 +18,12 @@ class DispatcherState extends State<Dispatcher> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        home: Scaffold(
-      body: screens[index],
-      bottomNavigationBar: NavigationBar(
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
+      themeMode: ThemeMode.system, // This will respect the system theme
+      home: Scaffold(
+        body: screens[index],
+        bottomNavigationBar: NavigationBar(
           selectedIndex: index,
           onDestinationSelected: (index) => setState(() => this.index = index),
           destinations: const <Widget>[
@@ -36,7 +39,9 @@ class DispatcherState extends State<Dispatcher> {
               icon: Icon(Icons.people),
               label: 'Friends',
             ),
-          ]),
-    ));
+          ],
+        ),
+      ),
+    );
   }
 }

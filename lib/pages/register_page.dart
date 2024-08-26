@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-//import 'package:cloud_firestore/cloud_firestore.dart';
-//import 'package:dima_project/pages/auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dima_project/widgets/my_textfield.dart';
-//import 'package:dima_project/services/error_handler.dart';
-import 'package:dima_project/pages/welcome_page.dart'; // Adjust the import path as needed
 import 'package:dima_project/widgets/custom_submit_button.dart';
+import 'package:dima_project/pages/welcome_page.dart';
+import 'package:dima_project/models/user_model.dart';
 
 class RegisterPage extends StatefulWidget {
   final VoidCallback showLoginPage;
@@ -21,7 +20,6 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _controllerPassword = TextEditingController();
   final TextEditingController _controllerConfirmPassword =
       TextEditingController();
-
   String? errorMessage = '';
 
   bool isPasswordValid(String password) {
@@ -36,10 +34,39 @@ class _RegisterPageState extends State<RegisterPage> {
     return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
   }
 
-  Future<bool> isEmailAlreadyInUse(String email) async {
-    final result =
-        await FirebaseAuth.instance.fetchSignInMethodsForEmail(email);
-    return result.isNotEmpty;
+  Future<String> getUniqueUsername(String baseUsername) async {
+    String username =
+        baseUsername.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    int suffix = 1;
+    bool isUnique = false;
+
+    try {
+      while (!isUnique) {
+        // Query the 'users' collection for documents where 'username' matches the current username
+        QuerySnapshot usernameQuery = await FirebaseFirestore.instance
+            .collection('users')
+            .where('username', isEqualTo: username)
+            .limit(1) // Limit to 1 result for efficiency
+            .get();
+
+        if (usernameQuery.docs.isEmpty) {
+          // If no documents are found, the username is unique
+          isUnique = true;
+          return username;
+        } else {
+          // If the username exists, append a number and try again
+          username = '$baseUsername$suffix';
+          suffix++;
+        }
+      }
+    } catch (e) {
+      print("Error querying Firestore for usernames: $e");
+      // Fallback: use a timestamp to ensure uniqueness
+      username = '${baseUsername}_${DateTime.now().millisecondsSinceEpoch}';
+      print("Warning: Unable to verify username uniqueness. Using $username");
+    }
+
+    return username;
   }
 
   Future<void> createUserWithEmailAndPassword() async {
@@ -57,13 +84,6 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    if (await isEmailAlreadyInUse(_controllerEmail.text.trim())) {
-      setState(() {
-        errorMessage = 'This email is already in use.';
-      });
-      return;
-    }
-
     if (!isPasswordValid(_controllerPassword.text)) {
       setState(() {
         errorMessage =
@@ -72,13 +92,29 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
+    // Clear any previous error messages
+    setState(() {
+      errorMessage = '';
+    });
 
     try {
+      // Show loading dialog
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(child: CircularProgressIndicator());
+        },
+      );
+
+      // Generate base username from email
+      String baseUsername = _controllerEmail.text
+          .trim()
+          .split('@')[0]
+          .toLowerCase()
+          .replaceAll(RegExp(r'[^a-z0-9]'), '');
+      String uniqueUsername = await getUniqueUsername(baseUsername);
+
       // Create user account
       UserCredential userCredential =
           await FirebaseAuth.instance.createUserWithEmailAndPassword(
@@ -87,11 +123,30 @@ class _RegisterPageState extends State<RegisterPage> {
       );
 
       if (userCredential.user != null) {
+        // Create MyUser object
+        MyUser newUser = MyUser(
+          id: userCredential.user!.uid,
+          username: uniqueUsername,
+          name: '',
+          email: _controllerEmail.text.trim(),
+          birthdate: DateTime.now(),
+          favoriteGenres: [],
+          friendList: [],
+          likedMovies: [],
+          customLists: {},
+        );
+
+        // Save user data to Firestore
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .set(newUser.toMap());
+
+        // Navigate to the WelcomeScreen
         if (mounted) {
-          Navigator.of(context).pop(); // Dismiss the loading dialog
-          // Navigate to the WelcomeScreen
-          Navigator.of(context).pushReplacement(
+          Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => WelcomeScreen()),
+            (Route<dynamic> route) => false,
           );
         }
       } else {
@@ -99,27 +154,31 @@ class _RegisterPageState extends State<RegisterPage> {
       }
     } on FirebaseAuthException catch (e) {
       setState(() {
-        errorMessage = e.message;
+        if (e.code == 'email-already-in-use') {
+          errorMessage = 'The account already exists for that email.';
+        } else {
+          errorMessage = e.message ?? 'An error occurred during registration.';
+        }
       });
     } catch (e) {
       setState(() {
-        errorMessage = 'An error occurred. Please try again.';
+        errorMessage = 'An unexpected error occurred. Please try again.';
       });
+    } finally {
+      // Ensure the loading dialog is dismissed
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
     }
-
-    if (mounted) Navigator.of(context).pop();
   }
 
   Widget _errorMessage() {
-    //if error message is empty, return an empty container
     if (errorMessage == '') {
       return const SizedBox();
     } else {
-      // else, return the error message centered in the screen
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 50.0),
         child: Text(
-          //ErrorHandler.getErrorMessage(errorMessage!),
           errorMessage!,
           style: const TextStyle(color: Colors.red, fontSize: 15),
         ),
