@@ -1,13 +1,14 @@
 import 'package:dima_project/api/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:dima_project/models/movie.dart';
 
 class MoviesSlider extends StatelessWidget {
+  final List<Movie> movies;
+
   const MoviesSlider({
     super.key,
-    required this.snapshot,
+    required this.movies,
   });
-
-  final AsyncSnapshot snapshot;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +30,7 @@ class MoviesSlider extends StatelessWidget {
                 child: Image.network(
                     filterQuality: FilterQuality.high,
                     fit: BoxFit.cover,
-                    '${Constants.imagePath}${snapshot.data![index].posterPath}'),
+                    '${Constants.imagePath}${movies[index].posterPath}'),
               ),
             ),
           );

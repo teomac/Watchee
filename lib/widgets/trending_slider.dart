@@ -2,15 +2,16 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:dima_project/api/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:dima_project/models/movie.dart';
 
 //widget used to display the trending movies with a self moving horizontal slider
 class TrendingSlider extends StatelessWidget {
+  final List<Movie> trendingMovies;
+
   const TrendingSlider({
     super.key,
-    required this.snapshot,
+    required this.trendingMovies,
   });
-
-  final AsyncSnapshot snapshot;
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +36,7 @@ class TrendingSlider extends StatelessWidget {
                   child: Image.network(
                       filterQuality: FilterQuality.high,
                       fit: BoxFit.cover,
-                      '${Constants.imagePath}${snapshot.data[itemIndex].posterPath}')),
+                      '${Constants.imagePath}${trendingMovies[itemIndex].posterPath}')),
             );
           },
         ));

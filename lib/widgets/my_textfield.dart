@@ -5,13 +5,15 @@ class MyTextField extends StatelessWidget {
   final String title;
   final bool obscureText;
   final TextInputType keyboardType;
+  final Widget? suffixIcon;
 
   const MyTextField({
     super.key,
     required this.controller,
     required this.title,
     required this.obscureText,
-    this.keyboardType = TextInputType.text, // Default to text input
+    this.keyboardType = TextInputType.text,
+    this.suffixIcon, // Default to text input
   });
 
   @override
@@ -26,6 +28,7 @@ class MyTextField extends StatelessWidget {
           border: const OutlineInputBorder(),
           labelText: title,
           labelStyle: const TextStyle(fontSize: 18),
+          suffixIcon: suffixIcon,
         ),
       ),
     );
