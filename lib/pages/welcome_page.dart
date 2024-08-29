@@ -11,8 +11,10 @@ import 'package:logger/logger.dart';
 import 'package:dima_project/services/user_service.dart';
 
 class WelcomeScreen extends StatefulWidget {
+  const WelcomeScreen({super.key});
+
   @override
-  _WelcomeScreenState createState() => _WelcomeScreenState();
+  State<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
@@ -75,7 +77,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         Navigator.of(context).pop(); // Dismiss the loading indicator
         // Navigate to the genre selection page
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => GenreSelectionPage()),
+          MaterialPageRoute(builder: (context) => const GenreSelectionPage()),
         );
       }
     } catch (e) {

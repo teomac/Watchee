@@ -8,12 +8,12 @@ class ProfileMenu extends StatelessWidget {
   final VoidCallback onSignOutTap;
 
   const ProfileMenu({
-    Key? key,
+    super.key,
     required this.user,
     required this.onManageAccountTap,
     required this.onAppSettingsTap,
     required this.onSignOutTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

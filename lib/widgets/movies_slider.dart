@@ -17,7 +17,7 @@ class MoviesSlider extends StatelessWidget {
       width: double.infinity,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        physics: BouncingScrollPhysics(),
+        physics: const BouncingScrollPhysics(),
         itemCount: 10,
         itemBuilder: (context, index) {
           return Padding(

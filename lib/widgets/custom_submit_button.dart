@@ -10,7 +10,7 @@ class CustomSubmitButton extends StatelessWidget {
   final double? fontSize;
 
   const CustomSubmitButton({
-    Key? key,
+    super.key,
     required this.text,
     required this.onPressed,
     this.backgroundColor = Colors.deepPurple,
@@ -18,7 +18,7 @@ class CustomSubmitButton extends StatelessWidget {
     this.width = 280,
     this.height = 60,
     this.fontSize = 19,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

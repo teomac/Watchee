@@ -3,10 +3,10 @@ import 'package:dima_project/pages/auth.dart';
 import 'package:flutter/material.dart';
 
 class UserInfo extends StatefulWidget {
-  UserInfo({Key? key}) : super(key: key);
+  const UserInfo({super.key});
 
   @override
-  _UserInfoState createState() => _UserInfoState();
+  State<UserInfo> createState() => _UserInfoState();
 }
 
 class _UserInfoState extends State<UserInfo> {

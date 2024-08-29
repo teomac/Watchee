@@ -4,10 +4,10 @@ import 'package:dima_project/widgets/my_textfield.dart';
 import 'package:dima_project/widgets/custom_submit_button.dart';
 
 class ResetPasswordPage extends StatefulWidget {
-  const ResetPasswordPage({Key? key}) : super(key: key);
+  const ResetPasswordPage({super.key});
 
   @override
-  _ResetPasswordPageState createState() => _ResetPasswordPageState();
+  State<ResetPasswordPage> createState() => _ResetPasswordPageState();
 }
 
 class _ResetPasswordPageState extends State<ResetPasswordPage> {
@@ -43,8 +43,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         errorMessage = 'An error occurred. Please try again.';
       });
     }
-
-    Navigator.of(context).pop(); // Dismiss the loading dialog
+    if (mounted) {
+      Navigator.of(context).pop();
+    } // Dismiss the loading dialog
   }
 
   @override

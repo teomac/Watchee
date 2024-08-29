@@ -25,12 +25,13 @@ Future<void> main() async {
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeProvider()..loadThemeMode(),
-      child: MyApp(),
+      child: const MyApp(),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
   @override
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(

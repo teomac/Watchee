@@ -11,9 +11,10 @@ import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:dima_project/theme/theme_provider.dart';
 import 'package:dima_project/pages/manage_account.dart';
-import 'package:dima_project/pages/login_page.dart';
+import 'package:logger/logger.dart';
 
 class HomeMovies extends StatefulWidget {
+  const HomeMovies({super.key});
   @override
   State<HomeMovies> createState() => HomeMoviesState();
 }
@@ -21,6 +22,7 @@ class HomeMovies extends StatefulWidget {
 class HomeMoviesState extends State<HomeMovies> {
   HomeMoviesData _data = HomeMoviesData();
   MyUser? _currentUser;
+  final Logger logger = Logger();
 
   @override
   void initState() {
@@ -46,32 +48,22 @@ class HomeMoviesState extends State<HomeMovies> {
         });
       }
     } catch (e) {
-      print('Error initializing data: $e');
+      logger.d('Error initializing data: $e');
       // Handle error (e.g., show a snackbar or dialog)
     }
   }
 
   Future<void> _signOut() async {
-    Future<String> message = UserService().signOut();
-    // After successful sign out, navigate to the login page
-    if (message.toString() == 'Sign out successful') {
-      // Check if the widget is still in the tree
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-        (Route<dynamic> route) => false,
-      );
-    } else {
+    bool success = await UserService().signOut();
+    if (mounted && success == false) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to sign out. Please try again.')),
       );
     }
+    return Future.value();
   }
 
-  void _showProfileMenu(BuildContext context) async {
-    //wait for _initializeData to complete before showing the bottom sheet
-    if (_currentUser == null) {
-      await _initializeData();
-    }
+  void _showProfileMenu(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -109,8 +101,10 @@ class HomeMoviesState extends State<HomeMovies> {
                 },
                 onAppSettingsTap: () {
                   Navigator.pop(context);
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => SettingsPage()));
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const SettingsPage()));
                 },
                 onSignOutTap: () {
                   Navigator.pop(context);
@@ -225,10 +219,10 @@ class HomeMoviesState extends State<HomeMovies> {
       future: UserService().getCurrentUser(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return CircularProgressIndicator();
+          return const CircularProgressIndicator();
         }
         if (snapshot.hasError) {
-          print('Error loading user data: ${snapshot.error}');
+          logger.d('Error loading user data: ${snapshot.error}');
           return Icon(
             Icons.error,
             color: isDarkMode ? Colors.white : Colors.black,
@@ -249,7 +243,7 @@ class HomeMoviesState extends State<HomeMovies> {
                       height: 40,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
-                        print('Error loading profile picture: $error');
+                        logger.d('Error loading profile picture: $error');
                         return Icon(
                           Icons.person,
                           size: 24,

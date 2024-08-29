@@ -140,12 +140,14 @@ class UserService {
     }
   }
 
-  Future<String> signOut() async {
+  Future<bool> signOut() async {
     try {
       await _auth.signOut();
-      return 'Sign out successful';
+      logger.d('User signed out');
     } catch (e) {
-      return 'Failed to sign out. Please try again.';
+      logger.d('Failed to sign out: $e');
+      return false;
     }
+    return true;
   }
 }

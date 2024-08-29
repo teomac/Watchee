@@ -11,7 +11,7 @@ import 'package:dima_project/pages/reset_password_page.dart';
 import 'package:dima_project/widgets/custom_submit_button.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({Key? key}) : super(key: key);
+  const LoginPage({super.key});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -47,7 +47,6 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  //TODO
   void _forgotPassword() {
     Navigator.push(
       context,
