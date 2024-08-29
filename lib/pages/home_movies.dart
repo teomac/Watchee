@@ -1,4 +1,5 @@
 import 'package:dima_project/models/movie.dart';
+import 'package:dima_project/pages/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:dima_project/api/tmdb_api.dart';
@@ -108,11 +109,8 @@ class HomeMoviesState extends State<HomeMovies> {
                 },
                 onAppSettingsTap: () {
                   Navigator.pop(context);
-                  // Add your navigation logic for App Settings
-                },
-                onAboutTap: () {
-                  Navigator.pop(context);
-                  // Add your navigation logic for About
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => SettingsPage()));
                 },
                 onSignOutTap: () {
                   Navigator.pop(context);

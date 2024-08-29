@@ -5,7 +5,6 @@ class ProfileMenu extends StatelessWidget {
   final MyUser user;
   final VoidCallback onManageAccountTap;
   final VoidCallback onAppSettingsTap;
-  final VoidCallback onAboutTap;
   final VoidCallback onSignOutTap;
 
   const ProfileMenu({
@@ -13,7 +12,6 @@ class ProfileMenu extends StatelessWidget {
     required this.user,
     required this.onManageAccountTap,
     required this.onAppSettingsTap,
-    required this.onAboutTap,
     required this.onSignOutTap,
   }) : super(key: key);
 
@@ -44,11 +42,6 @@ class ProfileMenu extends StatelessWidget {
           leading: const Icon(Icons.settings),
           title: const Text('App Settings'),
           onTap: onAppSettingsTap,
-        ),
-        ListTile(
-          leading: const Icon(Icons.info),
-          title: const Text('About'),
-          onTap: onAboutTap,
         ),
         ListTile(
           leading: const Icon(Icons.logout),

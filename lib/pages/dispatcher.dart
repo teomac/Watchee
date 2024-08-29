@@ -17,30 +17,28 @@ class DispatcherState extends State<Dispatcher> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData.light(),
-      darkTheme: ThemeData.dark(),
-      themeMode: ThemeMode.system, // This will respect the system theme
-      home: Scaffold(
-        body: screens[index],
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: index,
-          onDestinationSelected: (index) => setState(() => this.index = index),
-          destinations: const <Widget>[
-            NavigationDestination(
-              icon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.subscriptions),
-              label: 'My lists',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.people),
-              label: 'Friends',
-            ),
-          ],
-        ),
+    return Scaffold(
+      body: IndexedStack(
+        index: index,
+        children: screens,
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: index,
+        onDestinationSelected: (index) => setState(() => this.index = index),
+        destinations: const <Widget>[
+          NavigationDestination(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.subscriptions),
+            label: 'My lists',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.people),
+            label: 'Friends',
+          ),
+        ],
       ),
     );
   }
