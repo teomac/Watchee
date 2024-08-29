@@ -5,6 +5,7 @@ import 'package:dima_project/widgets/my_textfield.dart';
 import 'package:dima_project/widgets/custom_submit_button.dart';
 import 'package:dima_project/pages/welcome_page.dart';
 import 'package:dima_project/models/user_model.dart';
+import 'package:dima_project/services/user_service.dart';
 
 class RegisterPage extends StatefulWidget {
   final VoidCallback showLoginPage;
@@ -32,41 +33,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
   bool isEmailValid(String email) {
     return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
-  }
-
-  Future<String> getUniqueUsername(String baseUsername) async {
-    String username =
-        baseUsername.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
-    int suffix = 1;
-    bool isUnique = false;
-
-    try {
-      while (!isUnique) {
-        // Query the 'users' collection for documents where 'username' matches the current username
-        QuerySnapshot usernameQuery = await FirebaseFirestore.instance
-            .collection('users')
-            .where('username', isEqualTo: username)
-            .limit(1) // Limit to 1 result for efficiency
-            .get();
-
-        if (usernameQuery.docs.isEmpty) {
-          // If no documents are found, the username is unique
-          isUnique = true;
-          return username;
-        } else {
-          // If the username exists, append a number and try again
-          username = '$baseUsername$suffix';
-          suffix++;
-        }
-      }
-    } catch (e) {
-      print("Error querying Firestore for usernames: $e");
-      // Fallback: use a timestamp to ensure uniqueness
-      username = '${baseUsername}_${DateTime.now().millisecondsSinceEpoch}';
-      print("Warning: Unable to verify username uniqueness. Using $username");
-    }
-
-    return username;
   }
 
   Future<void> createUserWithEmailAndPassword() async {
@@ -113,7 +79,8 @@ class _RegisterPageState extends State<RegisterPage> {
           .split('@')[0]
           .toLowerCase()
           .replaceAll(RegExp(r'[^a-z0-9]'), '');
-      String uniqueUsername = await getUniqueUsername(baseUsername);
+      String uniqueUsername =
+          await UserService().getUniqueUsername(baseUsername);
 
       // Create user account
       UserCredential userCredential =

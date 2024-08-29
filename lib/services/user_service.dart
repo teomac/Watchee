@@ -1,10 +1,14 @@
+import 'dart:io'; // Add this line to import the 'File' class
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:dima_project/models/user_model.dart';
+import 'package:logger/logger.dart';
 
 class UserService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final auth.FirebaseAuth _auth = auth.FirebaseAuth.instance;
+  final Logger logger = Logger();
 
   // Create a new user in Firestore
   Future<void> createUser(MyUser user) async {
@@ -80,5 +84,68 @@ class UserService {
     await _firestore.collection('users').doc(userId).update({
       'friendList': FieldValue.arrayRemove([friendId])
     });
+  }
+
+  // Get a unique username based on a base username
+  Future<String> getUniqueUsername(String baseUsername) async {
+    String username =
+        baseUsername.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    int suffix = 1;
+    bool isUnique = false;
+
+    try {
+      while (!isUnique) {
+        // Query the 'users' collection for documents where 'username' matches the current username
+        QuerySnapshot usernameQuery = await FirebaseFirestore.instance
+            .collection('users')
+            .where('username', isEqualTo: username)
+            .limit(1) // Limit to 1 result for efficiency
+            .get();
+
+        if (usernameQuery.docs.isEmpty) {
+          // If no documents are found, the username is unique
+          isUnique = true;
+          return username;
+        } else {
+          // If the username exists, append a number and try again
+          username = '$baseUsername$suffix';
+          suffix++;
+        }
+      }
+    } catch (e) {
+      logger.d("Error querying Firestore for usernames: $e");
+      // Fallback: use a timestamp to ensure uniqueness
+      username = '${baseUsername}_${DateTime.now().millisecondsSinceEpoch}';
+      logger
+          .d("Warning: Unable to verify username uniqueness. Using $username");
+    }
+
+    return username;
+  }
+
+  // Upload an image to Firebase Storage
+  Future<String?> uploadImage(File image) async {
+    try {
+      final String uid = _auth.currentUser!.uid;
+      final String fileName = '$uid.png';
+      final Reference ref =
+          FirebaseStorage.instance.ref('profile_pictures').child(fileName);
+
+      UploadTask uploadTask = ref.putFile(image);
+      TaskSnapshot taskSnapshot = await uploadTask;
+      return await taskSnapshot.ref.getDownloadURL();
+    } catch (e) {
+      logger.d('Failed to upload image: $e');
+      return null;
+    }
+  }
+
+  Future<String> signOut() async {
+    try {
+      await _auth.signOut();
+      return 'Sign out successful';
+    } catch (e) {
+      return 'Failed to sign out. Please try again.';
+    }
   }
 }
