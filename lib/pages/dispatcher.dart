@@ -4,7 +4,7 @@ import 'package:dima_project/pages/my_lists.dart';
 import 'package:flutter/material.dart';
 
 class Dispatcher extends StatefulWidget {
-  const Dispatcher({Key? key}) : super(key: key);
+  const Dispatcher({super.key});
 
   @override
   DispatcherState createState() => DispatcherState();
@@ -13,7 +13,7 @@ class Dispatcher extends StatefulWidget {
 class DispatcherState extends State<Dispatcher> {
   int index = 0;
 
-  final screens = [HomeMovies(), MyLists(), Friends()];
+  final screens = [const HomeMovies(), const MyLists(), const Friends()];
 
   @override
   Widget build(BuildContext context) {

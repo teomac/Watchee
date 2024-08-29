@@ -8,10 +8,10 @@ import 'package:dima_project/services/user_service.dart';
 import 'package:intl/intl.dart';
 
 class ManageAccountPage extends StatefulWidget {
-  const ManageAccountPage({Key? key}) : super(key: key);
+  const ManageAccountPage({super.key});
 
   @override
-  _ManageAccountPageState createState() => _ManageAccountPageState();
+  State<ManageAccountPage> createState() => _ManageAccountPageState();
 }
 
 class _ManageAccountPageState extends State<ManageAccountPage> {
@@ -86,19 +86,22 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
           .collection('users')
           .doc(uid)
           .update(updateData);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile updated successfully')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile updated successfully')),
+        );
+      }
 
       // Refresh user data
       setState(() {
         _userFuture = UserService().getCurrentUser();
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update profile: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update profile: $e')),
+        );
+      }
     }
   }
 

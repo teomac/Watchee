@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:dima_project/theme/theme_provider.dart';
 
 class SettingsPage extends StatelessWidget {
+  const SettingsPage({super.key});
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -18,7 +19,7 @@ class SettingsPage extends StatelessWidget {
       body: ListView(
         children: [
           _buildSection('General', [
-            ThemeSelectorWidget(),
+            const ThemeSelectorWidget(),
           ]),
           _buildSection('Notification Preferences', [
             SwitchListTile(
@@ -80,6 +81,7 @@ class SettingsPage extends StatelessWidget {
 }
 
 class ThemeSelectorWidget extends StatelessWidget {
+  const ThemeSelectorWidget({super.key});
   @override
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
@@ -93,7 +95,7 @@ class ThemeSelectorWidget extends StatelessWidget {
                 themeProvider.setThemeMode(newThemeMode);
               }
             },
-            items: [
+            items: const [
               DropdownMenuItem(
                 value: ThemeMode.system,
                 child: Text('System default'),

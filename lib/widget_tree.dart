@@ -6,7 +6,7 @@ import 'package:dima_project/pages/login_page.dart';
 import 'package:dima_project/pages/welcome_page.dart';
 
 class WidgetTree extends StatelessWidget {
-  const WidgetTree({Key? key}) : super(key: key);
+  const WidgetTree({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -36,12 +36,12 @@ class WidgetTree extends StatelessWidget {
                   if (userData['profilePicture'] != null ||
                       (userData['name'] != null &&
                           userData['name'].isNotEmpty)) {
-                    return Dispatcher();
+                    return const Dispatcher();
                   }
                 }
               }
 
-              return WelcomeScreen();
+              return const WelcomeScreen();
             },
           );
         } else {

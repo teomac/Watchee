@@ -4,8 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dima_project/pages/dispatcher.dart';
 
 class GenreSelectionPage extends StatefulWidget {
+  const GenreSelectionPage({super.key});
   @override
-  _GenreSelectionPageState createState() => _GenreSelectionPageState();
+  State<GenreSelectionPage> createState() => _GenreSelectionPageState();
 }
 
 class _GenreSelectionPageState extends State<GenreSelectionPage> {
@@ -39,9 +40,11 @@ class _GenreSelectionPageState extends State<GenreSelectionPage> {
       await FirebaseFirestore.instance.collection('users').doc(uid).update({
         'favorite_genres': selectedGenres,
       });
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => Dispatcher()),
-      );
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const Dispatcher()),
+        );
+      }
     }
   }
 

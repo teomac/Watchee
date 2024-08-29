@@ -10,7 +10,7 @@ import 'package:dima_project/services/user_service.dart';
 class RegisterPage extends StatefulWidget {
   final VoidCallback showLoginPage;
 
-  const RegisterPage({Key? key, required this.showLoginPage}) : super(key: key);
+  const RegisterPage({super.key, required this.showLoginPage});
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -112,7 +112,7 @@ class _RegisterPageState extends State<RegisterPage> {
         // Navigate to the WelcomeScreen
         if (mounted) {
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => WelcomeScreen()),
+            MaterialPageRoute(builder: (context) => const WelcomeScreen()),
             (Route<dynamic> route) => false,
           );
         }
