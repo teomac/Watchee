@@ -9,6 +9,8 @@ import 'package:dima_project/widgets/profile_widget.dart';
 import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:dima_project/theme/theme_provider.dart';
+import 'package:dima_project/pages/manage_account.dart';
+import 'package:dima_project/pages/login_page.dart';
 
 class HomeMovies extends StatefulWidget {
   @override
@@ -48,7 +50,27 @@ class HomeMoviesState extends State<HomeMovies> {
     }
   }
 
-  void _showProfileMenu(BuildContext context) {
+  Future<void> _signOut() async {
+    Future<String> message = UserService().signOut();
+    // After successful sign out, navigate to the login page
+    if (message.toString() == 'Sign out successful') {
+      // Check if the widget is still in the tree
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+        (Route<dynamic> route) => false,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to sign out. Please try again.')),
+      );
+    }
+  }
+
+  void _showProfileMenu(BuildContext context) async {
+    //wait for _initializeData to complete before showing the bottom sheet
+    if (_currentUser == null) {
+      await _initializeData();
+    }
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -74,8 +96,15 @@ class HomeMoviesState extends State<HomeMovies> {
                         birthdate: DateTime(1900, 01,
                             01)), // Provide a default value if _currentUser is null
                 onManageAccountTap: () {
-                  Navigator.pop(context);
-                  // Add your navigation logic for Manage Account
+                  Navigator.pop(context); // Close the bottom sheet
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ManageAccountPage()),
+                  ).then((_) {
+                    // Refresh user data when returning from ManageAccountPage
+                    _initializeData();
+                  });
                 },
                 onAppSettingsTap: () {
                   Navigator.pop(context);
@@ -84,6 +113,10 @@ class HomeMoviesState extends State<HomeMovies> {
                 onAboutTap: () {
                   Navigator.pop(context);
                   // Add your navigation logic for About
+                },
+                onSignOutTap: () {
+                  Navigator.pop(context);
+                  _signOut();
                 },
               ),
             );

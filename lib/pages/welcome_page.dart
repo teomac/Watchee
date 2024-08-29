@@ -7,8 +7,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:logger/logger.dart';
+import 'package:dima_project/services/user_service.dart';
 
 class WelcomeScreen extends StatefulWidget {
   @override
@@ -35,30 +35,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     }
   }
 
-  Future<String?> _uploadImage() async {
-    if (_image == null) return null;
-
-    try {
-      final String uid = FirebaseAuth.instance.currentUser!.uid;
-      final String fileName = '$uid.png';
-      final Reference ref =
-          FirebaseStorage.instance.ref('profile_pictures').child(fileName);
-
-      logger.d("Starting upload task");
-      UploadTask uploadTask = ref.putFile(_image!);
-
-      // Wait until the file is uploaded then fetch the download URL
-      TaskSnapshot taskSnapshot = await uploadTask;
-      final String downloadUrl = await taskSnapshot.ref.getDownloadURL();
-
-      logger.d("Image uploaded successfully. Download URL: $downloadUrl");
-      return downloadUrl;
-    } catch (e) {
-      logger.e('Error during image upload: $e');
-      return null;
-    }
-  }
-
   void _submitForm() async {
     if (_controllerName.text.isEmpty || _selectedDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -82,7 +58,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       // Only attempt to upload image if one has been selected
       if (_image != null) {
         logger.d("Starting image upload");
-        profilePictureUrl = await _uploadImage();
+        profilePictureUrl = await UserService().uploadImage(_image!);
         logger.d("Image upload completed. URL: $profilePictureUrl");
       }
 
