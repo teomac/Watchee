@@ -16,4 +16,5 @@ class Constants {
   static String movieCredits = '';
   static String similarMovies = '';
   static String movieReviews = '';
+  static const String movieBaseUrl = 'https://api.themoviedb.org/3/movie';
 }

@@ -24,15 +24,24 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
   List<String> _selectedGenres = [];
   final List<String> _allGenres = [
     'Action',
-    'Comedy',
-    'Drama',
-    'Horror',
-    'Sci-Fi',
-    'Romance',
-    'Thriller',
-    'Documentary',
+    'Adventure',
     'Animation',
-    'Fantasy'
+    ' Comedy',
+    'Crime',
+    'Documentary',
+    'Drama',
+    ' Family',
+    'Fantasy',
+    'History',
+    'Horror',
+    'Music',
+    'Mystery',
+    'Romance',
+    'Science Fiction',
+    'Thriller',
+    'TV Movie',
+    'War',
+    'Western'
   ];
 
   @override
