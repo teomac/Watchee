@@ -1,4 +1,4 @@
-import 'package:dima_project/pages/friends.dart';
+import 'package:dima_project/pages/friends_page.dart';
 import 'package:dima_project/pages/home_movies.dart';
 import 'package:dima_project/pages/my_lists.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +13,7 @@ class Dispatcher extends StatefulWidget {
 class DispatcherState extends State<Dispatcher> {
   int index = 0;
 
-  final screens = [const HomeMovies(), const MyLists(), const Friends()];
+  final screens = [const HomeMovies(), const MyLists(), const FriendsPage()];
 
   @override
   Widget build(BuildContext context) {

@@ -140,6 +140,26 @@ class UserService {
     }
   }
 
+  Future<List<MyUser>> searchUsers(String query) async {
+    if (query.length < 3) return [];
+
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('username', isGreaterThanOrEqualTo: query)
+          .where('username', isLessThan: '${query}z')
+          .limit(20) // Limit the number of results
+          .get();
+
+      return querySnapshot.docs
+          .map((doc) => MyUser.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      logger.d('Error searching users: $e');
+      return [];
+    }
+  }
+
   Future<bool> signOut() async {
     try {
       await _auth.signOut();
