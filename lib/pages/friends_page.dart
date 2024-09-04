@@ -104,8 +104,7 @@ class FriendsView extends StatelessWidget {
   final Logger logger = Logger();
 
   //final TextEditingController _searchController = TextEditingController();
-  static const String defaultProfilePicture =
-      'https://example.com/default_profile_picture.png';
+  static const String defaultProfilePicture = 'images/default_profile.png';
 
   @override
   Widget build(BuildContext context) {
