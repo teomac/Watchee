@@ -1,13 +1,13 @@
 import 'dart:async';
-import 'package:dima_project/pages/auth.dart';
-import 'package:dima_project/services/auth_service.dart';
+import 'package:dima_project/services/auth.dart';
+import 'package:dima_project/services/google_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dima_project/widgets/my_textfield.dart';
 import 'package:flutter/gestures.dart';
-import 'package:dima_project/pages/register_page.dart';
+import 'package:dima_project/pages/login_and_register/register_page.dart';
 //import 'package:dima_project/services/error_handler.dart';
-import 'package:dima_project/pages/reset_password_page.dart';
+import 'package:dima_project/pages/login_and_register/reset_password_page.dart';
 import 'package:dima_project/widgets/custom_submit_button.dart';
 
 class LoginPage extends StatefulWidget {
