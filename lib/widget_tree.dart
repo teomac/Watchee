@@ -2,8 +2,8 @@ import 'package:dima_project/pages/dispatcher.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:dima_project/pages/login_page.dart';
-import 'package:dima_project/pages/welcome_page.dart';
+import 'package:dima_project/pages/login_and_register/login_page.dart';
+import 'package:dima_project/pages/login_and_register/welcome_page.dart';
 
 class WidgetTree extends StatelessWidget {
   const WidgetTree({super.key});

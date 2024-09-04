@@ -3,6 +3,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:dima_project/api/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:dima_project/models/movie.dart';
+import 'package:dima_project/pages/film_details/film_details_page.dart';
 
 //widget used to display the trending movies with a self moving horizontal slider
 class TrendingSlider extends StatelessWidget {
@@ -16,29 +17,44 @@ class TrendingSlider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-        width: double.infinity,
-        child: CarouselSlider.builder(
-          itemCount: 10,
-          options: CarouselOptions(
-              height: 175,
-              autoPlay: true,
-              viewportFraction: 0.35,
-              enlargeCenterPage: true,
-              pageSnapping: true,
-              autoPlayCurve: Curves.fastOutSlowIn,
-              autoPlayAnimationDuration: const Duration(seconds: 1)),
-          itemBuilder: (context, itemIndex, pageViewIndex) {
-            return ClipRRect(
+      width: double.infinity,
+      child: CarouselSlider.builder(
+        itemCount: trendingMovies.length > 10 ? 10 : trendingMovies.length,
+        options: CarouselOptions(
+          height: 175,
+          autoPlay: true,
+          viewportFraction: 0.35,
+          enlargeCenterPage: true,
+          pageSnapping: true,
+          autoPlayCurve: Curves.fastOutSlowIn,
+          autoPlayAnimationDuration: const Duration(seconds: 1),
+        ),
+        itemBuilder: (context, itemIndex, pageViewIndex) {
+          final movie = trendingMovies[itemIndex];
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => FilmDetailsPage(movie: movie),
+                ),
+              );
+            },
+            child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: SizedBox(
-                  height: 175,
-                  width: 110,
-                  child: Image.network(
-                      filterQuality: FilterQuality.high,
-                      fit: BoxFit.cover,
-                      '${Constants.imagePath}${trendingMovies[itemIndex].posterPath}')),
-            );
-          },
-        ));
+                height: 175,
+                width: 110,
+                child: Image.network(
+                  filterQuality: FilterQuality.high,
+                  fit: BoxFit.cover,
+                  '${Constants.imagePath}${movie.posterPath}',
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 }
