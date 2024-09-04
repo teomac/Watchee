@@ -43,5 +43,51 @@ Future<List<Movie>> fetchUpcomingMovies() async {
   }
 }
 
-//TODO
-//all the function for popular, higher rated, ecc.
+// function used to retrieve the movie details
+Future<Movie> retrieveFilmInfo(int movieId) async {
+  final response = await http.get(Uri.parse(
+      '${Constants.movieBaseUrl}/$movieId?api_key=${Constants.apiKey}'));
+
+  if (response.statusCode == 200) {
+    return Movie.fromJson(json.decode(response.body));
+  } else {
+    throw Exception('Failed to load movie details');
+  }
+}
+
+// function used to retrieve the cast of a movie
+Future<List<Map<String, dynamic>>> retrieveCast(int movieId) async {
+  final response = await http.get(Uri.parse(
+      '${Constants.movieBaseUrl}/$movieId/credits?api_key=${Constants.apiKey}'));
+
+  if (response.statusCode == 200) {
+    final decodedData = json.decode(response.body)['cast'] as List;
+    return decodedData
+        .map((castMember) => {
+              'id': castMember['id'],
+              'name': castMember['name'],
+              'character': castMember['character'],
+              'profile_path': castMember['profile_path']
+            })
+        .toList();
+  } else {
+    throw Exception('Failed to load cast information');
+  }
+}
+
+// function used to retrieve the trailer of a movie
+Future<String> retrieveTrailer(int movieId) async {
+  final response = await http.get(Uri.parse(
+      '${Constants.movieBaseUrl}/$movieId/videos?api_key=${Constants.apiKey}'));
+
+  if (response.statusCode == 200) {
+    final decodedData = json.decode(response.body)['results'] as List;
+    final trailer = decodedData.firstWhere(
+        (video) => video['type'] == 'Trailer' && video['site'] == 'YouTube',
+        orElse: () => null);
+    final String trailerKey = trailer['key'];
+    return trailerKey;
+  } else {
+    throw Exception('Failed to load trailer information');
+  }
+}
