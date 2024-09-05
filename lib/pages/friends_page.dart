@@ -5,6 +5,7 @@ import 'package:dima_project/services/user_service.dart';
 import 'package:dima_project/services/user_menu_manager.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:logger/logger.dart';
+import 'package:dima_project/pages/user_profile_page.dart';
 
 // Events
 abstract class FriendsEvent {}
@@ -22,6 +23,8 @@ abstract class FriendsState {}
 class FriendsInitial extends FriendsState {}
 
 class FriendsLoading extends FriendsState {}
+
+class RefreshFriends extends FriendsEvent {}
 
 class FriendsLoaded extends FriendsState {
   final List<MyUser> friends;
@@ -48,10 +51,20 @@ class FriendsBloc extends Bloc<FriendsEvent, FriendsState> {
         transformer: (events, mapper) => events
             .debounceTime(const Duration(milliseconds: 300))
             .switchMap(mapper));
+    on<RefreshFriends>(_onRefreshFriends);
   }
 
   Future<void> _onLoadFriends(
       LoadFriends event, Emitter<FriendsState> emit) async {
+    await _loadFriends(emit);
+  }
+
+  Future<void> _onRefreshFriends(
+      RefreshFriends event, Emitter<FriendsState> emit) async {
+    await _loadFriends(emit);
+  }
+
+  Future<void> _loadFriends(Emitter<FriendsState> emit) async {
     emit(FriendsLoading());
     try {
       final currentUser = await _userService.getCurrentUser();
@@ -211,7 +224,7 @@ class FriendsView extends StatelessWidget {
     return ListView.builder(
       itemCount: friends.length,
       itemBuilder: (context, index) {
-        return _buildUserListTile(friends[index]);
+        return _buildUserListTile(context, friends[index]);
       },
     );
   }
@@ -220,51 +233,62 @@ class FriendsView extends StatelessWidget {
     return ListView.builder(
       itemCount: users.length,
       itemBuilder: (context, index) {
-        return _buildUserListTile(users[index]);
+        return _buildUserListTile(context, users[index]);
       },
     );
   }
 
-  Widget _buildUserListTile(MyUser user) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: SizedBox(
-        height: 55, // Fixed height for each row
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 25, // Smaller avatar
-              backgroundImage: NetworkImage(
-                user.profilePicture?.isNotEmpty == true
-                    ? user.profilePicture!
-                    : defaultProfilePicture,
+  Widget _buildUserListTile(BuildContext context, MyUser user) {
+    return GestureDetector(
+      onTap: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => UserProfilePage(user: user)),
+        );
+        if (result == true) {
+          // Friend status changed, refresh the list
+          context.read<FriendsBloc>().add(RefreshFriends());
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5.0),
+        child: SizedBox(
+          height: 55,
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundImage: user.profilePicture?.isNotEmpty == true
+                    ? NetworkImage(user.profilePicture!)
+                    : const AssetImage('lib/images/default_profile.jpg')
+                        as ImageProvider,
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    user.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16, // Slightly smaller font
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      user.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
-                  ),
-                  Text(
-                    user.username,
-                    style: const TextStyle(
-                      fontStyle: FontStyle.italic,
-                      color: Colors.grey,
-                      fontSize: 14, // Smaller font for username
+                    Text(
+                      user.username,
+                      style: const TextStyle(
+                        fontStyle: FontStyle.italic,
+                        color: Colors.grey,
+                        fontSize: 14,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

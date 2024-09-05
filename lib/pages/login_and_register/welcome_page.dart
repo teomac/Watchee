@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dima_project/widgets/my_textfield.dart';
 import 'package:dima_project/widgets/custom_submit_button.dart';
-import 'package:dima_project/pages/genre_selection_page.dart';
+import 'package:dima_project/pages/login_and_register/genre_selection_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
