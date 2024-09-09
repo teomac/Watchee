@@ -31,11 +31,11 @@ class AuthService {
           username: googleUser.email.split('@')[0],
           name: googleUser.displayName ?? "",
           email: googleUser.email,
-          birthdate: DateTime.now(),
           profilePicture:
               googleUser.photoUrl, // This will be updated in the welcome page
           favoriteGenres: [],
-          friendList: [],
+          followers: [],
+          following: [],
           likedMovies: [],
           customLists: {},
         );

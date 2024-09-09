@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/services/user_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class UserProfilePage extends StatefulWidget {
   final MyUser user;
@@ -13,23 +12,31 @@ class UserProfilePage extends StatefulWidget {
 }
 
 class _UserProfilePageState extends State<UserProfilePage> {
-  late bool isFriend = false;
+  late bool isFollowing = false;
   bool isLoading = true;
-  bool friendStatusChanged = false;
+  bool followStatusChanged = false;
   final UserService _userService = UserService();
+  MyUser? _currentUser;
+  List<MyUser> _followedByUsers = [];
 
   @override
   void initState() {
     super.initState();
-    _checkFriendStatus();
+    _initializeData();
   }
 
-  Future<void> _checkFriendStatus() async {
+  Future<void> _initializeData() async {
     try {
-      MyUser? currentUser = await _userService.getCurrentUser();
+      final currentUser = await _userService.getCurrentUser();
+      if (currentUser != null) {
+        _currentUser = currentUser;
+        await Future.wait([
+          _checkFollowStatus(),
+          _fetchFollowedByUsers(),
+        ]);
+      }
       if (mounted) {
         setState(() {
-          isFriend = currentUser?.friendList.contains(widget.user.id) ?? false;
           isLoading = false;
         });
       }
@@ -39,41 +46,63 @@ class _UserProfilePageState extends State<UserProfilePage> {
           isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error checking friend status: $e')),
+          SnackBar(content: Text('Error initializing data: $e')),
         );
       }
     }
   }
 
-  Future<void> _toggleFriendStatus() async {
-    if (!mounted) return;
+  Future<void> _checkFollowStatus() async {
+    if (_currentUser == null) return;
+    bool followStatus =
+        await _userService.isFollowing(_currentUser!.id, widget.user.id);
+    if (mounted) {
+      setState(() {
+        isFollowing = followStatus;
+      });
+    }
+  }
+
+  Future<void> _fetchFollowedByUsers() async {
+    if (_currentUser == null) return;
+    List<MyUser> followers = await _userService.getFollowers(widget.user.id);
+    _followedByUsers = followers
+        .where((follower) =>
+            _currentUser!.following.contains(follower.id) &&
+            follower.id != _currentUser!.id)
+        .toList();
+  }
+
+  Future<void> _toggleFollowStatus() async {
+    if (!mounted || _currentUser == null) return;
     setState(() {
       isLoading = true;
     });
-    String currentUserId = FirebaseAuth.instance.currentUser!.uid;
     try {
-      if (isFriend) {
-        await _userService.removeFriend(currentUserId, widget.user.id);
+      if (isFollowing) {
+        await _userService.unfollowUser(_currentUser!.id, widget.user.id);
       } else {
-        await _userService.addFriend(currentUserId, widget.user.id);
+        await _userService.followUser(_currentUser!.id, widget.user.id);
       }
       if (mounted) {
         setState(() {
-          isFriend = !isFriend;
-          isLoading = false;
-          friendStatusChanged = true;
+          isFollowing = !isFollowing;
+          followStatusChanged = true;
         });
       }
     } catch (e) {
       if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  'Failed to ${isFollowing ? 'unfollow' : 'follow'} user: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
         setState(() {
           isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content:
-                  Text('Failed to ${isFriend ? 'remove' : 'add'} friend: $e')),
-        );
       }
     }
   }
@@ -81,71 +110,133 @@ class _UserProfilePageState extends State<UserProfilePage> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-        canPop: false,
-        onPopInvoked: (didPop) {
-          if (didPop) return;
-          Navigator.of(context).pop(friendStatusChanged);
-        },
-        child: Scaffold(
-          appBar: AppBar(
-            title: Text(widget.user.name),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () {
-                Navigator.of(context).pop(friendStatusChanged);
-              },
-            ),
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (didPop) return;
+        Navigator.of(context).pop(followStatusChanged);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(widget.user.username),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.of(context).pop(followStatusChanged),
           ),
-          body: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  CircleAvatar(
-                    radius: 55,
-                    backgroundImage: widget.user.profilePicture != null
-                        ? NetworkImage(widget.user.profilePicture!)
-                        : const AssetImage('lib/images/default_profile.jpg')
-                            as ImageProvider,
+        ),
+        body: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      _buildProfileHeader(),
+                      const SizedBox(height: 14),
+                      _buildFollowButton(),
+                      if (_followedByUsers.isNotEmpty) _buildFollowedByText(),
+                      const SizedBox(height: 32),
+                      _buildPublicWatchlists(),
+                      const SizedBox(height: 32),
+                      _buildLatestReviews(),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    widget.user.name,
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  Text(
-                    '@${widget.user.username}',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(color: Colors.grey),
-                  ),
-                  const SizedBox(height: 24),
-                  isLoading
-                      ? const CircularProgressIndicator()
-                      : ElevatedButton(
-                          onPressed: _toggleFriendStatus,
-                          child:
-                              Text(isFriend ? 'Remove Friend' : 'Add Friend'),
-                        ),
-                  const SizedBox(height: 32),
-                  const Text(
-                    'Watchlists',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    height: 200,
-                    color: Colors.grey[900],
-                    child: const Center(
-                      child: Text('Watchlists coming soon!'),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+      ),
+    );
+  }
+
+  Widget _buildProfileHeader() {
+    return Column(
+      children: [
+        CircleAvatar(
+          radius: 55,
+          backgroundImage: widget.user.profilePicture != null
+              ? NetworkImage(widget.user.profilePicture!)
+              : const AssetImage('lib/images/default_profile.jpg')
+                  as ImageProvider,
+        ),
+        const SizedBox(height: 16),
+        Text(
+          widget.user.name,
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        Text(
+          '@${widget.user.username}',
+          style: Theme.of(context)
+              .textTheme
+              .titleMedium
+              ?.copyWith(color: Colors.grey),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFollowButton() {
+    if (_currentUser == null || _currentUser!.id == widget.user.id) {
+      return const SizedBox.shrink();
+    }
+    return ElevatedButton(
+      onPressed: _toggleFollowStatus,
+      child: Text(isFollowing ? 'Unfollow' : 'Follow'),
+    );
+  }
+
+  Widget _buildFollowedByText() {
+    String followedByText = 'Followed by ${_followedByUsers.first.name}';
+    if (_followedByUsers.length > 1) {
+      followedByText += ' and ${_followedByUsers.length - 1} others';
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0),
+      child: Text(
+        followedByText,
+        style: Theme.of(context)
+            .textTheme
+            .bodyMedium
+            ?.copyWith(color: Colors.grey),
+      ),
+    );
+  }
+
+  Widget _buildPublicWatchlists() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Public Watchlists',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 200,
+          color: Colors.grey[900],
+          child: const Center(
+            child: Text('Public watchlists coming soon!'),
           ),
-        ));
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLatestReviews() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Latest Reviews',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 200,
+          color: Colors.grey[900],
+          child: const Center(
+            child: Text('Latest reviews coming soon!'),
+          ),
+        ),
+      ],
+    );
   }
 }

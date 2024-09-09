@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MyUser {
@@ -7,10 +6,10 @@ class MyUser {
   final String username;
   final String name;
   final String email;
-  final DateTime? birthdate;
   final String? profilePicture;
   final List<String> favoriteGenres;
-  final List<String> friendList;
+  final List<String> following; // Changed from friendList
+  final List<String> followers; // New field
   final List<String> likedMovies;
   final Map<String, List<String>> customLists;
 
@@ -19,10 +18,10 @@ class MyUser {
     required this.username,
     required this.name,
     required this.email,
-    this.birthdate,
     this.profilePicture,
     this.favoriteGenres = const [],
-    this.friendList = const [],
+    this.following = const [], // Changed from friendList
+    this.followers = const [], // New field
     this.likedMovies = const [],
     this.customLists = const {},
   });
@@ -34,10 +33,10 @@ class MyUser {
       'username': username,
       'name': name,
       'email': email,
-      'birthdate': birthdate,
       'profilePicture': profilePicture,
       'favoriteGenres': favoriteGenres,
-      'friendList': friendList,
+      'following': following, // Changed from friendList
+      'followers': followers, // New field
       'likedMovies': likedMovies,
       'customLists': customLists,
     };
@@ -51,10 +50,11 @@ class MyUser {
       username: data['username'] ?? '',
       name: data['name'] ?? '',
       email: data['email'] ?? '',
-      birthdate: (data['birthdate'] as Timestamp).toDate(),
       profilePicture: data['profilePicture'],
       favoriteGenres: List<String>.from(data['favoriteGenres'] ?? []),
-      friendList: List<String>.from(data['friendList'] ?? []),
+      following:
+          List<String>.from(data['following'] ?? []), // Changed from friendList
+      followers: List<String>.from(data['followers'] ?? []), // New field
       likedMovies: List<String>.from(data['likedMovies'] ?? []),
       customLists: Map<String, List<String>>.from(
         (data['customLists'] ?? {})
@@ -65,7 +65,7 @@ class MyUser {
 
   @override
   String toString() {
-    return 'User(id: $id, username: $username, name: $name, email: $email, birthdate: $birthdate, profilePicture: $profilePicture, favoriteGenres: $favoriteGenres, friendList: $friendList, likedMovies: $likedMovies, customLists: $customLists)';
+    return 'MyUser(id: $id, username: $username, name: $name, email: $email, profilePicture: $profilePicture, favoriteGenres: $favoriteGenres, following: $following, followers: $followers, likedMovies: $likedMovies, customLists: $customLists)';
   }
 
   @override
@@ -77,10 +77,10 @@ class MyUser {
         other.username == username &&
         other.name == name &&
         other.email == email &&
-        other.birthdate == birthdate &&
         other.profilePicture == profilePicture &&
         listEquals(other.favoriteGenres, favoriteGenres) &&
-        listEquals(other.friendList, friendList) &&
+        listEquals(other.following, following) &&
+        listEquals(other.followers, followers) &&
         listEquals(other.likedMovies, likedMovies) &&
         mapEquals(other.customLists, customLists);
   }
@@ -91,10 +91,10 @@ class MyUser {
         username.hashCode ^
         name.hashCode ^
         email.hashCode ^
-        birthdate.hashCode ^
         profilePicture.hashCode ^
         favoriteGenres.hashCode ^
-        friendList.hashCode ^
+        following.hashCode ^
+        followers.hashCode ^
         likedMovies.hashCode ^
         customLists.hashCode;
   }

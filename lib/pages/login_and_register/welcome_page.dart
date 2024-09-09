@@ -4,7 +4,6 @@ import 'package:dima_project/widgets/custom_submit_button.dart';
 import 'package:dima_project/pages/login_and_register/genre_selection_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:logger/logger.dart';
@@ -19,8 +18,6 @@ class WelcomeScreen extends StatefulWidget {
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
   final TextEditingController _controllerName = TextEditingController();
-  final TextEditingController _controllerBirthdate = TextEditingController();
-  DateTime? _selectedDate;
   File? _image;
   var logger = Logger();
   bool permissionGranted = false;
@@ -38,9 +35,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   void _submitForm() async {
-    if (_controllerName.text.isEmpty || _selectedDate == null) {
+    if (_controllerName.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all required fields')),
+        const SnackBar(content: Text('Please fill in name field')),
       );
       return;
     }
@@ -67,7 +64,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       logger.d("Updating user document for UID: $uid");
       await FirebaseFirestore.instance.collection('users').doc(uid).update({
         'name': _controllerName.text,
-        'birthdate': _selectedDate,
         if (profilePictureUrl != null) 'profilePicture': profilePictureUrl,
       });
 
@@ -88,22 +84,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           SnackBar(content: Text('An error occurred: $e')),
         );
       }
-    }
-  }
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-        _controllerBirthdate.text = DateFormat('yyyy-MM-dd').format(picked);
-      });
-      logger.d("Date selected: ${_controllerBirthdate.text}");
     }
   }
 
@@ -154,18 +134,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   controller: _controllerName,
                   title: 'Name *',
                   obscureText: false,
-                ),
-                const SizedBox(height: 25),
-                GestureDetector(
-                  onTap: () => _selectDate(context),
-                  child: AbsorbPointer(
-                    child: MyTextField(
-                      controller: _controllerBirthdate,
-                      title: 'Birthdate *',
-                      obscureText: false,
-                      suffixIcon: const Icon(Icons.calendar_today),
-                    ),
-                  ),
                 ),
                 const SizedBox(height: 35),
                 CustomSubmitButton(

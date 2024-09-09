@@ -47,7 +47,7 @@ class _GenreSelectionPageState extends State<GenreSelectionPage> {
     if (selectedGenres.length >= 3) {
       String uid = FirebaseAuth.instance.currentUser!.uid;
       await FirebaseFirestore.instance.collection('users').doc(uid).update({
-        'favorite_genres': selectedGenres,
+        'favoriteGenres': selectedGenres,
       });
       if (mounted) {
         Navigator.of(context).pushReplacement(

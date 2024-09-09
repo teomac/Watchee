@@ -5,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/services/user_service.dart';
-import 'package:intl/intl.dart';
 
 class ManageAccountPage extends StatefulWidget {
   const ManageAccountPage({super.key});
@@ -20,7 +19,6 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
   late Future<MyUser?> _userFuture;
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _birthdateController = TextEditingController();
   List<String> _selectedGenres = [];
   final List<String> _allGenres = [
     'Action',
@@ -52,9 +50,7 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
       if (user != null) {
         _usernameController.text = user.username;
         _nameController.text = user.name;
-        _birthdateController.text = user.birthdate != null
-            ? DateFormat('yyyy-MM-dd').format(user.birthdate!)
-            : '';
+
         _selectedGenres = List<String>.from(user.favoriteGenres);
       }
     });
@@ -78,11 +74,6 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
         'name': _nameController.text,
         'favoriteGenres': _selectedGenres,
       };
-
-      if (_birthdateController.text.isNotEmpty) {
-        updateData['birthdate'] = Timestamp.fromDate(
-            DateFormat('yyyy-MM-dd').parse(_birthdateController.text));
-      }
 
       if (_image != null) {
         String? imageUrl = await UserService().uploadImage(_image!);
@@ -111,22 +102,6 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
           SnackBar(content: Text('Failed to update profile: $e')),
         );
       }
-    }
-  }
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _birthdateController.text.isNotEmpty
-          ? DateFormat('yyyy-MM-dd').parse(_birthdateController.text)
-          : DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null) {
-      setState(() {
-        _birthdateController.text = DateFormat('yyyy-MM-dd').format(picked);
-      });
     }
   }
 
@@ -194,19 +169,6 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
                 TextField(
                   controller: _nameController,
                   decoration: const InputDecoration(labelText: 'Full Name'),
-                ),
-                const SizedBox(height: 16),
-                GestureDetector(
-                  onTap: () => _selectDate(context),
-                  child: AbsorbPointer(
-                    child: TextField(
-                      controller: _birthdateController,
-                      decoration: const InputDecoration(
-                        labelText: 'Birthdate',
-                        suffixIcon: Icon(Icons.calendar_today),
-                      ),
-                    ),
-                  ),
                 ),
                 const SizedBox(height: 36),
                 const Text('Favorite Genres',

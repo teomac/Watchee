@@ -18,6 +18,7 @@ class UserInfo extends StatefulWidget {
 class _UserInfoState extends State<UserInfo> {
   MyUser? _currentUser;
   final Logger logger = Logger();
+  final UserService _userService = UserService();
 
   @override
   void initState() {
@@ -59,12 +60,11 @@ class _UserInfoState extends State<UserInfo> {
               child: ProfileMenu(
                 user: _currentUser ??
                     MyUser(
-                        id: '',
-                        name: '',
-                        username: '',
-                        email: '',
-                        birthdate: DateTime(1900, 01,
-                            01)), // Provide a default value if _currentUser is null
+                      id: '',
+                      name: '',
+                      username: '',
+                      email: '',
+                    ), // Provide a default value if _currentUser is null
                 onManageAccountTap: () {
                   Navigator.pop(context); // Close the bottom sheet
                   Navigator.push(
@@ -96,13 +96,28 @@ class _UserInfoState extends State<UserInfo> {
   }
 
   Future<void> _signOut() async {
-    bool success = await UserService().signOut();
-    if (mounted && success == false) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to sign out. Please try again.')),
-      );
+    try {
+      bool success = await _userService.signOut();
+      if (success) {
+        logger.d('Sign out successful');
+        // No need to navigate here, WidgetTree will handle it
+      } else {
+        logger.e('Sign out failed');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Failed to sign out. Please try again.')),
+          );
+        }
+      }
+    } catch (e) {
+      logger.e('Error during sign out: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('An error occurred. Please try again.')),
+        );
+      }
     }
-    return Future.value();
   }
 
   @override
