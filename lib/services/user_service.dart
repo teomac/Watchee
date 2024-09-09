@@ -32,6 +32,100 @@ class UserService {
     await _firestore.collection('users').doc(userId).delete();
   }
 
+  // Follow a user
+  Future<void> followUser(String currentUserId, String userToFollowId) async {
+    // Add userToFollowId to current user's following list
+    await _firestore.collection('users').doc(currentUserId).update({
+      'following': FieldValue.arrayUnion([userToFollowId])
+    });
+
+    // Add currentUserId to userToFollow's followers list
+    await _firestore.collection('users').doc(userToFollowId).update({
+      'followers': FieldValue.arrayUnion([currentUserId])
+    });
+  }
+
+  // Unfollow a user
+  Future<void> unfollowUser(
+      String currentUserId, String userToUnfollowId) async {
+    await _firestore.collection('users').doc(currentUserId).update({
+      'following': FieldValue.arrayRemove([userToUnfollowId])
+    });
+
+    await _firestore.collection('users').doc(userToUnfollowId).update({
+      'followers': FieldValue.arrayRemove([currentUserId])
+    });
+
+    logger.d('User $currentUserId unfollowed $userToUnfollowId');
+  }
+
+  Future<void> removeFollower(
+      String currentUserId, String followerToRemoveId) async {
+    await _firestore.collection('users').doc(currentUserId).update({
+      'followers': FieldValue.arrayRemove([followerToRemoveId])
+    });
+
+    await _firestore.collection('users').doc(followerToRemoveId).update({
+      'following': FieldValue.arrayRemove([currentUserId])
+    });
+
+    logger.d('User $currentUserId removed follower $followerToRemoveId');
+  }
+
+  // Get followers of a user
+  Future<List<MyUser>> getFollowers(String userId) async {
+    DocumentSnapshot userDoc =
+        await _firestore.collection('users').doc(userId).get();
+    MyUser user = MyUser.fromFirestore(userDoc);
+    List<String> followerIds = List<String>.from(user.followers);
+
+    //for followers in followerIds retrieve the user data
+    List<MyUser> followersList = [];
+    for (String followerId in followerIds) {
+      MyUser follower = await getUser(followerId).then((value) => value!);
+      followersList.add(follower);
+    }
+
+    return followersList;
+  }
+
+  // Get users followed by a user
+  Future<List<MyUser>> getFollowing(String userId) async {
+    DocumentSnapshot userDoc =
+        await _firestore.collection('users').doc(userId).get();
+    MyUser user = MyUser.fromFirestore(userDoc);
+    List<String> followingIds = List<String>.from(user.following);
+
+    // Retrieve user data for each user ID in followingIds
+    List<MyUser> followingList = [];
+    for (String id in followingIds) {
+      MyUser following = await getUser(id).then((value) => value!);
+      followingList.add(following);
+    }
+
+    return followingList;
+  }
+
+  // Check if a user is following another user
+  Future<bool> isFollowing(String currentUserId, String otherUserId) async {
+    DocumentSnapshot userDoc =
+        await _firestore.collection('users').doc(currentUserId).get();
+    List<String> following = List<String>.from(userDoc['following'] ?? []);
+    return following.contains(otherUserId);
+  }
+
+  // Search for users
+  Future<List<MyUser>> searchUsers(String query) async {
+    query = query.toLowerCase();
+    QuerySnapshot snapshot = await _firestore
+        .collection('users')
+        .where('username', isGreaterThanOrEqualTo: query)
+        .where('username', isLessThan: '${query}z')
+        .get();
+
+    return snapshot.docs.map((doc) => MyUser.fromFirestore(doc)).toList();
+  }
+
   // Get current logged-in user
   Future<MyUser?> getCurrentUser() async {
     auth.User? firebaseUser = _auth.currentUser;
@@ -70,20 +164,6 @@ class UserService {
         .collection('users')
         .doc(userId)
         .update({'customLists.$listName': FieldValue.delete()});
-  }
-
-  // Add a friend to user's friend list
-  Future<void> addFriend(String userId, String friendId) async {
-    await _firestore.collection('users').doc(userId).update({
-      'friendList': FieldValue.arrayUnion([friendId])
-    });
-  }
-
-  // Remove a friend from user's friend list
-  Future<void> removeFriend(String userId, String friendId) async {
-    await _firestore.collection('users').doc(userId).update({
-      'friendList': FieldValue.arrayRemove([friendId])
-    });
   }
 
   // Get a unique username based on a base username
@@ -140,34 +220,14 @@ class UserService {
     }
   }
 
-  Future<List<MyUser>> searchUsers(String query) async {
-    if (query.length < 3) return [];
-
-    try {
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .where('username', isGreaterThanOrEqualTo: query)
-          .where('username', isLessThan: '${query}z')
-          .limit(20) // Limit the number of results
-          .get();
-
-      return querySnapshot.docs
-          .map((doc) => MyUser.fromFirestore(doc))
-          .toList();
-    } catch (e) {
-      logger.d('Error searching users: $e');
-      return [];
-    }
-  }
-
   Future<bool> signOut() async {
     try {
       await _auth.signOut();
       logger.d('User signed out');
+      return true;
     } catch (e) {
       logger.d('Failed to sign out: $e');
       return false;
     }
-    return true;
   }
 }

@@ -6,6 +6,7 @@ import 'package:dima_project/widgets/custom_submit_button.dart';
 import 'package:dima_project/pages/login_and_register/welcome_page.dart';
 import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/services/user_service.dart';
+import 'package:logger/logger.dart';
 
 class RegisterPage extends StatefulWidget {
   final VoidCallback showLoginPage;
@@ -22,6 +23,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _controllerConfirmPassword =
       TextEditingController();
   String? errorMessage = '';
+  final Logger logger = Logger();
 
   bool isPasswordValid(String password) {
     if (password.length < 8) return false;
@@ -36,10 +38,12 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Future<void> createUserWithEmailAndPassword() async {
+    logger.d("Starting user registration process");
     if (_controllerPassword.text != _controllerConfirmPassword.text) {
       setState(() {
         errorMessage = 'Passwords do not match';
       });
+      logger.w("Passwords do not match");
       return;
     }
 
@@ -47,6 +51,7 @@ class _RegisterPageState extends State<RegisterPage> {
       setState(() {
         errorMessage = 'Please enter a valid email address.';
       });
+      logger.w("Invalid email address");
       return;
     }
 
@@ -55,17 +60,17 @@ class _RegisterPageState extends State<RegisterPage> {
         errorMessage =
             'Password must be at least 8 characters long, contain 1 uppercase letter, 1 number, and 1 special character.';
       });
+      logger.w("Invalid password");
       return;
     }
 
-    // Clear any previous error messages
     setState(() {
       errorMessage = '';
     });
 
     try {
-      // Show loading dialog
-      await showDialog(
+      logger.d("Showing loading dialog");
+      showDialog(
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) {
@@ -73,7 +78,7 @@ class _RegisterPageState extends State<RegisterPage> {
         },
       );
 
-      // Generate base username from email
+      logger.d("Generating unique username");
       String baseUsername = _controllerEmail.text
           .trim()
           .split('@')[0]
@@ -81,8 +86,9 @@ class _RegisterPageState extends State<RegisterPage> {
           .replaceAll(RegExp(r'[^a-z0-9]'), '');
       String uniqueUsername =
           await UserService().getUniqueUsername(baseUsername);
+      logger.d("Unique username generated: $uniqueUsername");
 
-      // Create user account
+      logger.d("Creating user account with Firebase");
       UserCredential userCredential =
           await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _controllerEmail.text.trim(),
@@ -90,26 +96,33 @@ class _RegisterPageState extends State<RegisterPage> {
       );
 
       if (userCredential.user != null) {
-        // Create MyUser object
+        logger.d("User account created successfully");
         MyUser newUser = MyUser(
           id: userCredential.user!.uid,
           username: uniqueUsername,
           name: '',
           email: _controllerEmail.text.trim(),
-          birthdate: DateTime.now(),
           favoriteGenres: [],
-          friendList: [],
+          following: [],
+          followers: [],
           likedMovies: [],
           customLists: {},
         );
 
-        // Save user data to Firestore
+        logger.d("Saving user data to Firestore");
         await FirebaseFirestore.instance
             .collection('users')
             .doc(userCredential.user!.uid)
             .set(newUser.toMap());
+        logger.d("User data saved to Firestore");
 
-        // Navigate to the WelcomeScreen
+        logger.d("Dismissing loading dialog");
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
+
+        logger.d("Navigating to WelcomeScreen");
+
         if (mounted) {
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => const WelcomeScreen()),
@@ -117,9 +130,17 @@ class _RegisterPageState extends State<RegisterPage> {
           );
         }
       } else {
+        logger.e("Failed to create user account");
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
         throw Exception('Failed to create user.');
       }
     } on FirebaseAuthException catch (e) {
+      logger.e("FirebaseAuthException: ${e.message}");
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
       setState(() {
         if (e.code == 'email-already-in-use') {
           errorMessage = 'The account already exists for that email.';
@@ -128,14 +149,13 @@ class _RegisterPageState extends State<RegisterPage> {
         }
       });
     } catch (e) {
-      setState(() {
-        errorMessage = 'An unexpected error occurred. Please try again.';
-      });
-    } finally {
-      // Ensure the loading dialog is dismissed
+      logger.e("Unexpected error: $e");
       if (mounted) {
         Navigator.of(context).pop();
       }
+      setState(() {
+        errorMessage = 'An unexpected error occurred. Please try again.';
+      });
     }
   }
 

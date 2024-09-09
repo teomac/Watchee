@@ -53,31 +53,9 @@ class WidgetTree extends StatelessWidget {
   }
 
   Widget _buildLoadingIndicator() {
-    return Scaffold(
+    return const Scaffold(
       body: Center(
-        child: Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.3),
-                spreadRadius: 2,
-                blurRadius: 5,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: const Padding(
-            padding: EdgeInsets.all(12.0),
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-              strokeWidth: 3,
-            ),
-          ),
-        ),
+        child: CircularProgressIndicator(),
       ),
     );
   }
