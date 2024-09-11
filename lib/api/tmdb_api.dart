@@ -91,3 +91,16 @@ Future<String> retrieveTrailer(int movieId) async {
     throw Exception('Failed to load trailer information');
   }
 }
+
+// function used to search movies
+Future<List<Movie>> searchMovie(String query) async {
+  final response = await http.get(Uri.parse(
+      'https://api.themoviedb.org/3/search/movie?api_key=${Constants.apiKey}&query=$query'));
+
+  if (response.statusCode == 200) {
+    final decodedData = json.decode(response.body)['results'] as List;
+    return decodedData.map((movieJson) => Movie.fromJson(movieJson)).toList();
+  } else {
+    throw Exception('Failed to search movies');
+  }
+}
