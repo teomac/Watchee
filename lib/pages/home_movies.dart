@@ -1,13 +1,11 @@
 import 'package:dima_project/models/movie.dart';
 import 'package:dima_project/pages/film_details/film_details_page.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:dima_project/api/tmdb_api.dart';
 import 'package:dima_project/widgets/movies_slider.dart';
 import 'package:dima_project/widgets/trending_slider.dart';
 import 'package:dima_project/models/home_movies_data.dart';
 import 'package:dima_project/services/user_menu_manager.dart';
-import 'package:dima_project/theme/theme_provider.dart';
 import 'package:logger/logger.dart';
 
 class HomeMovies extends StatefulWidget {
@@ -62,8 +60,7 @@ class HomeMoviesState extends State<HomeMovies> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final theme = Theme.of(context);
 
     return Scaffold(

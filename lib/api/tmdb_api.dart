@@ -85,8 +85,12 @@ Future<String> retrieveTrailer(int movieId) async {
     final trailer = decodedData.firstWhere(
         (video) => video['type'] == 'Trailer' && video['site'] == 'YouTube',
         orElse: () => null);
-    final String trailerKey = trailer['key'];
-    return trailerKey;
+    if (trailer != null) {
+      final String trailerKey = trailer['key'];
+      return trailerKey;
+    } else {
+      return '';
+    }
   } else {
     throw Exception('Failed to load trailer information');
   }
