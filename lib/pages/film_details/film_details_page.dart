@@ -106,10 +106,15 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
       expandedHeight: 200.0,
       pinned: true,
       flexibleSpace: FlexibleSpaceBar(
-        background: Image.network(
-          'https://image.tmdb.org/t/p/w500${movie.backdropPath}',
-          fit: BoxFit.cover,
-        ),
+        background: movie.backdropPath != null
+            ? Image.network(
+                'https://image.tmdb.org/t/p/w500${movie.backdropPath}',
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(color: Colors.grey);
+                },
+              )
+            : Container(color: Colors.grey),
       ),
     );
   }
@@ -132,7 +137,6 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         );
       }
     }
-
     // Return a fallback in case release date is null or can't be parsed
     return const Text(
       'Release Date: Unknown',
@@ -147,13 +151,19 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
             .toList() ??
         [];
 
-    return Wrap(
-      spacing: 8,
-      children: genres.map((genre) => Chip(label: Text(genre))).toList(),
-    );
+    return genres.isNotEmpty
+        ? Wrap(
+            spacing: 8,
+            children: genres.map((genre) => Chip(label: Text(genre))).toList(),
+          )
+        : const Text('Genres: Unknown',
+            style: TextStyle(fontSize: 16, color: Colors.grey));
   }
 
   Widget _buildRating(Movie movie) {
+    String rating = movie.voteAverage.toStringAsFixed(1);
+    rating = rating.isNotEmpty ? '$rating/10' : 'N/A';
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -169,7 +179,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                 const Icon(Icons.star, color: Colors.amber),
                 const SizedBox(width: 4),
                 Text(
-                  '${movie.voteAverage.toStringAsFixed(1)}/10',
+                  rating,
                   style: const TextStyle(fontSize: 16),
                 ),
               ],
@@ -193,7 +203,9 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
             ),
             const SizedBox(height: 8),
             Text(
-              movie.overview,
+              movie.overview.isNotEmpty
+                  ? movie.overview
+                  : 'No overview available.',
               style: const TextStyle(fontSize: 16),
             ),
           ],
@@ -204,7 +216,12 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
 
   Widget _buildCast(List<Map<String, dynamic>>? cast) {
     if (cast == null || cast.isEmpty) {
-      return const SizedBox.shrink();
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text('No cast information available.'),
+        ),
+      );
     }
 
     return Card(
