@@ -1,4 +1,5 @@
 import 'package:dima_project/models/movie.dart';
+import 'package:dima_project/pages/film_details/film_details_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:dima_project/api/tmdb_api.dart';
@@ -18,6 +19,8 @@ class HomeMovies extends StatefulWidget {
 class HomeMoviesState extends State<HomeMovies> {
   HomeMoviesData _data = HomeMoviesData();
   final Logger logger = Logger();
+  final TextEditingController _searchController = TextEditingController();
+  List<Movie> _searchResults = [];
 
   @override
   void initState() {
@@ -45,6 +48,18 @@ class HomeMoviesState extends State<HomeMovies> {
     }
   }
 
+  Future<void> _onSearch(String query) async {
+    try {
+      final results =
+          await searchMovie(query); // Call your searchMovie function
+      setState(() {
+        _searchResults = results;
+      });
+    } catch (e) {
+      logger.d('Error searching movies: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -61,28 +76,31 @@ class HomeMoviesState extends State<HomeMovies> {
               _buildHeader(theme, isDarkMode),
               const SizedBox(height: 16),
               Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildMovieSection(
-                          'Trending movies',
-                          _data.trendingMovies,
-                          (movies) => TrendingSlider(trendingMovies: movies),
-                          theme),
-                      _buildMovieSection(
-                          'Top rated movies',
-                          _data.topRatedMovies,
-                          (movies) => MoviesSlider(movies: movies),
-                          theme),
-                      _buildMovieSection(
-                          'Upcoming Movies',
-                          _data.upcomingMovies,
-                          (movies) => MoviesSlider(movies: movies),
-                          theme),
-                    ],
-                  ),
-                ),
+                child: _searchResults.isNotEmpty
+                    ? _buildSearchResults()
+                    : SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildMovieSection(
+                                'Trending movies',
+                                _data.trendingMovies,
+                                (movies) =>
+                                    TrendingSlider(trendingMovies: movies),
+                                theme),
+                            _buildMovieSection(
+                                'Top rated movies',
+                                _data.topRatedMovies,
+                                (movies) => MoviesSlider(movies: movies),
+                                theme),
+                            _buildMovieSection(
+                                'Upcoming Movies',
+                                _data.upcomingMovies,
+                                (movies) => MoviesSlider(movies: movies),
+                                theme),
+                          ],
+                        ),
+                      ),
               ),
             ],
           ),
@@ -97,52 +115,72 @@ class HomeMoviesState extends State<HomeMovies> {
         Expanded(
           child: SearchAnchor(
             builder: (BuildContext context, SearchController controller) {
-              return SearchBar(
-                controller: controller,
-                onTap: () => controller.openView(),
-                onChanged: (_) => controller.openView(),
-                leading: Icon(Icons.search, color: theme.iconTheme.color),
-                hintText: 'Search movies...',
-                hintStyle: WidgetStateProperty.all(
-                  TextStyle(color: theme.hintColor),
-                ),
-                backgroundColor: WidgetStateProperty.all(
-                  theme.brightness == Brightness.dark
-                      ? Colors.grey[900]
-                      : Colors.grey[200],
-                ),
-                elevation: WidgetStateProperty.all(0),
-                shape: WidgetStateProperty.all(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
+              return TextField(
+                controller: _searchController,
+                onChanged: (value) {
+                  _onSearch(value);
+                },
+                decoration: InputDecoration(
+                  hintText: 'Search movies...',
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide.none,
                   ),
-                ),
-                padding: const WidgetStatePropertyAll<EdgeInsets>(
-                  EdgeInsets.symmetric(horizontal: 16),
-                ),
-                constraints: const BoxConstraints(
-                  minHeight: 48,
-                  maxHeight: 48,
+                  filled: true,
+                  fillColor: isDarkMode ? Colors.grey[800] : Colors.grey[200],
                 ),
               );
             },
             suggestionsBuilder:
                 (BuildContext context, SearchController controller) {
-              // TODO: Implement search suggestions
-              return List<ListTile>.generate(5, (int index) {
+              if (_searchResults.isEmpty) {
+                return [];
+              }
+              return _searchResults.take(5).map((movie) {
                 return ListTile(
-                  title: Text('Suggestion $index'),
+                  title: Text(movie.title),
                   onTap: () {
-                    // Handle suggestion tap
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                FilmDetailsPage(movie: movie)));
                   },
                 );
-              });
+              }).toList();
             },
           ),
         ),
         const SizedBox(width: 16),
         const UserInfo(),
       ],
+    );
+  }
+
+  Widget _buildSearchResults() {
+    return ListView.builder(
+      itemCount: _searchResults.length,
+      itemBuilder: (context, index) {
+        final movie = _searchResults[index];
+        return ListTile(
+          leading: movie.posterPath != null
+              ? Image.network(
+                  'https://image.tmdb.org/t/p/w92${movie.posterPath}',
+                  width: 50,
+                  fit: BoxFit.cover,
+                )
+              : const Icon(Icons.movie),
+          title: Text(movie.title),
+          subtitle: Text(movie.releaseDate ?? ''),
+          onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => FilmDetailsPage(movie: movie)));
+          },
+        );
+      },
     );
   }
 

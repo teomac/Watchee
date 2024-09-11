@@ -122,11 +122,21 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   }
 
   Widget _buildReleaseDate(Movie movie) {
-    final releaseDate = DateTime.parse(movie.releaseDate);
-    final formattedDate = DateFormat.yMMMMd().format(releaseDate);
-    return Text(
-      'Release Date: $formattedDate',
-      style: const TextStyle(fontSize: 16, color: Colors.grey),
+    if (movie.releaseDate != null && movie.releaseDate!.isNotEmpty) {
+      final releaseDate = DateTime.tryParse(movie.releaseDate!); // Parse safely
+      if (releaseDate != null) {
+        final formattedDate = DateFormat.yMMMMd().format(releaseDate);
+        return Text(
+          'Release Date: $formattedDate',
+          style: const TextStyle(fontSize: 16, color: Colors.grey),
+        );
+      }
+    }
+
+    // Return a fallback in case release date is null or can't be parsed
+    return const Text(
+      'Release Date: Unknown',
+      style: TextStyle(fontSize: 16, color: Colors.grey),
     );
   }
 
