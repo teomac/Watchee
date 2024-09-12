@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dima_project/models/movie.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:intl/intl.dart';
-import 'package:dima_project/models/genres.dart';
 import 'package:dima_project/pages/film_details/film_details_bloc.dart';
 
 class FilmDetailsPage extends StatefulWidget {
@@ -82,12 +81,12 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                   _buildRating(state.movie),
                   const SizedBox(height: 16),
                   _buildOverview(state.movie),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   _buildCast(state.cast),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   if (_showYoutubePlayer)
                     _buildTrailer(context, state.trailerKey),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   _buildFriendReviews(),
                 ],
               ),
@@ -145,16 +144,11 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   }
 
   Widget _buildGenres(Movie movie) {
-    final MovieGenres movieGenres = MovieGenres();
-    final genres = movie.genres
-            ?.map((genreId) => movieGenres.getGenre(genreId))
-            .toList() ??
-        [];
-
-    return genres.isNotEmpty
+    return movie.genres!.isNotEmpty
         ? Wrap(
             spacing: 8,
-            children: genres.map((genre) => Chip(label: Text(genre))).toList(),
+            children:
+                movie.genres!.map((genre) => Chip(label: Text(genre))).toList(),
           )
         : const Text('Genres: Unknown',
             style: TextStyle(fontSize: 16, color: Colors.grey));
