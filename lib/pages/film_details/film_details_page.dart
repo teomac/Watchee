@@ -1,3 +1,4 @@
+import 'package:dima_project/services/user_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dima_project/models/movie.dart';
@@ -15,8 +16,20 @@ class FilmDetailsPage extends StatefulWidget {
 }
 
 class _FilmDetailsPageState extends State<FilmDetailsPage> {
+  //late UserService _userService;
+
   bool _isDisposing = false;
   final bool _showYoutubePlayer = true;
+  final TextEditingController _reviewController = TextEditingController();
+  int _selectedRating = 0;
+
+  @override
+  void dispose() {
+    _reviewController.dispose();
+    super.dispose();
+  }
+
+  final UserService _userService = UserService();
 
   @override
   Widget build(BuildContext context) {
@@ -305,18 +318,18 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
 
   Widget _buildFriendReviews() {
     // TODO: Implement actual friend reviews fetching
-    return const Card(
+    return Card(
       child: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Friend Reviews',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8),
-            ListTile(
+            const SizedBox(height: 8),
+            const ListTile(
               leading: CircleAvatar(child: Text('JD')),
               title: Text('John Doe'),
               subtitle: Text('Great movie! Loved the plot twists.'),
@@ -328,7 +341,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                 ],
               ),
             ),
-            ListTile(
+            const ListTile(
               leading: CircleAvatar(child: Text('JS')),
               title: Text('Jane Smith'),
               subtitle:
@@ -341,9 +354,97 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                 ],
               ),
             ),
+            const SizedBox(height: 16),
+            const Text(
+              'Add your review',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                for (int i = 1; i <= 5; i++)
+                  IconButton(
+                    icon: IconTheme(
+                      data: IconThemeData(
+                        color:
+                            _selectedRating >= i ? Colors.amber : Colors.grey,
+                      ),
+                      child: Icon(
+                        Icons.star,
+                        size: 32,
+                      ),
+                    ),
+                    onPressed: () => setState(() => _selectedRating = i),
+                  ),
+              ],
+            ),
+            TextField(
+              controller: _reviewController,
+              maxLines: 4,
+              maxLength: 160,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                hintText: 'Write your review here...',
+              ),
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: () {
+                if (_reviewController.text.isNotEmpty) {
+                  _submitReview();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please enter a review')),
+                  );
+                }
+              },
+              child: const Text('Submit your review'),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  void _submitReview() async {
+    // Retrieve the current logged-in user
+    final currentUser = await _userService.getCurrentUser();
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('You need to be logged in to submit a review')),
+      );
+      return;
+    }
+
+    // Get the movieId, review text, and rating (rating should be captured somewhere in the UI)
+    final int movieId = widget.movie.id;
+    final String reviewText = _reviewController.text.trim();
+    final int rating =
+        _selectedRating; // Set the rating value dynamically from user input (modify this line based on UI)
+
+    if (reviewText.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a review')),
+      );
+      return;
+    }
+
+    // Submit the review using UserService
+    try {
+      await _userService.addMovieReview(
+          currentUser.id, movieId, rating, reviewText);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Review submitted successfully')),
+      );
+      // Clear the review input after submission
+      _reviewController.clear();
+      setState(() => _selectedRating = 0);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to submit review: $e')),
+      );
+    }
   }
 }
