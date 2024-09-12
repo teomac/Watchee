@@ -6,7 +6,7 @@ import 'package:dima_project/services/user_menu_manager.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:logger/logger.dart';
 import 'package:dima_project/pages/user_profile_page.dart';
-import 'package:dima_project/widgets/search_bar_widget.dart';
+import 'package:dima_project/widgets/user_search_bar_widget.dart';
 
 // Events
 abstract class FollowEvent {}
@@ -186,7 +186,7 @@ class FollowView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       body: SafeArea(
