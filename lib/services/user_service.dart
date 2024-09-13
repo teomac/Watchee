@@ -1,5 +1,6 @@
 import 'dart:io'; // Add this line to import the 'File' class
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dima_project/models/movie_review.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:dima_project/models/user_model.dart';
@@ -217,6 +218,70 @@ class UserService {
     } catch (e) {
       logger.d('Failed to upload image: $e');
       return null;
+    }
+  }
+
+  // add a new movie review
+  Future<void> addMovieReview(String userId, int movieId, int rating,
+      String text, String title, String username) async {
+    final review = MovieReview(
+        id: _firestore.collection('reviews').doc().id,
+        userId: userId,
+        movieId: movieId,
+        text: text,
+        rating: rating,
+        timestamp: Timestamp.now(),
+        title: title,
+        username: username);
+
+    await _firestore.collection('reviews').doc(review.id).set(review.toMap());
+  }
+
+  // retrieve the two most recent reviews for a movie
+  Future<List<MovieReview>> getReviewsForMovie(String movieId) async {
+    QuerySnapshot snapshot = await _firestore
+        .collection('reviews')
+        .where('movieId', isEqualTo: movieId)
+        .orderBy('timestamp', descending: true)
+        .limit(2)
+        .get();
+
+    return snapshot.docs.map((doc) => MovieReview.fromFirestore(doc)).toList();
+  }
+
+  // retrieve reviews for a user
+  Future<List<MovieReview>> getReviewsByUser(String userId) async {
+    QuerySnapshot snapshot = await _firestore
+        .collection('reviews')
+        .where('userId', isEqualTo: userId)
+        .orderBy('timestamp', descending: true)
+        .get();
+
+    return snapshot.docs.map((doc) => MovieReview.fromFirestore(doc)).toList();
+  }
+
+  // retrieve friends reviews
+  Future<List<MovieReview>> getFriendsReviews(String currentUserId) async {
+    try {
+      // retrieve followed users
+      DocumentSnapshot userDoc =
+          await _firestore.collection('users').doc(currentUserId).get();
+      MyUser user = MyUser.fromFirestore(userDoc);
+      List<String> followedUserIds = List<String>.from(user.following);
+
+      // retrieve all reviews from followed users
+      QuerySnapshot reviewsSnapshot = await _firestore
+          .collection('reviews')
+          .where('userId', whereIn: followedUserIds)
+          .orderBy('timestamp', descending: true)
+          .get();
+
+      return reviewsSnapshot.docs
+          .map((doc) => MovieReview.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      logger.d('Failed to retrieve friends reviews: $e');
+      return [];
     }
   }
 
