@@ -1,3 +1,5 @@
+import 'package:dima_project/api/tmdb_api.dart';
+import 'package:dima_project/models/movie_review.dart';
 import 'package:flutter/material.dart';
 import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/services/user_service.dart';
@@ -18,6 +20,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
   final UserService _userService = UserService();
   MyUser? _currentUser;
   List<MyUser> _followedByUsers = [];
+  List<MovieReview> _userReviews = [];
 
   @override
   void initState() {
@@ -33,6 +36,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
         await Future.wait([
           _checkFollowStatus(),
           _fetchFollowedByUsers(),
+          _fetchUserReviews(),
         ]);
       }
       if (mounted) {
@@ -104,6 +108,17 @@ class _UserProfilePageState extends State<UserProfilePage> {
           isLoading = false;
         });
       }
+    }
+  }
+
+  Future<void> _fetchUserReviews() async {
+    if (_currentUser == null) return;
+    List<MovieReview> reviews =
+        await _userService.getReviewsByUser(widget.user.id);
+    if (mounted) {
+      setState(() {
+        _userReviews = reviews;
+      });
     }
   }
 
@@ -221,20 +236,56 @@ class _UserProfilePageState extends State<UserProfilePage> {
   }
 
   Widget _buildLatestReviews() {
+    if (_userReviews.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.only(top: 16.0),
+        child: Text('No reviews yet.'),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Latest Reviews',
+          'All Reviews',
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
-        Container(
-          height: 200,
-          color: Colors.grey[900],
-          child: const Center(
-            child: Text('Latest reviews coming soon!'),
-          ),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _userReviews.length,
+          itemBuilder: (context, index) {
+            final review = _userReviews[index];
+            return ListTile(
+              title: Text(
+                (review.title),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(
+                review.text,
+                style: TextStyle(fontSize: 16),
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${review.rating}/5',
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.star,
+                    color: Colors.amber,
+                    size: 20,
+                  )
+                ],
+              ),
+              isThreeLine: true,
+            );
+          },
         ),
       ],
     );

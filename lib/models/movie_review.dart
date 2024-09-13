@@ -7,26 +7,30 @@ class MovieReview {
   final String text;
   final int rating;
   final Timestamp timestamp;
+  final String title;
+  final String username;
 
-  MovieReview({
-    required this.id,
-    required this.userId,
-    required this.movieId,
-    required this.text,
-    required this.rating,
-    required this.timestamp,
-  });
+  MovieReview(
+      {required this.id,
+      required this.userId,
+      required this.movieId,
+      required this.text,
+      required this.rating,
+      required this.timestamp,
+      required this.title,
+      required this.username});
 
   static MovieReview fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     return MovieReview(
-      id: doc.id,
-      userId: data['userId'],
-      movieId: data['movieId'],
-      rating: data['rating'],
-      text: data['reviewText'],
-      timestamp: data['timestamp'],
-    );
+        id: doc.id,
+        userId: data['userId'],
+        movieId: data['movieId'],
+        rating: data['rating'],
+        text: data['text'],
+        timestamp: data['timestamp'],
+        title: data['title'],
+        username: data['username']);
   }
 
   Map<String, dynamic> toMap() {
@@ -37,6 +41,8 @@ class MovieReview {
       'rating': rating,
       'text': text,
       'timestamp': timestamp,
+      'title': title,
+      'username': username,
     };
   }
 }
