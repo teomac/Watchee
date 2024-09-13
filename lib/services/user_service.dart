@@ -222,16 +222,17 @@ class UserService {
   }
 
   // add a new movie review
-  Future<void> addMovieReview(
-      String userId, int movieId, int rating, String text) async {
+  Future<void> addMovieReview(String userId, int movieId, int rating,
+      String text, String title, String username) async {
     final review = MovieReview(
-      id: _firestore.collection('reviews').doc().id,
-      userId: userId,
-      movieId: movieId,
-      text: text,
-      rating: rating,
-      timestamp: Timestamp.now(),
-    );
+        id: _firestore.collection('reviews').doc().id,
+        userId: userId,
+        movieId: movieId,
+        text: text,
+        rating: rating,
+        timestamp: Timestamp.now(),
+        title: title,
+        username: username);
 
     await _firestore.collection('reviews').doc(review.id).set(review.toMap());
   }
@@ -252,11 +253,36 @@ class UserService {
   Future<List<MovieReview>> getReviewsByUser(String userId) async {
     QuerySnapshot snapshot = await _firestore
         .collection('reviews')
-        .where('movieId', isEqualTo: userId)
+        .where('userId', isEqualTo: userId)
         .orderBy('timestamp', descending: true)
         .get();
 
     return snapshot.docs.map((doc) => MovieReview.fromFirestore(doc)).toList();
+  }
+
+  // retrieve friends reviews
+  Future<List<MovieReview>> getFriendsReviews(String currentUserId) async {
+    try {
+      // retrieve followed users
+      DocumentSnapshot userDoc =
+          await _firestore.collection('users').doc(currentUserId).get();
+      MyUser user = MyUser.fromFirestore(userDoc);
+      List<String> followedUserIds = List<String>.from(user.following);
+
+      // retrieve all reviews from followed users
+      QuerySnapshot reviewsSnapshot = await _firestore
+          .collection('reviews')
+          .where('userId', whereIn: followedUserIds)
+          .orderBy('timestamp', descending: true)
+          .get();
+
+      return reviewsSnapshot.docs
+          .map((doc) => MovieReview.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      logger.d('Failed to retrieve friends reviews: $e');
+      return [];
+    }
   }
 
   Future<bool> signOut() async {

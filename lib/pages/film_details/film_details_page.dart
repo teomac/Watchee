@@ -1,3 +1,5 @@
+import 'package:dima_project/models/movie_review.dart';
+import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,12 +18,13 @@ class FilmDetailsPage extends StatefulWidget {
 }
 
 class _FilmDetailsPageState extends State<FilmDetailsPage> {
-  //late UserService _userService;
-
   bool _isDisposing = false;
   final bool _showYoutubePlayer = true;
   final TextEditingController _reviewController = TextEditingController();
   int _selectedRating = 0;
+  MyUser? _currentUser;
+  final UserService _userService = UserService();
+  List<MovieReview> _friendsReviews = [];
 
   @override
   void dispose() {
@@ -29,7 +32,37 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     super.dispose();
   }
 
-  final UserService _userService = UserService();
+  @override
+  void initState() {
+    super.initState();
+    _initializeData().then((_) {
+      _fetchFriendsReviews();
+    });
+  }
+
+  Future<void> _initializeData() async {
+    try {
+      final currentUser = await _userService.getCurrentUser();
+      if (currentUser != null) {
+        _currentUser = currentUser;
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error initializing data: $e')),
+      );
+    }
+  }
+
+  Future<void> _fetchFriendsReviews() async {
+    if (_currentUser == null) return;
+    List<MovieReview> reviews =
+        await _userService.getFriendsReviews(_currentUser!.id);
+    if (mounted) {
+      setState(() {
+        _friendsReviews = reviews;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,6 +134,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                     _buildTrailer(context, state.trailerKey),
                   const SizedBox(height: 16),
                   _buildFriendReviews(),
+                  const SizedBox(height: 16),
+                  _buildAddYourReview(),
                 ],
               ),
             ),
@@ -317,7 +352,15 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   }
 
   Widget _buildFriendReviews() {
-    // TODO: Implement actual friend reviews fetching
+    if (_friendsReviews.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text('No reviews from friends available.'),
+        ),
+      );
+    }
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -329,32 +372,37 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const ListTile(
-              leading: CircleAvatar(child: Text('JD')),
-              title: Text('John Doe'),
-              subtitle: Text('Great movie! Loved the plot twists.'),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.star, color: Colors.amber),
-                  Text('4.5'),
-                ],
-              ),
-            ),
-            const ListTile(
-              leading: CircleAvatar(child: Text('JS')),
-              title: Text('Jane Smith'),
-              subtitle:
-                  Text('Visually stunning, but the pacing was a bit slow.'),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.star, color: Colors.amber),
-                  Text('3.5'),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
+            ..._friendsReviews.map((review) {
+              return ListTile(
+                leading: CircleAvatar(
+                  child: Text(review.username.isNotEmpty
+                      ? review.username[0]
+                      : '?'), // Placeholder for user initial
+                ),
+                title: Text(review.username), // Placeholder for user name
+                subtitle: Text(review.text),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.star, color: Colors.amber),
+                    Text(review.rating.toStringAsFixed(1)),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddYourReview() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             const Text(
               'Add your review',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -418,11 +466,11 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
       return;
     }
 
-    // Get the movieId, review text, and rating (rating should be captured somewhere in the UI)
     final int movieId = widget.movie.id;
+    final String title = widget.movie.title;
+    final String name = currentUser.username;
     final String reviewText = _reviewController.text.trim();
-    final int rating =
-        _selectedRating; // Set the rating value dynamically from user input (modify this line based on UI)
+    final int rating = _selectedRating;
 
     if (reviewText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -430,11 +478,19 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
       );
       return;
     }
+    if (_selectedRating == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text(
+                'Please select a star rating before submitting your review')),
+      );
+      return;
+    }
 
     // Submit the review using UserService
     try {
       await _userService.addMovieReview(
-          currentUser.id, movieId, rating, reviewText);
+          currentUser.id, movieId, rating, reviewText, title, name);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Review submitted successfully')),
       );
