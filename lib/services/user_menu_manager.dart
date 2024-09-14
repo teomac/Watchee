@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/services/user_service.dart';
-import 'package:dima_project/pages/manage_account.dart';
+import 'package:dima_project/pages/account/manage_account.dart';
 import 'package:dima_project/pages/settings_page.dart';
 import 'package:dima_project/widgets/profile_widget.dart';
 import 'package:logger/logger.dart';

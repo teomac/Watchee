@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:dima_project/pages/follow_page.dart';
+import 'package:dima_project/pages/follow/follow_page.dart';
 
 class SearchBarWidget extends StatefulWidget {
   final ThemeData theme;

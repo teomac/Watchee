@@ -3,7 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dima_project/models/movie.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:intl/intl.dart';
-import 'package:dima_project/pages/film_details/film_details_bloc.dart';
+import 'package:dima_project/pages/movies/film_details_bloc.dart';
+import 'package:dima_project/api/constants.dart';
 
 class FilmDetailsPage extends StatefulWidget {
   final Movie movie;
@@ -63,7 +64,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     if (state is FilmDetailsLoading) {
       return const Center(child: CircularProgressIndicator());
     } else if (state is FilmDetailsLoaded) {
-      return CustomScrollView(
+      return SafeArea(
+          child: CustomScrollView(
         slivers: [
           _buildAppBar(state.movie),
           SliverToBoxAdapter(
@@ -93,7 +95,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
             ),
           ),
         ],
-      );
+      ));
     } else if (state is FilmDetailsError) {
       return Center(child: Text('Error: ${state.message}'));
     }
@@ -107,7 +109,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
       flexibleSpace: FlexibleSpaceBar(
         background: movie.backdropPath != null
             ? Image.network(
-                'https://image.tmdb.org/t/p/w500${movie.backdropPath}',
+                '${Constants.imagePath}${movie.backdropPath}',
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(color: Colors.grey);
