@@ -128,15 +128,13 @@ class MyLists extends StatelessWidget {
           }
         },
         builder: (context, state) {
-          if (state is MyListsLoading) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is MyListsLoaded) {
+          if (state is MyListsLoaded) {
             return MyListsView(
               ownWatchlists: state.ownWatchlists,
               followedWatchlists: state.followedWatchlists,
             );
           } else {
-            return const Center(child: Text('Something went wrong'));
+            return const Center(child: CircularProgressIndicator());
           }
         },
       ),

@@ -3,10 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dima_project/models/watchlist.dart';
 import 'package:dima_project/models/movie.dart';
 import 'package:dima_project/services/watchlist_service.dart';
-import 'package:dima_project/widgets/movie_search_bar_widget.dart';
 import 'package:dima_project/api/constants.dart';
 import 'package:dima_project/api/tmdb_api.dart';
 import 'package:dima_project/pages/movies/film_details_page.dart';
+import 'package:dima_project/pages/watchlists/search_page.dart';
+import 'package:rxdart/rxdart.dart';
 
 // Events
 abstract class ManageWatchlistEvent {}
@@ -60,7 +61,10 @@ class ManageWatchlistBloc
   ManageWatchlistBloc(this._watchlistService)
       : super(ManageWatchlistInitial()) {
     on<LoadWatchlist>(_onLoadWatchlist);
-    on<AddMovieToWatchlist>(_onAddMovieToWatchlist);
+    on<AddMovieToWatchlist>(_onAddMovieToWatchlist,
+        transformer: (events, mapper) => events
+            .debounceTime(const Duration(milliseconds: 300))
+            .switchMap(mapper));
     on<RemoveMovieFromWatchlist>(_onRemoveMovieFromWatchlist);
     on<UpdateWatchlistName>(_onUpdateWatchlistName);
   }
@@ -87,12 +91,19 @@ class ManageWatchlistBloc
     final currentState = state;
     if (currentState is ManageWatchlistLoaded) {
       try {
+        await _watchlistService.addMovieToWatchlist(
+            currentState.watchlist.userID,
+            currentState.watchlist.id,
+            event.movie.id);
+
+        final updatedMovies = List<int>.from(currentState.watchlist.movies)
+          ..add(event.movie.id);
         final updatedWatchlist = currentState.watchlist.copyWith(
-          movies: {...currentState.watchlist.movies, event.movie.id: true},
+          movies: updatedMovies,
         );
-        await _watchlistService.updateWatchList(updatedWatchlist);
-        final updatedMovies = [...currentState.movies, event.movie];
-        emit(ManageWatchlistLoaded(updatedWatchlist, updatedMovies));
+
+        final updatedMovieList = [...currentState.movies, event.movie];
+        emit(ManageWatchlistLoaded(updatedWatchlist, updatedMovieList));
       } catch (e) {
         emit(ManageWatchlistError('Failed to add movie: ${e.toString()}'));
       }
@@ -104,8 +115,7 @@ class ManageWatchlistBloc
     final currentState = state;
     if (currentState is ManageWatchlistLoaded) {
       try {
-        final updatedMovies =
-            Map<int, bool>.from(currentState.watchlist.movies);
+        final updatedMovies = List<int>.from(currentState.watchlist.movies);
         updatedMovies.remove(event.movie.id);
         final updatedWatchlist =
             currentState.watchlist.copyWith(movies: updatedMovies);
@@ -120,13 +130,14 @@ class ManageWatchlistBloc
   }
 
   Future<List<Movie>> _fetchMoviesForWatchlist(WatchList watchlist) async {
-    for (final movieId in watchlist.movies.keys) {
+    List<Movie> movies = [];
+    for (final movieId in watchlist.movies) {
       final movie = await retrieveFilmInfo(movieId);
       movie.trailer = await retrieveTrailer(movieId);
       movie.cast = await retrieveCast(movieId);
-      return [movie];
+      movies.add(movie);
     }
-    return [];
+    return movies;
   }
 
   Future<void> _onUpdateWatchlistName(
@@ -150,121 +161,101 @@ class ManageWatchlistPage extends StatefulWidget {
   final String watchlistId;
   final String userId;
 
-  const ManageWatchlistPage(
-      {super.key, required this.userId, required this.watchlistId});
+  const ManageWatchlistPage({
+    super.key,
+    required this.userId,
+    required this.watchlistId,
+  });
 
   @override
-  State<ManageWatchlistPage> createState() => ManageWatchlistPageState();
+  State<ManageWatchlistPage> createState() => _ManageWatchlistPageState();
 }
 
-class ManageWatchlistPageState extends State<ManageWatchlistPage> {
+class _ManageWatchlistPageState extends State<ManageWatchlistPage>
+    with WidgetsBindingObserver {
+  late ManageWatchlistBloc _manageWatchlistBloc;
+
   @override
-  Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvoked: (didPop) {
-        if (didPop) {
-          return;
-        }
-        // Notify the previous page to refresh
-        Navigator.of(context).pop();
-      },
-      child: BlocProvider(
-        create: (context) => ManageWatchlistBloc(WatchlistService())
-          ..add(LoadWatchlist(widget.userId, widget.watchlistId)),
-        child: const ManageWatchlistView(),
-      ),
-    );
+  void initState() {
+    super.initState();
+    _manageWatchlistBloc = ManageWatchlistBloc(WatchlistService());
+    _loadWatchlist();
+    WidgetsBinding.instance.addObserver(this);
   }
-}
 
-class ManageWatchlistView extends StatelessWidget {
-  const ManageWatchlistView({super.key});
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadWatchlist();
+    }
+  }
+
+  void _loadWatchlist() {
+    _manageWatchlistBloc.add(LoadWatchlist(widget.userId, widget.watchlistId));
+  }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ManageWatchlistBloc, ManageWatchlistState>(
-      builder: (context, state) {
-        if (state is ManageWatchlistLoading) {
-          return const Scaffold(
-              body: Center(child: CircularProgressIndicator()));
-        } else if (state is ManageWatchlistLoaded) {
-          return SafeArea(
-              child: Scaffold(
-            appBar: _buildAppBar(context, state.watchlist),
-            body: Column(
-              children: [
-                _buildAddMovieButton(context),
-                Expanded(child: _buildMovieList(context, state)),
+    return BlocProvider.value(
+      value: _manageWatchlistBloc,
+      child: BlocBuilder<ManageWatchlistBloc, ManageWatchlistState>(
+        builder: (context, state) {
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(
+                state is ManageWatchlistLoaded
+                    ? state.watchlist.name
+                    : 'Watchlist',
+              ),
+              actions: [
+                if (state is ManageWatchlistLoaded)
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () =>
+                        _showEditNameDialog(context, state.watchlist),
+                  ),
               ],
             ),
-          ));
-        } else if (state is ManageWatchlistError) {
-          return Scaffold(body: Center(child: Text('Error: ${state.message}')));
-        }
-        return const Scaffold(
-            body: Center(child: Text('Something went wrong')));
-      },
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar(BuildContext context, WatchList watchlist) {
-    return AppBar(
-      centerTitle: true,
-      title: Text(
-        watchlist.name,
-        style: const TextStyle(fontWeight: FontWeight.bold),
+            body: _buildBody(context, state),
+          );
+        },
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.edit),
-          onPressed: () => _showEditNameDialog(context, watchlist),
-        ),
-      ],
     );
   }
 
-  void _showEditNameDialog(BuildContext context, WatchList watchlist) {
-    final TextEditingController controller =
-        TextEditingController(text: watchlist.name);
-
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Edit Watchlist Name'),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(hintText: "Enter new name"),
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () => Navigator.of(dialogContext).pop(),
-            ),
-            TextButton(
-              child: const Text('Save'),
-              onPressed: () {
-                if (controller.text.isNotEmpty) {
-                  Navigator.of(dialogContext).pop();
-                  // Use the outer context to access the BLoC
-                  context
-                      .read<ManageWatchlistBloc>()
-                      .add(UpdateWatchlistName(controller.text));
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
+  Widget _buildBody(BuildContext context, ManageWatchlistState state) {
+    if (state is ManageWatchlistLoading) {
+      return const Center(child: CircularProgressIndicator());
+    } else if (state is ManageWatchlistLoaded) {
+      return Column(
+        children: [
+          _buildAddMovieButton(context, state.watchlist),
+          Expanded(child: _buildMovieList(context, state)),
+        ],
+      );
+    } else if (state is ManageWatchlistError) {
+      return Center(child: Text('Error: ${state.message}'));
+    }
+    return const Center(child: Text('Something went wrong'));
   }
 
-  Widget _buildAddMovieButton(BuildContext context) {
+  Widget _buildAddMovieButton(BuildContext context, WatchList watchlist) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: ElevatedButton.icon(
-        onPressed: () => _showAddMovieDialog(context),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SearchPage(
+                watchlist: watchlist,
+              ),
+            ),
+          ).then((_) {
+            // Refresh the watchlist when returning from SearchPage
+            _loadWatchlist();
+          });
+        },
         icon: const Icon(Icons.add),
         label: const Text('Add a movie'),
         style: ElevatedButton.styleFrom(
@@ -300,17 +291,17 @@ class ManageWatchlistView extends StatelessWidget {
       MaterialPageRoute(
         builder: (context) => FilmDetailsPage(movie: movie),
       ),
-    );
+    ).then((_) {
+      // Refresh the watchlist when returning from FilmDetailsPage
+      _loadWatchlist();
+    });
   }
 
   void _showRemoveMovieSnackBar(BuildContext context, Movie movie) {
     final snackBar = SnackBar(
       content: Text('Remove ${movie.title} from watchlist?'),
-      backgroundColor: Colors.red,
-      duration: const Duration(seconds: 5),
       action: SnackBarAction(
         label: 'REMOVE',
-        textColor: Colors.white,
         onPressed: () {
           context
               .read<ManageWatchlistBloc>()
@@ -326,28 +317,45 @@ class ManageWatchlistView extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
-  void _showAddMovieDialog(BuildContext context) {
+  void _showEditNameDialog(BuildContext context, WatchList watchlist) {
+    final TextEditingController controller =
+        TextEditingController(text: watchlist.name);
+
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text('Add a movie'),
-          content: MovieSearchBarWidget(
-            theme: Theme.of(context),
-            isDarkMode: Theme.of(context).brightness == Brightness.dark,
-            onExpandChanged: (bool expanded) {},
-            onSearchResults: (List<Movie> movies) {
-              // Handle search results
-            },
+          title: const Text('Edit Watchlist Name'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(hintText: "Enter new name"),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
               child: const Text('Cancel'),
+              onPressed: () => Navigator.of(dialogContext).pop(),
+            ),
+            TextButton(
+              child: const Text('Save'),
+              onPressed: () {
+                if (controller.text.isNotEmpty) {
+                  Navigator.of(dialogContext).pop();
+                  context
+                      .read<ManageWatchlistBloc>()
+                      .add(UpdateWatchlistName(controller.text));
+                }
+              },
             ),
           ],
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _manageWatchlistBloc.close();
+    super.dispose();
   }
 }
