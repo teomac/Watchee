@@ -35,7 +35,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                 context.read<FilmDetailsBloc>().add(DisposeYoutubePlayer());
                 // Allow the frame to rebuild without the YouTube player
                 await Future.microtask(() {});
-                Navigator.of(context).pop();
+                if (context.mounted) Navigator.of(context).pop();
               }
             },
             child: Stack(

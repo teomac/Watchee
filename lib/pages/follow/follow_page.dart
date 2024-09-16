@@ -339,7 +339,7 @@ class FollowView extends StatelessWidget {
           MaterialPageRoute(builder: (context) => UserProfilePage(user: user)),
         );
         if (result == true) {
-          context.read<FollowBloc>().add(LoadFollowData());
+          if (context.mounted) context.read<FollowBloc>().add(LoadFollowData());
         }
       },
     );
