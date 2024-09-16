@@ -285,6 +285,29 @@ class UserService {
     }
   }
 
+  // add movie to liked movies
+  Future<void> addToLikedMovies(String userId, int movieId) async {
+    await _firestore.collection('users').doc(userId).update({
+      'likedMovies': FieldValue.arrayUnion([movieId])
+    });
+  }
+
+  // remove movie from liked movies
+  Future<void> removeFromLikedMovies(String userId, int movieId) async {
+    await _firestore.collection('users').doc(userId).update({
+      'likedMovies': FieldValue.arrayRemove([movieId])
+    });
+  }
+
+  // check if movie is in liked movies
+  Future<bool> checkLikedMovies(String userId, int movieId) async {
+    DocumentSnapshot userDoc =
+        await _firestore.collection('users').doc(userId).get();
+    List<dynamic> likedMovies = userDoc['likedMovies'];
+    if (likedMovies == null) return false;
+    return likedMovies.contains(movieId);
+  }
+
   Future<bool> signOut() async {
     try {
       await _auth.signOut();

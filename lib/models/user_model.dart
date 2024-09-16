@@ -10,7 +10,7 @@ class MyUser {
   final List<String> favoriteGenres;
   final List<String> following; // Changed from friendList
   final List<String> followers; // New field
-  final List<String> likedMovies;
+  final List<dynamic> likedMovies;
   final Map<String, List<String>> customLists;
 
   MyUser({
@@ -55,7 +55,7 @@ class MyUser {
       following:
           List<String>.from(data['following'] ?? []), // Changed from friendList
       followers: List<String>.from(data['followers'] ?? []), // New field
-      likedMovies: List<String>.from(data['likedMovies'] ?? []),
+      likedMovies: List<dynamic>.from(data['likedMovies'] ?? []),
       customLists: Map<String, List<String>>.from(
         (data['customLists'] ?? {})
             .map((key, value) => MapEntry(key, List<String>.from(value))),

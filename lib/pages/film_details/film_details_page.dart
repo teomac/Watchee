@@ -25,6 +25,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   MyUser? _currentUser;
   final UserService _userService = UserService();
   List<MovieReview> _friendsReviews = [];
+  bool _isLiked = false;
 
   @override
   void dispose() {
@@ -45,6 +46,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
       final currentUser = await _userService.getCurrentUser();
       if (currentUser != null) {
         _currentUser = currentUser;
+        _isLiked = await _userService.checkLikedMovies(
+            _currentUser!.id, widget.movie.id);
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -118,7 +121,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTitle(state.movie),
+                  _buildTitleAndLikeButton(state.movie),
                   const SizedBox(height: 8),
                   _buildReleaseDate(state.movie),
                   const SizedBox(height: 8),
@@ -166,11 +169,53 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     );
   }
 
-  Widget _buildTitle(Movie movie) {
-    return Text(
-      movie.title,
-      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+  Widget _buildTitleAndLikeButton(Movie movie) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Text(
+            movie.title,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+        ),
+        IconButton(
+          icon: Icon(
+            Icons.favorite,
+            color: _isLiked ? Colors.red : Colors.grey,
+          ),
+          iconSize: 30,
+          onPressed: _toggle,
+          padding: EdgeInsets.zero,
+          highlightColor: Colors.grey,
+          color: _isLiked ? Colors.red : Colors.grey,
+        )
+      ],
     );
+  }
+
+  void _toggle() {
+    setState(() {
+      _isLiked = !_isLiked;
+    });
+    if (_isLiked) {
+      try {
+        _userService.addToLikedMovies(_currentUser!.id, widget.movie.id);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to add movie to liked movies: $e')),
+        );
+      }
+    } else {
+      try {
+        _userService.removeFromLikedMovies(_currentUser!.id, widget.movie.id);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Failed to remove movie from liked movies: $e')),
+        );
+      }
+    }
   }
 
   Widget _buildReleaseDate(Movie movie) {
