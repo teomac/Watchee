@@ -5,18 +5,22 @@ class WatchList {
   final String userID;
   final String name;
   final bool isPrivate;
-  final Map<int, bool> movies;
+  final List<int> movies;
   final List<String> followers;
   final List<String> collaborators;
+  final String createdAt;
+  final String updatedAt;
 
   WatchList({
     required this.id,
     required this.userID,
     required this.name,
     required this.isPrivate,
-    this.movies = const {},
+    this.movies = const [],
     this.followers = const [],
     this.collaborators = const [],
+    required this.createdAt,
+    required this.updatedAt,
   });
 
   // Convert WatchList object to a map for Firestore
@@ -29,6 +33,8 @@ class WatchList {
       'movies': movies,
       'followers': followers,
       'collaborators': collaborators,
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
     };
   }
 
@@ -40,15 +46,17 @@ class WatchList {
       userID: data['userID'] ?? '',
       name: data['name'] ?? '',
       isPrivate: data['isPrivate'] ?? true,
-      movies: Map<int, bool>.from(data['movies'] ?? {}),
+      movies: List<int>.from(data['movies'] ?? []),
       followers: List<String>.from(data['followers'] ?? []),
       collaborators: List<String>.from(data['collaborators'] ?? []),
+      createdAt: data['createdAt'] ?? DateTime.now().toString(),
+      updatedAt: data['updatedAt'] ?? DateTime.now().toString(),
     );
   }
 
   @override
   String toString() {
-    return 'WatchList{id: $id, userID: $userID, isPrivate: $isPrivate, movies: $movies, followers: $followers, collaborators: $collaborators}';
+    return 'WatchList{id: $id, userID: $userID, isPrivate: $isPrivate, movies: $movies, followers: $followers, collaborators: $collaborators, createdAt: $createdAt, updatedAt: $updatedAt}';
   }
 
   // Copy the WatchList object with new data
@@ -57,9 +65,11 @@ class WatchList {
     String? userID,
     String? name,
     bool? isPrivate,
-    Map<int, bool>? movies,
+    List<int>? movies,
     List<String>? followers,
     List<String>? collaborators,
+    String? createdAt,
+    String? updatedAt,
   }) {
     return WatchList(
       id: id ?? this.id,
@@ -69,6 +79,8 @@ class WatchList {
       movies: movies ?? this.movies,
       followers: followers ?? this.followers,
       collaborators: collaborators ?? this.collaborators,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }

@@ -9,10 +9,12 @@ class WatchlistService {
 
   Future<void> createWatchList(MyUser user, String name, bool isPrivate) async {
     WatchList watchList = WatchList(
-      id: user.id + Timestamp.now().toString(),
+      id: user.id + DateTime.now().toString(),
       userID: user.id,
       name: name,
       isPrivate: isPrivate,
+      createdAt: DateTime.now().toString(),
+      updatedAt: DateTime.now().toString(),
     );
 
     try {
@@ -28,13 +30,15 @@ class WatchlistService {
   }
 
   Future<void> updateWatchList(WatchList watchList) async {
+    WatchList updatedWatchList =
+        watchList.copyWith(updatedAt: DateTime.now().toString());
     try {
       await _firestore
           .collection('users')
           .doc(watchList.userID)
           .collection('my_watchlists')
           .doc(watchList.id)
-          .update(watchList.toMap());
+          .update(updatedWatchList.toMap());
     } catch (e) {
       logger.e(e);
     }
@@ -125,6 +129,25 @@ class WatchlistService {
     } catch (e) {
       logger.e(e);
       return [];
+    }
+  }
+
+  Future<void> addMovieToWatchlist(
+      String userId, String watchlistId, int movieId) async {
+    try {
+      DocumentSnapshot doc = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('my_watchlists')
+          .doc(watchlistId)
+          .get();
+      //add movie id to the watchlist
+      WatchList watchlist = WatchList.fromFirestore(doc);
+      watchlist.movies.add(movieId);
+      watchlist = watchlist.copyWith(updatedAt: DateTime.now().toString());
+      await updateWatchList(watchlist);
+    } catch (e) {
+      logger.e(e);
     }
   }
 }
