@@ -51,9 +51,11 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
             _currentUser!.id, widget.movie.id);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error initializing data: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error initializing data: $e')),
+        );
+      }
     }
   }
 
@@ -465,7 +467,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                         color:
                             _selectedRating >= i ? Colors.amber : Colors.grey,
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.star,
                         size: 32,
                       ),
@@ -506,10 +508,12 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     // Retrieve the current logged-in user
     final currentUser = await _userService.getCurrentUser();
     if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('You need to be logged in to submit a review')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('You need to be logged in to submit a review')),
+        );
+      }
       return;
     }
 
@@ -520,34 +524,42 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     final int rating = _selectedRating;
 
     if (reviewText.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a review')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter a review')),
+        );
+      }
       return;
     }
     if (_selectedRating == 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text(
-                'Please select a star rating before submitting your review')),
-      );
-      return;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text(
+                  'Please select a star rating before submitting your review')),
+        );
+        return;
+      }
     }
 
     // Submit the review using UserService
     try {
       await _userService.addMovieReview(
           currentUser.id, movieId, rating, reviewText, title, name);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Review submitted successfully')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Review submitted successfully')),
+        );
+      }
       // Clear the review input after submission
       _reviewController.clear();
       setState(() => _selectedRating = 0);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to submit review: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to submit review: $e')),
+        );
+      }
     }
   }
 }
