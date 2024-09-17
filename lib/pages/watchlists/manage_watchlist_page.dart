@@ -272,7 +272,8 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage>
         final movie = state.movies[index];
         return InkWell(
           onTap: () => _navigateToFilmDetails(context, movie),
-          onLongPress: () => _showRemoveMovieSnackBar(context, movie),
+          onLongPress: () =>
+              _showRemoveMovieMenu(context, movie, state.watchlist.name),
           child: ListTile(
             leading: movie.posterPath != null
                 ? Image.network('${Constants.imagePath}${movie.posterPath}')
@@ -297,24 +298,49 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage>
     });
   }
 
-  void _showRemoveMovieSnackBar(BuildContext context, Movie movie) {
-    final snackBar = SnackBar(
-      content: Text('Remove ${movie.title} from watchlist?'),
-      action: SnackBarAction(
-        label: 'REMOVE',
-        onPressed: () {
-          context
-              .read<ManageWatchlistBloc>()
-              .add(RemoveMovieFromWatchlist(movie));
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${movie.title} removed from watchlist')),
-          );
-        },
-      ),
-    );
+  void _showRemoveMovieMenu(
+      BuildContext context, Movie movie, String watchlistName) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
 
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: isDarkMode ? Colors.grey[900] : Colors.white,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: Icon(Icons.delete, color: theme.colorScheme.error),
+                  title: Text(
+                    'Remove from $watchlistName',
+                    style: TextStyle(color: theme.colorScheme.error),
+                  ),
+                  onTap: () {
+                    _manageWatchlistBloc.add(RemoveMovieFromWatchlist(movie));
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content:
+                              Text('${movie.title} removed from watchlist')),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _showEditNameDialog(BuildContext context, WatchList watchlist) {
