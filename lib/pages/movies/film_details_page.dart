@@ -1,3 +1,6 @@
+import 'package:dima_project/models/movie_review.dart';
+import 'package:dima_project/models/user_model.dart';
+import 'package:dima_project/services/user_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dima_project/models/movie.dart';
@@ -18,6 +21,52 @@ class FilmDetailsPage extends StatefulWidget {
 class _FilmDetailsPageState extends State<FilmDetailsPage> {
   bool _isDisposing = false;
   final bool _showYoutubePlayer = true;
+  final TextEditingController _reviewController = TextEditingController();
+  int _selectedRating = 0;
+  MyUser? _currentUser;
+  final UserService _userService = UserService();
+  List<MovieReview> _friendsReviews = [];
+  bool _isLiked = false;
+
+  @override
+  void dispose() {
+    _reviewController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeData().then((_) {
+      _fetchFriendsReviews();
+    });
+  }
+
+  Future<void> _initializeData() async {
+    try {
+      final currentUser = await _userService.getCurrentUser();
+      if (currentUser != null) {
+        _currentUser = currentUser;
+        _isLiked = await _userService.checkLikedMovies(
+            _currentUser!.id, widget.movie.id);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error initializing data: $e')),
+      );
+    }
+  }
+
+  Future<void> _fetchFriendsReviews() async {
+    if (_currentUser == null) return;
+    List<MovieReview> reviews =
+        await _userService.getFriendsReviews(_currentUser!.id, widget.movie.id);
+    if (mounted) {
+      setState(() {
+        _friendsReviews = reviews;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +123,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTitle(state.movie),
+                  _buildTitleAndLikeButton(state.movie),
                   const SizedBox(height: 8),
                   _buildReleaseDate(state.movie),
                   const SizedBox(height: 8),
@@ -90,6 +139,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                     _buildTrailer(context, state.trailerKey),
                   const SizedBox(height: 16),
                   _buildFriendReviews(),
+                  const SizedBox(height: 16),
+                  _buildAddYourReview(),
                 ],
               ),
             ),
@@ -120,11 +171,53 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     );
   }
 
-  Widget _buildTitle(Movie movie) {
-    return Text(
-      movie.title,
-      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+  Widget _buildTitleAndLikeButton(Movie movie) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Text(
+            movie.title,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+        ),
+        IconButton(
+          icon: Icon(
+            Icons.favorite,
+            color: _isLiked ? Colors.red : Colors.grey,
+          ),
+          iconSize: 30,
+          onPressed: _toggle,
+          padding: EdgeInsets.zero,
+          highlightColor: Colors.grey,
+          color: _isLiked ? Colors.red : Colors.grey,
+        )
+      ],
     );
+  }
+
+  void _toggle() {
+    setState(() {
+      _isLiked = !_isLiked;
+    });
+    if (_isLiked) {
+      try {
+        _userService.addToLikedMovies(_currentUser!.id, widget.movie.id);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to add movie to liked movies: $e')),
+        );
+      }
+    } else {
+      try {
+        _userService.removeFromLikedMovies(_currentUser!.id, widget.movie.id);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Failed to remove movie from liked movies: $e')),
+        );
+      }
+    }
   }
 
   Widget _buildReleaseDate(Movie movie) {
@@ -306,46 +399,155 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   }
 
   Widget _buildFriendReviews() {
-    // TODO: Implement actual friend reviews fetching
-    return const Card(
+    if (_friendsReviews.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text('No reviews from friends available.'),
+        ),
+      );
+    }
+
+    return Card(
       child: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Friend Reviews',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8),
-            ListTile(
-              leading: CircleAvatar(child: Text('JD')),
-              title: Text('John Doe'),
-              subtitle: Text('Great movie! Loved the plot twists.'),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.star, color: Colors.amber),
-                  Text('4.5'),
-                ],
+            const SizedBox(height: 8),
+            ..._friendsReviews.map((review) {
+              return ListTile(
+                leading: CircleAvatar(
+                  child: Text(review.username.isNotEmpty
+                      ? review.username[0]
+                      : '?'), // Placeholder for user initial
+                ),
+                title: Text(review.username), // Placeholder for user name
+                subtitle: Text(review.text),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.star, color: Colors.amber),
+                    Text(review.rating.toStringAsFixed(1)),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddYourReview() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Add your review',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                for (int i = 1; i <= 5; i++)
+                  IconButton(
+                    icon: IconTheme(
+                      data: IconThemeData(
+                        color:
+                            _selectedRating >= i ? Colors.amber : Colors.grey,
+                      ),
+                      child: Icon(
+                        Icons.star,
+                        size: 32,
+                      ),
+                    ),
+                    onPressed: () => setState(() => _selectedRating = i),
+                  ),
+              ],
+            ),
+            TextField(
+              controller: _reviewController,
+              maxLines: 4,
+              maxLength: 160,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                hintText: 'Write your review here...',
               ),
             ),
-            ListTile(
-              leading: CircleAvatar(child: Text('JS')),
-              title: Text('Jane Smith'),
-              subtitle:
-                  Text('Visually stunning, but the pacing was a bit slow.'),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.star, color: Colors.amber),
-                  Text('3.5'),
-                ],
-              ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: () {
+                if (_reviewController.text.isNotEmpty) {
+                  _submitReview();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please enter a review')),
+                  );
+                }
+              },
+              child: const Text('Submit your review'),
             ),
           ],
         ),
       ),
     );
+  }
+
+  void _submitReview() async {
+    // Retrieve the current logged-in user
+    final currentUser = await _userService.getCurrentUser();
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('You need to be logged in to submit a review')),
+      );
+      return;
+    }
+
+    final int movieId = widget.movie.id;
+    final String title = widget.movie.title;
+    final String name = currentUser.username;
+    final String reviewText = _reviewController.text.trim();
+    final int rating = _selectedRating;
+
+    if (reviewText.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a review')),
+      );
+      return;
+    }
+    if (_selectedRating == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text(
+                'Please select a star rating before submitting your review')),
+      );
+      return;
+    }
+
+    // Submit the review using UserService
+    try {
+      await _userService.addMovieReview(
+          currentUser.id, movieId, rating, reviewText, title, name);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Review submitted successfully')),
+      );
+      // Clear the review input after submission
+      _reviewController.clear();
+      setState(() => _selectedRating = 0);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to submit review: $e')),
+      );
+    }
   }
 }

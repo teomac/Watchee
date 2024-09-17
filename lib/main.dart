@@ -1,4 +1,6 @@
+import 'package:dima_project/services/fcm_service.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
 import 'package:dima_project/widget_tree.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +24,21 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
+  NotificationSettings settings = await messaging.requestPermission();
+
+  if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+    // retrieve FCM Token
+    String? token = await messaging.getToken();
+    if (token != null) {
+      await FMCService.storeFCMToken(token);
+      await FMCService.storeFCMTokenToFirestore(token);
+    }
+  }
+
+  FMCService.setupTokenRefreshListener();
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeProvider()..loadThemeMode(),
