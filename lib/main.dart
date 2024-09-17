@@ -44,6 +44,11 @@ class MyApp extends StatelessWidget {
           darkTheme: ThemeData.dark(useMaterial3: true).copyWith(
             // Customize your dark theme here
             scaffoldBackgroundColor: Colors.black,
+            snackBarTheme: const SnackBarThemeData(
+                actionTextColor: Colors.red,
+                backgroundColor: Colors.black,
+                contentTextStyle: TextStyle(color: Colors.white),
+                elevation: 20),
           ),
           themeMode: themeProvider.themeMode,
           home: const WidgetTree(),
