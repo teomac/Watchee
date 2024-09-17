@@ -59,7 +59,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   Future<void> _fetchFriendsReviews() async {
     if (_currentUser == null) return;
     List<MovieReview> reviews =
-        await _userService.getFriendsReviews(_currentUser!.id);
+        await _userService.getFriendsReviews(_currentUser!.id, widget.movie.id);
     if (mounted) {
       setState(() {
         _friendsReviews = reviews;

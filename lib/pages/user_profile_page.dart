@@ -1,4 +1,3 @@
-import 'package:dima_project/api/tmdb_api.dart';
 import 'package:dima_project/models/movie_review.dart';
 import 'package:flutter/material.dart';
 import 'package:dima_project/models/user_model.dart';
@@ -265,7 +264,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
               ),
               subtitle: Text(
                 review.text,
-                style: TextStyle(fontSize: 16),
+                style: const TextStyle(fontSize: 16),
               ),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,

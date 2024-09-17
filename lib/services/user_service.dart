@@ -261,7 +261,8 @@ class UserService {
   }
 
   // retrieve friends reviews
-  Future<List<MovieReview>> getFriendsReviews(String currentUserId) async {
+  Future<List<MovieReview>> getFriendsReviews(
+      String currentUserId, int movieId) async {
     try {
       // retrieve followed users
       DocumentSnapshot userDoc =
@@ -273,7 +274,9 @@ class UserService {
       QuerySnapshot reviewsSnapshot = await _firestore
           .collection('reviews')
           .where('userId', whereIn: followedUserIds)
+          .where('movieId', isEqualTo: movieId)
           .orderBy('timestamp', descending: true)
+          .limit(2)
           .get();
 
       return reviewsSnapshot.docs
