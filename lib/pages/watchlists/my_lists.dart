@@ -49,6 +49,11 @@ class WatchlistCreationError extends MyListsState {
   WatchlistCreationError(this.message);
 }
 
+class DeleteWatchlist extends MyListsEvent {
+  final WatchList watchlist;
+  DeleteWatchlist(this.watchlist);
+}
+
 // BLoC
 class MyListsBloc extends Bloc<MyListsEvent, MyListsState> {
   final WatchlistService _watchlistService;
@@ -59,6 +64,7 @@ class MyListsBloc extends Bloc<MyListsEvent, MyListsState> {
       : super(MyListsInitial()) {
     on<LoadMyLists>(_onLoadMyLists);
     on<CreateWatchlist>(_onCreateWatchlist);
+    on<DeleteWatchlist>(_onDeleteWatchlist);
     add(LoadMyLists());
   }
 
@@ -102,6 +108,19 @@ class MyListsBloc extends Bloc<MyListsEvent, MyListsState> {
       _logger.e("Error creating watchlist", error: e, stackTrace: stackTrace);
       emit(WatchlistCreationError(
           "Failed to create watchlist. Please try again."));
+    }
+  }
+
+  Future<void> _onDeleteWatchlist(
+      DeleteWatchlist event, Emitter<MyListsState> emit) async {
+    try {
+      await _watchlistService.deleteWatchList(event.watchlist);
+      _logger.d("Watchlist deleted: ${event.watchlist.name}");
+      // Reload the lists after successful deletion
+      add(LoadMyLists());
+    } catch (e, stackTrace) {
+      _logger.e("Error deleting watchlist", error: e, stackTrace: stackTrace);
+      emit(MyListsError("Failed to delete watchlist. Please try again."));
     }
   }
 }
@@ -196,9 +215,10 @@ class MyListsView extends StatelessWidget {
           ),
           SliverList(
             delegate: SliverChildListDelegate([
-              _buildWatchlistSection(context, 'My Watchlists', ownWatchlists),
               _buildWatchlistSection(
-                  context, 'Followed Watchlists', followedWatchlists),
+                  context, 'My Watchlists', ownWatchlists, true),
+              _buildWatchlistSection(
+                  context, 'Followed Watchlists', followedWatchlists, false),
             ]),
           ),
         ],
@@ -248,8 +268,8 @@ class MyListsView extends StatelessWidget {
     );
   }
 
-  Widget _buildWatchlistSection(
-      BuildContext context, String title, List<WatchList> watchlists) {
+  Widget _buildWatchlistSection(BuildContext context, String title,
+      List<WatchList> watchlists, bool isOwnWatchlist) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -277,13 +297,133 @@ class MyListsView extends StatelessWidget {
                         userId: watchlist.userID, watchlistId: watchlist.id),
                   ),
                 ).then((_) {
-                  // Refresh the watchlists when returning from ManageWatchlistPage
                   context.read<MyListsBloc>().add(LoadMyLists());
                 });
               },
+              onLongPress: () => _showWatchlistOptions(
+                  context,
+                  watchlist,
+                  isOwnWatchlist,
+                  (WatchList wl) =>
+                      context.read<MyListsBloc>().add(DeleteWatchlist(wl))),
             )),
         const SizedBox(height: 16),
       ],
+    );
+  }
+
+  void _showWatchlistOptions(BuildContext context, WatchList watchlist,
+      bool isOwnWatchlist, Function(WatchList) onDelete) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: isDarkMode ? Colors.grey[900] : Colors.white,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isOwnWatchlist)
+                  ListTile(
+                    leading: Icon(Icons.person_add,
+                        color: theme.colorScheme.secondary),
+                    title: Text('Invite', style: theme.textTheme.titleMedium),
+                    onTap: () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Invite functionality coming soon')),
+                      );
+                    },
+                  ),
+                ListTile(
+                  leading:
+                      Icon(Icons.share, color: theme.colorScheme.secondary),
+                  title: Text('Share', style: theme.textTheme.titleMedium),
+                  onTap: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Share functionality coming soon')),
+                    );
+                  },
+                ),
+                if (isOwnWatchlist)
+                  ListTile(
+                    leading: Icon(Icons.delete, color: theme.colorScheme.error),
+                    title: Text('Delete',
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(color: theme.colorScheme.error)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showDeleteConfirmation(context, watchlist, onDelete);
+                    },
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showDeleteConfirmation(
+      BuildContext context, WatchList watchlist, Function(WatchList) onDelete) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            'Delete Watchlist',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              color: isDarkMode ? Colors.white : Colors.black,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to delete "${watchlist.name}"?',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: isDarkMode ? Colors.white70 : Colors.black87,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: theme.colorScheme.secondary),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                onDelete(watchlist);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -309,50 +449,97 @@ class _CreateWatchlistDialogState extends State<CreateWatchlistDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Create New Watchlist'),
-      content: Form(
-        key: _formKey,
+    final theme = Theme.of(context);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      backgroundColor: theme.dialogBackgroundColor,
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.9,
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextFormField(
-              controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Watchlist Name'),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a name for your watchlist';
-                }
-                return null;
-              },
+            Text(
+              'Create New Watchlist',
+              style: theme.textTheme.headlineSmall,
             ),
-            const SizedBox(height: 16),
-            SwitchListTile(
-              title: const Text('Private'),
-              value: _isPrivate,
-              onChanged: (bool value) {
-                setState(() {
-                  _isPrivate = value;
-                });
-              },
+            const SizedBox(height: 24),
+            Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextFormField(
+                    controller: _nameController,
+                    style: theme.textTheme.bodyMedium,
+                    decoration: InputDecoration(
+                      labelText: 'Watchlist Name',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      filled: true,
+                      fillColor:
+                          isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a name for your watchlist';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  SwitchListTile(
+                    title: Text('Private Watchlist',
+                        style: theme.textTheme.bodyLarge),
+                    subtitle: Text(
+                      'Only you can see private watchlists',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    value: _isPrivate,
+                    onChanged: (bool value) {
+                      setState(() {
+                        _isPrivate = value;
+                      });
+                    },
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('Cancel',
+                      style: TextStyle(color: theme.colorScheme.secondary)),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      widget.onCreateWatchlist(
+                          _nameController.text, _isPrivate);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                  ),
+                  child: const Text('Create'),
+                ),
+              ],
             ),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            if (_formKey.currentState!.validate()) {
-              widget.onCreateWatchlist(_nameController.text, _isPrivate);
-            }
-          },
-          child: const Text('Create'),
-        ),
-      ],
     );
   }
 
