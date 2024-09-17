@@ -1,5 +1,5 @@
 import 'package:dima_project/models/movie.dart';
-import 'package:dima_project/pages/film_details/film_details_page.dart';
+import 'package:dima_project/pages/movies/film_details_page.dart';
 import 'package:flutter/material.dart';
 import 'package:dima_project/api/tmdb_api.dart';
 import 'package:dima_project/widgets/movies_slider.dart';

@@ -5,7 +5,7 @@ import 'package:dima_project/services/user_service.dart';
 import 'package:dima_project/services/user_menu_manager.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:logger/logger.dart';
-import 'package:dima_project/pages/user_profile_page.dart';
+import 'package:dima_project/pages/account/user_profile_page.dart';
 import 'package:dima_project/widgets/user_search_bar_widget.dart';
 
 // Events
@@ -339,7 +339,7 @@ class FollowView extends StatelessWidget {
           MaterialPageRoute(builder: (context) => UserProfilePage(user: user)),
         );
         if (result == true) {
-          context.read<FollowBloc>().add(LoadFollowData());
+          if (context.mounted) context.read<FollowBloc>().add(LoadFollowData());
         }
       },
     );

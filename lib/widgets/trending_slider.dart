@@ -3,7 +3,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:dima_project/api/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:dima_project/models/movie.dart';
-import 'package:dima_project/pages/film_details/film_details_page.dart';
+import 'package:dima_project/pages/movies/film_details_page.dart';
 
 //widget used to display the trending movies with a self moving horizontal slider
 class TrendingSlider extends StatelessWidget {
