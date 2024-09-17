@@ -20,6 +20,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
   MyUser? _currentUser;
   List<MyUser> _followedByUsers = [];
   List<MovieReview> _userReviews = [];
+  bool _showAllReviews = false;
 
   @override
   void initState() {
@@ -242,18 +243,25 @@ class _UserProfilePageState extends State<UserProfilePage> {
       );
     }
 
+    int reviewsToShow = 0;
+    if (_userReviews.length <= 2) {
+      reviewsToShow = _userReviews.length;
+    } else {
+      reviewsToShow = _showAllReviews ? _userReviews.length : 2;
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'All Reviews',
+          'Reviews',
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: _userReviews.length,
+          itemCount: reviewsToShow,
           itemBuilder: (context, index) {
             final review = _userReviews[index];
             return ListTile(
@@ -286,6 +294,15 @@ class _UserProfilePageState extends State<UserProfilePage> {
             );
           },
         ),
+        if (_userReviews.length > 2)
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _showAllReviews = !_showAllReviews;
+              });
+            },
+            child: Text(_showAllReviews ? 'Show less' : 'Show more'),
+          ),
       ],
     );
   }
