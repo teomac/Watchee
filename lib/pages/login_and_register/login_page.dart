@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:dima_project/services/auth.dart';
+import 'package:dima_project/services/fcm_service.dart';
 import 'package:dima_project/services/google_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dima_project/widgets/my_textfield.dart';
@@ -37,6 +39,15 @@ class _LoginPageState extends State<LoginPage> {
       _cleanErrorMessage();
       await Auth().signInWithEmailAndPassword(
           email: _controllerEmail.text, password: _controllerPassword.text);
+
+      FirebaseMessaging messaging = FirebaseMessaging.instance;
+      String? token = await messaging.getToken();
+      if (token != null) {
+        await FMCService.storeFCMToken(token);
+        await FMCService.storeFCMTokenToFirestore(token);
+      }
+
+      FMCService.setupTokenRefreshListener();
     } on FirebaseAuthException catch (e) {
       setState(() {
         errorMessage = e.message;
