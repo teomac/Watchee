@@ -1,4 +1,5 @@
 import 'package:dima_project/models/movie_review.dart';
+import 'package:dima_project/pages/account/edit_reviews_page.dart';
 import 'package:flutter/material.dart';
 import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/services/user_service.dart';
@@ -257,6 +258,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
           'Reviews',
           style: Theme.of(context).textTheme.titleMedium,
         ),
+        if (_currentUser != null && _currentUser!.id == widget.user.id)
+          TextButton(
+              onPressed: _openEditReviewsPage, child: const Icon(Icons.edit)),
         const SizedBox(height: 8),
         ListView.builder(
           shrinkWrap: true,
@@ -305,5 +309,19 @@ class _UserProfilePageState extends State<UserProfilePage> {
           ),
       ],
     );
+  }
+
+  void _openEditReviewsPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditReviewsPage(
+          user: widget.user,
+          userReviews: _userReviews,
+        ),
+      ),
+    ).then((_) {
+      setState(() {});
+    });
   }
 }

@@ -311,6 +311,27 @@ class UserService {
     return likedMovies.contains(movieId);
   }
 
+  // delete reviews
+  Future<void> deleteReviews(String userId, List<MovieReview> reviews) async {
+    try {
+      WriteBatch batch = _firestore.batch();
+
+      for (var review in reviews) {
+        if (review.userId == userId) {
+          DocumentReference reviewRef =
+              _firestore.collection('reviews').doc(review.id);
+          batch.delete(reviewRef);
+        }
+      }
+      await batch.commit();
+      logger
+          .d('Successfully deleted ${reviews.length} reviews for user $userId');
+    } catch (e) {
+      logger.e('Failed to delete reviews: $e');
+      throw Exception('Failed to delete reviews $e');
+    }
+  }
+
   Future<bool> signOut() async {
     try {
       await _auth.signOut();

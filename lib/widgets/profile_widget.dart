@@ -6,6 +6,7 @@ class ProfileMenu extends StatelessWidget {
   final VoidCallback onManageAccountTap;
   final VoidCallback onAppSettingsTap;
   final VoidCallback onSignOutTap;
+  final VoidCallback onUserTap;
 
   const ProfileMenu({
     super.key,
@@ -13,6 +14,7 @@ class ProfileMenu extends StatelessWidget {
     required this.onManageAccountTap,
     required this.onAppSettingsTap,
     required this.onSignOutTap,
+    required this.onUserTap,
   });
 
   @override
@@ -21,13 +23,16 @@ class ProfileMenu extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         ListTile(
-          leading: CircleAvatar(
-            backgroundImage: user.profilePicture != null
-                ? NetworkImage(user.profilePicture!)
-                : null,
-            child: user.profilePicture == null
-                ? const Icon(Icons.person, color: Colors.white)
-                : null,
+          leading: GestureDetector(
+            onTap: onUserTap,
+            child: CircleAvatar(
+              backgroundImage: user.profilePicture != null
+                  ? NetworkImage(user.profilePicture!)
+                  : null,
+              child: user.profilePicture == null
+                  ? const Icon(Icons.person, color: Colors.white)
+                  : null,
+            ),
           ),
           title: Text(user.name),
           subtitle: Text(user.email),

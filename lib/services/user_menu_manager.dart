@@ -1,3 +1,4 @@
+import 'package:dima_project/pages/account/user_profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/services/user_service.dart';
@@ -86,6 +87,14 @@ class _UserInfoState extends State<UserInfo> {
                 onSignOutTap: () {
                   Navigator.pop(context);
                   _signOut();
+                },
+                onUserTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              UserProfilePage(user: _currentUser!)));
                 },
               ),
             );
