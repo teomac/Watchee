@@ -307,7 +307,6 @@ class UserService {
     DocumentSnapshot userDoc =
         await _firestore.collection('users').doc(userId).get();
     List<dynamic> likedMovies = userDoc['likedMovies'];
-    if (likedMovies == null) return false;
     return likedMovies.contains(movieId);
   }
 
