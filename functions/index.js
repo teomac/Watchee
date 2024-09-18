@@ -2,6 +2,7 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 admin.initializeApp();
 
+// notification for new follower
 exports.sendFollowNotification = functions
     .firestore.document("users/{userId}")
     .onUpdate(async (change, context) => {
@@ -57,5 +58,53 @@ exports.sendFollowNotification = functions
         console.error("Error sending notification:", error);
       }
 
+      return null;
+    });
+
+
+// notification for new friend review
+exports.sendReviewNotification = functions
+    .firestore.document("reviews/{reviewId}")
+    .onCreate(async (snapshot, context) => {
+      const reviewData = snapshot.data();
+      const reviewAuthorId = reviewData.userId;
+
+      try {
+        const reviewAuthorDoc = await admin
+            .firestore().doc(`users/${reviewAuthorId}`).get();
+        const reviewAuthorData = reviewAuthorDoc.data();
+        const reviewAuthorName = reviewAuthorData.username;
+
+        const followers = reviewAuthorData.followers || [];
+
+        if (followers.length === 0) {
+          return null;
+        }
+
+        for (const followerId of followers) {
+          const followerDoc = await admin
+              .firestore().doc(`users/${followerId}`).get();
+          const followerData = followerDoc.data();
+          const followerFcmToken = followerData.fcmToken;
+
+          if (followerFcmToken) {
+            const message = `${reviewAuthorName} just posted a new review!`;
+
+            await admin.messaging().send({
+              token: followerFcmToken,
+              notification: {
+                title: "New review posted!",
+                body: message,
+              },
+            });
+            console.log(
+                `Notification sent to follower ${followerData.username}`);
+          } else {
+            console.log(`No FCM token found for follower ${followerId}`);
+          }
+        }
+      } catch (error) {
+        console.error("Error sending review notification: ", error);
+      }
       return null;
     });
