@@ -11,7 +11,7 @@ class MyUser {
   final List<String> following; // Changed from friendList
   final List<String> followers; // New field
   final List<int> likedMovies;
-  final Map<String, List<String>> customLists;
+  final List<int> seenMovies;
 
   MyUser({
     required this.id,
@@ -23,7 +23,7 @@ class MyUser {
     this.following = const [], // Changed from friendList
     this.followers = const [], // New field
     this.likedMovies = const [],
-    this.customLists = const {},
+    this.seenMovies = const [],
   });
 
   // Convert User object to a map for Firestore
@@ -38,7 +38,7 @@ class MyUser {
       'following': following, // Changed from friendList
       'followers': followers, // New field
       'likedMovies': likedMovies,
-      'customLists': customLists,
+      'seenMovies': seenMovies,
     };
   }
 
@@ -56,16 +56,13 @@ class MyUser {
           List<String>.from(data['following'] ?? []), // Changed from friendList
       followers: List<String>.from(data['followers'] ?? []), // New field
       likedMovies: List<int>.from(data['likedMovies'] ?? []),
-      customLists: Map<String, List<String>>.from(
-        (data['customLists'] ?? {})
-            .map((key, value) => MapEntry(key, List<String>.from(value))),
-      ),
+      seenMovies: List<int>.from(data['seenMovies'] ?? []),
     );
   }
 
   @override
   String toString() {
-    return 'MyUser(id: $id, username: $username, name: $name, email: $email, profilePicture: $profilePicture, favoriteGenres: $favoriteGenres, following: $following, followers: $followers, likedMovies: $likedMovies, customLists: $customLists)';
+    return 'MyUser(id: $id, username: $username, name: $name, email: $email, profilePicture: $profilePicture, favoriteGenres: $favoriteGenres, following: $following, followers: $followers, likedMovies: $likedMovies, seenMovies: $seenMovies)';
   }
 
   @override
@@ -82,7 +79,7 @@ class MyUser {
         listEquals(other.following, following) &&
         listEquals(other.followers, followers) &&
         listEquals(other.likedMovies, likedMovies) &&
-        mapEquals(other.customLists, customLists);
+        listEquals(other.seenMovies, seenMovies);
   }
 
   @override
@@ -96,6 +93,6 @@ class MyUser {
         following.hashCode ^
         followers.hashCode ^
         likedMovies.hashCode ^
-        customLists.hashCode;
+        seenMovies.hashCode;
   }
 }
