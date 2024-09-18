@@ -1,6 +1,8 @@
 import 'package:dima_project/models/movie_review.dart';
 import 'package:dima_project/models/user_model.dart';
+import 'package:dima_project/models/watchlist.dart';
 import 'package:dima_project/services/user_service.dart';
+import 'package:dima_project/services/watchlist_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dima_project/models/movie.dart';
@@ -27,6 +29,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   final UserService _userService = UserService();
   List<MovieReview> _friendsReviews = [];
   bool _isLiked = false;
+  final WatchlistService _watchlistService = WatchlistService();
+  List<WatchList> _userWatchlists = [];
 
   @override
   void dispose() {
@@ -67,6 +71,20 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
       setState(() {
         _friendsReviews = reviews;
       });
+    }
+  }
+
+  Future<void> _fetchUserWatchlists() async {
+    if (_currentUser == null) return;
+    try {
+      List<WatchList> watchlists =
+          await _watchlistService.getOwnWatchLists(_currentUser!.id);
+      setState(() {
+        _userWatchlists = watchlists;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to fetch watchlists: $e')));
     }
   }
 
@@ -125,7 +143,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTitleAndLikeButton(state.movie),
+                  _buildTitleAndButtons(state.movie),
                   const SizedBox(height: 8),
                   _buildReleaseDate(state.movie),
                   const SizedBox(height: 8),
@@ -173,7 +191,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     );
   }
 
-  Widget _buildTitleAndLikeButton(Movie movie) {
+  Widget _buildTitleAndButtons(Movie movie) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -182,6 +200,14 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
             movie.title,
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.add),
+          iconSize: 30,
+          onPressed: () async {
+            await _fetchUserWatchlists();
+            _showWatchlistModal();
+          },
         ),
         IconButton(
           icon: Icon(
@@ -560,6 +586,77 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
           SnackBar(content: Text('Failed to submit review: $e')),
         );
       }
+    }
+  }
+
+  void _showWatchlistModal() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter modalsetState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16.0),
+                  child: const Text(
+                    'My Lists',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Expanded(
+                    child: ListView.builder(
+                  itemCount: _userWatchlists.length,
+                  itemBuilder: (context, index) {
+                    final watchlist = _userWatchlists[index];
+                    final bool isInWatchlist =
+                        watchlist.movies.contains(widget.movie.id);
+
+                    return ListTile(
+                      title: Text(watchlist.name),
+                      trailing: isInWatchlist
+                          ? const Icon(Icons.check, color: Colors.green)
+                          : IconButton(
+                              icon: const Icon(Icons.add),
+                              onPressed: () async {
+                                if (!isInWatchlist) {
+                                  await _addMovieInWatchlist(
+                                      watchlist, isInWatchlist, modalsetState);
+                                  modalsetState(() {
+                                    watchlist.movies.add(widget.movie.id);
+                                  });
+                                }
+                              },
+                            ),
+                    );
+                  },
+                ))
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _addMovieInWatchlist(WatchList watchlist, bool isInWatchlist,
+      StateSetter modalSetState) async {
+    try {
+      await _watchlistService.addMovieToWatchlist(
+          watchlist.userID, watchlist.id, widget.movie.id);
+      watchlist.movies.add(widget.movie.id);
+
+      setState(() {});
+      modalSetState(() {});
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Movie added to watchlist')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to add movie to watchlist: $e')),
+      );
     }
   }
 }
