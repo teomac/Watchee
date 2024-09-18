@@ -83,8 +83,10 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         _userWatchlists = watchlists;
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to fetch watchlists: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to fetch watchlists: $e')));
+      }
     }
   }
 
@@ -97,7 +99,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         builder: (context, state) {
           return PopScope(
             canPop: false,
-            onPopInvoked: (didPop) async {
+            onPopInvokedWithResult: (bool didPop, Object? result) async {
               if (didPop) return;
               if (!_isDisposing) {
                 setState(() => _isDisposing = true);
@@ -139,7 +141,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
           _buildAppBar(state.movie),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(12.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -198,12 +200,12 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         Expanded(
           child: Text(
             movie.title,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
         ),
         IconButton(
           icon: const Icon(Icons.add),
-          iconSize: 30,
+          iconSize: 25,
           onPressed: () async {
             await _fetchUserWatchlists();
             _showWatchlistModal();
@@ -214,7 +216,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
             Icons.favorite,
             color: _isLiked ? Colors.red : Colors.grey,
           ),
-          iconSize: 30,
+          iconSize: 25,
           onPressed: _toggle,
           padding: EdgeInsets.zero,
           highlightColor: Colors.grey,
@@ -255,7 +257,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         final formattedDate = DateFormat.yMMMMd().format(releaseDate);
         return Text(
           'Release Date: $formattedDate',
-          style: const TextStyle(fontSize: 16, color: Colors.grey),
+          style: const TextStyle(fontSize: 14, color: Colors.grey),
         );
       }
     }
@@ -650,13 +652,17 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
       setState(() {});
       modalSetState(() {});
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Movie added to watchlist')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Movie added to watchlist')),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to add movie to watchlist: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to add movie to watchlist: $e')),
+        );
+      }
     }
   }
 }

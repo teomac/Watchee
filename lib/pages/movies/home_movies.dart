@@ -76,7 +76,7 @@ class HomeMoviesState extends State<HomeMovies> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(12.0),
           child: Column(
             children: [
               _buildHeader(theme, isDarkMode),

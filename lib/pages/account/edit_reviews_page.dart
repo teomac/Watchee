@@ -11,7 +11,7 @@ class EditReviewsPage extends StatefulWidget {
       {super.key, required this.user, required this.userReviews});
 
   @override
-  _EditReviewsPageState createState() => _EditReviewsPageState();
+  State<EditReviewsPage> createState() => _EditReviewsPageState();
 }
 
 class _EditReviewsPageState extends State<EditReviewsPage> {
@@ -32,9 +32,11 @@ class _EditReviewsPageState extends State<EditReviewsPage> {
         _currentUser = currentUser;
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error initializing data: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error initializing data: $e')),
+        );
+      }
     }
   }
 
@@ -85,15 +87,19 @@ class _EditReviewsPageState extends State<EditReviewsPage> {
               .removeWhere((review) => _selectedReviews.contains(review));
           _selectedReviews.clear();
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Selected reviews deleted successfully.')),
-        );
-        Navigator.pop(context, widget.userReviews);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Selected reviews deleted successfully.')),
+          );
+          Navigator.pop(context, widget.userReviews);
+        }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete selected reviews: $e')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to delete selected reviews: $e')),
+          );
+        }
       }
     }
   }
