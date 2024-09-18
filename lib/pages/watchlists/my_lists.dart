@@ -6,6 +6,7 @@ import 'package:dima_project/services/user_service.dart';
 import 'package:logger/logger.dart';
 import 'package:dima_project/pages/watchlists/manage_watchlist_page.dart';
 import 'dart:async';
+import 'package:dima_project/services/user_menu_manager.dart';
 
 // Events
 abstract class MyListsEvent {}
@@ -125,9 +126,15 @@ class MyListsBloc extends Bloc<MyListsEvent, MyListsState> {
   }
 }
 
-class MyLists extends StatelessWidget {
-  MyLists({super.key});
-  final Logger logger = Logger();
+class MyLists extends StatefulWidget {
+  const MyLists({super.key});
+
+  @override
+  State<MyLists> createState() => _MyListsState();
+}
+
+class _MyListsState extends State<MyLists> {
+  late final Logger logger = Logger();
 
   @override
   Widget build(BuildContext context) {
@@ -188,7 +195,10 @@ class MyListsView extends StatelessWidget {
       builder: (context, state) {
         return Scaffold(
           body: SafeArea(
-            child: _buildBody(context, state),
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: _buildBody(context, state),
+            ),
           ),
           floatingActionButton: FloatingActionButton(
             onPressed: () => _showCreateWatchlistDialog(context),
@@ -205,13 +215,28 @@ class MyListsView extends StatelessWidget {
     } else if (state is MyListsLoaded) {
       return CustomScrollView(
         slivers: [
-          const SliverAppBar(
+          SliverAppBar(
             floating: true,
             pinned: true,
-            title: Text('My Lists'),
+            backgroundColor: Colors.transparent,
+            flexibleSpace: FlexibleSpaceBar(
+              titlePadding: const EdgeInsets.only(left: 12, bottom: 12),
+              title: Text(
+                'My Lists',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+            ),
+            actions: const [
+              UserInfo(),
+            ],
           ),
           SliverToBoxAdapter(
-            child: _buildLikedSection(),
+            child: Column(
+              children: [
+                _buildLikedSection(),
+                _buildSeenSection(), // New section
+              ],
+            ),
           ),
           SliverList(
             delegate: SliverChildListDelegate([
@@ -268,13 +293,27 @@ class MyListsView extends StatelessWidget {
     );
   }
 
+  Widget _buildSeenSection() {
+    return ListTile(
+      leading: const CircleAvatar(
+        backgroundColor: Colors.green,
+        child: Icon(Icons.visibility, color: Colors.white),
+      ),
+      title: const Text('Seen Movies'),
+      subtitle: const Text('Movies you have already watched'),
+      onTap: () {
+        // TODO: Navigate to Seen Movies page
+      },
+    );
+  }
+
   Widget _buildWatchlistSection(BuildContext context, String title,
       List<WatchList> watchlists, bool isOwnWatchlist) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(12.0),
           child: Text(
             title,
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -297,7 +336,9 @@ class MyListsView extends StatelessWidget {
                         userId: watchlist.userID, watchlistId: watchlist.id),
                   ),
                 ).then((_) {
-                  context.read<MyListsBloc>().add(LoadMyLists());
+                  if (context.mounted) {
+                    context.read<MyListsBloc>().add(LoadMyLists());
+                  }
                 });
               },
               onLongPress: () => _showWatchlistOptions(
