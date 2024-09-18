@@ -1,3 +1,4 @@
+import 'package:dima_project/services/user_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dima_project/models/watchlist.dart';
@@ -7,7 +8,9 @@ import 'package:dima_project/api/constants.dart';
 import 'package:dima_project/api/tmdb_api.dart';
 import 'package:dima_project/pages/movies/film_details_page.dart';
 import 'package:dima_project/pages/watchlists/search_page.dart';
+import 'package:dima_project/pages/account/user_profile_page.dart'; // Add this import
 import 'package:rxdart/rxdart.dart';
+import 'package:dima_project/models/user_model.dart';
 
 // Events
 abstract class ManageWatchlistEvent {}
@@ -33,6 +36,8 @@ class UpdateWatchlistName extends ManageWatchlistEvent {
   final String newName;
   UpdateWatchlistName(this.newName);
 }
+
+class ToggleWatchlistPrivacy extends ManageWatchlistEvent {}
 
 // States
 abstract class ManageWatchlistState {}
@@ -67,6 +72,7 @@ class ManageWatchlistBloc
             .switchMap(mapper));
     on<RemoveMovieFromWatchlist>(_onRemoveMovieFromWatchlist);
     on<UpdateWatchlistName>(_onUpdateWatchlistName);
+    on<ToggleWatchlistPrivacy>(_onToggleWatchlistPrivacy);
   }
 
   Future<void> _onLoadWatchlist(
@@ -155,6 +161,23 @@ class ManageWatchlistBloc
       }
     }
   }
+
+  Future<void> _onToggleWatchlistPrivacy(
+      ToggleWatchlistPrivacy event, Emitter<ManageWatchlistState> emit) async {
+    final currentState = state;
+    if (currentState is ManageWatchlistLoaded) {
+      try {
+        final updatedWatchlist = currentState.watchlist.copyWith(
+          isPrivate: !currentState.watchlist.isPrivate,
+        );
+        await _watchlistService.updateWatchList(updatedWatchlist);
+        emit(ManageWatchlistLoaded(updatedWatchlist, currentState.movies));
+      } catch (e) {
+        emit(ManageWatchlistError(
+            'Failed to toggle watchlist privacy: ${e.toString()}'));
+      }
+    }
+  }
 }
 
 class ManageWatchlistPage extends StatefulWidget {
@@ -174,12 +197,15 @@ class ManageWatchlistPage extends StatefulWidget {
 class _ManageWatchlistPageState extends State<ManageWatchlistPage>
     with WidgetsBindingObserver {
   late ManageWatchlistBloc _manageWatchlistBloc;
+  final UserService _userService = UserService();
+  MyUser? user;
 
   @override
   void initState() {
     super.initState();
     _manageWatchlistBloc = ManageWatchlistBloc(WatchlistService());
     _loadWatchlist();
+    _loadUser();
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -187,7 +213,12 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _loadWatchlist();
+      _loadUser();
     }
+  }
+
+  Future<void> _loadUser() async {
+    user = await _userService.getUser(widget.userId);
   }
 
   void _loadWatchlist() {
@@ -201,22 +232,9 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage>
       child: BlocBuilder<ManageWatchlistBloc, ManageWatchlistState>(
         builder: (context, state) {
           return Scaffold(
-            appBar: AppBar(
-              title: Text(
-                state is ManageWatchlistLoaded
-                    ? state.watchlist.name
-                    : 'Watchlist',
-              ),
-              actions: [
-                if (state is ManageWatchlistLoaded)
-                  IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed: () =>
-                        _showEditNameDialog(context, state.watchlist),
-                  ),
-              ],
+            body: SafeArea(
+              child: _buildBody(context, state),
             ),
-            body: _buildBody(context, state),
           );
         },
       ),
@@ -227,16 +245,194 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage>
     if (state is ManageWatchlistLoading) {
       return const Center(child: CircularProgressIndicator());
     } else if (state is ManageWatchlistLoaded) {
-      return Column(
-        children: [
-          _buildAddMovieButton(context, state.watchlist),
-          Expanded(child: _buildMovieList(context, state)),
+      return CustomScrollView(
+        slivers: [
+          _buildSliverAppBar(context, state.watchlist),
+          SliverToBoxAdapter(
+            child: _buildWatchlistHeaderContent(context, state.watchlist),
+          ),
+          SliverToBoxAdapter(
+            child: _buildAddMovieButton(context, state.watchlist),
+          ),
+          _buildMovieList(context, state),
         ],
       );
     } else if (state is ManageWatchlistError) {
       return Center(child: Text('Error: ${state.message}'));
     }
     return const Center(child: Text('Something went wrong'));
+  }
+
+  Widget _buildSliverAppBar(BuildContext context, WatchList watchlist) {
+    return SliverAppBar(
+      expandedHeight: 20.0,
+      floating: false,
+      pinned: true,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.more_vert),
+          onPressed: () => _showWatchlistOptions(context, watchlist),
+        ),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.black.withOpacity(0.7),
+                Colors.transparent,
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWatchlistHeaderContent(
+      BuildContext context, WatchList watchlist) {
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                watchlist.name,
+                style: Theme.of(context).textTheme.headlineLarge,
+              ),
+              if (watchlist.isPrivate)
+                Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: Icon(
+                    Icons.lock,
+                    size: 24,
+                    color: Theme.of(context).colorScheme.secondary,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _buildCreatedByText(context, watchlist.userID),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCreatedByText(BuildContext context, String creatorId) {
+    if (user == null) {
+      return const Text('Created by Unknown');
+    }
+    return Row(
+      children: [
+        const Text('Created by '),
+        GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UserProfilePage(user: user!),
+            ),
+          ),
+          child: Text(
+            user!.username,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showWatchlistOptions(BuildContext context, WatchList watchlist) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.edit),
+                title: const Text('Rename watchlist'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showRenameDialog(context, watchlist);
+                },
+              ),
+              ListTile(
+                leading: Icon(watchlist.isPrivate ? Icons.public : Icons.lock),
+                title: Text(
+                    watchlist.isPrivate ? 'Make it public' : 'Make it private'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _manageWatchlistBloc.add(ToggleWatchlistPrivacy());
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.person_add),
+                title: const Text('Invite as collaborator'),
+                onTap: () {
+                  Navigator.pop(context);
+                  // TODO: Implement invite functionality
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.share),
+                title: const Text('Share'),
+                onTap: () {
+                  Navigator.pop(context);
+                  // TODO: Implement share functionality
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showRenameDialog(BuildContext context, WatchList watchlist) {
+    final TextEditingController controller =
+        TextEditingController(text: watchlist.name);
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Rename Watchlist'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(hintText: "Enter new name"),
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text('Save'),
+              onPressed: () {
+                if (controller.text.isNotEmpty) {
+                  Navigator.of(context).pop();
+                  _manageWatchlistBloc
+                      .add(UpdateWatchlistName(controller.text));
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildAddMovieButton(BuildContext context, WatchList watchlist) {
@@ -251,10 +447,7 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage>
                 watchlist: watchlist,
               ),
             ),
-          ).then((_) {
-            // Refresh the watchlist when returning from SearchPage
-            _loadWatchlist();
-          });
+          ).then((_) => _loadWatchlist());
         },
         icon: const Icon(Icons.add),
         label: const Text('Add a movie'),
@@ -266,23 +459,23 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage>
   }
 
   Widget _buildMovieList(BuildContext context, ManageWatchlistLoaded state) {
-    return ListView.builder(
-      itemCount: state.movies.length,
-      itemBuilder: (context, index) {
-        final movie = state.movies[index];
-        return InkWell(
-          onTap: () => _navigateToFilmDetails(context, movie),
-          onLongPress: () =>
-              _showRemoveMovieMenu(context, movie, state.watchlist.name),
-          child: ListTile(
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final movie = state.movies[index];
+          return ListTile(
             leading: movie.posterPath != null
                 ? Image.network('${Constants.imagePath}${movie.posterPath}')
                 : const Icon(Icons.movie),
             title: Text(movie.title),
             subtitle: Text(movie.releaseDate ?? 'Release date unknown'),
-          ),
-        );
-      },
+            onTap: () => _navigateToFilmDetails(context, movie),
+            onLongPress: () =>
+                _showRemoveMovieMenu(context, movie, state.watchlist.name),
+          );
+        },
+        childCount: state.movies.length,
+      ),
     );
   }
 
@@ -338,41 +531,6 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage>
               ],
             ),
           ),
-        );
-      },
-    );
-  }
-
-  void _showEditNameDialog(BuildContext context, WatchList watchlist) {
-    final TextEditingController controller =
-        TextEditingController(text: watchlist.name);
-
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Edit Watchlist Name'),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(hintText: "Enter new name"),
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () => Navigator.of(dialogContext).pop(),
-            ),
-            TextButton(
-              child: const Text('Save'),
-              onPressed: () {
-                if (controller.text.isNotEmpty) {
-                  Navigator.of(dialogContext).pop();
-                  context
-                      .read<ManageWatchlistBloc>()
-                      .add(UpdateWatchlistName(controller.text));
-                }
-              },
-            ),
-          ],
         );
       },
     );
