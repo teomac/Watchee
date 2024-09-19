@@ -214,78 +214,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
             _showWatchlistModal();
           },
         ),
-        IconButton(
-          icon: Icon(
-            Icons.visibility,
-            color: _isSeen ? Colors.green : Colors.grey,
-          ),
-          iconSize: 25,
-          onPressed: _toggleSeen,
-          padding: EdgeInsets.zero,
-          highlightColor: Colors.grey,
-          color: _isSeen ? Colors.green : Colors.grey,
-        ),
-        IconButton(
-          icon: Icon(
-            Icons.favorite,
-            color: _isLiked ? Colors.red : Colors.grey,
-          ),
-          iconSize: 25,
-          onPressed: _toggleLiked,
-          padding: EdgeInsets.zero,
-          highlightColor: Colors.grey,
-          color: _isLiked ? Colors.red : Colors.grey,
-        )
       ],
     );
-  }
-
-  void _toggleLiked() {
-    setState(() {
-      _isLiked = !_isLiked;
-    });
-    if (_isLiked) {
-      try {
-        _userService.addToLikedMovies(_currentUser!.id, widget.movie.id);
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to add movie to liked movies: $e')),
-        );
-      }
-    } else {
-      try {
-        _userService.removeFromLikedMovies(_currentUser!.id, widget.movie.id);
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Failed to remove movie from liked movies: $e')),
-        );
-      }
-    }
-  }
-
-  void _toggleSeen() {
-    setState(() {
-      _isSeen = !_isSeen;
-    });
-    if (_isSeen) {
-      try {
-        _userService.addToSeenMovies(_currentUser!.id, widget.movie.id);
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to add movie to seen movies: $e')),
-        );
-      }
-    } else {
-      try {
-        _userService.removeFromSeenMovies(_currentUser!.id, widget.movie.id);
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Failed to remove movie from seen movies: $e')),
-        );
-      }
-    }
   }
 
   Widget _buildReleaseDate(Movie movie) {
@@ -645,6 +575,35 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
+                ListTile(
+                  title: const Text('Liked movies'),
+                  trailing: _isLiked
+                      ? const Icon(Icons.favorite, color: Colors.red)
+                      : IconButton(
+                          icon: const Icon(Icons.favorite_border,
+                              color: Colors.grey),
+                          onPressed: () async {
+                            if (!_isLiked) {
+                              await _toggleLiked(modalsetState);
+                            }
+                          },
+                        ),
+                ),
+                ListTile(
+                  title: const Text('Seen movies'),
+                  trailing: _isSeen
+                      ? const Icon(Icons.check_box, color: Colors.green)
+                      : IconButton(
+                          icon: const Icon(Icons.check_box_outline_blank,
+                              color: Colors.grey),
+                          onPressed: () async {
+                            if (!_isSeen) {
+                              await _toggleSeen(modalsetState);
+                            }
+                          },
+                        ),
+                ),
+                const Divider(),
                 Expanded(
                     child: ListView.builder(
                   itemCount: _userWatchlists.length,
@@ -678,6 +637,40 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         );
       },
     );
+  }
+
+  Future<void> _toggleLiked(StateSetter modalSetState) async {
+    setState(() {
+      _isLiked = !_isLiked;
+    });
+    if (_isLiked) {
+      try {
+        _userService.addToLikedMovies(_currentUser!.id, widget.movie.id);
+        setState(() {});
+        modalSetState(() {});
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to add movie to liked movies: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _toggleSeen(StateSetter modalSetState) async {
+    setState(() {
+      _isSeen = !_isSeen;
+    });
+    if (_isSeen) {
+      try {
+        _userService.addToSeenMovies(_currentUser!.id, widget.movie.id);
+        setState(() {});
+        modalSetState(() {});
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to add movie to seen movies: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _addMovieInWatchlist(WatchList watchlist, bool isInWatchlist,
