@@ -9,7 +9,6 @@ import 'package:dima_project/api/tmdb_api.dart';
 import 'package:dima_project/pages/movies/film_details_page.dart';
 import 'package:dima_project/pages/watchlists/search_page.dart';
 import 'package:dima_project/pages/account/user_profile_page.dart'; // Add this import
-import 'package:rxdart/rxdart.dart';
 import 'package:dima_project/models/user_model.dart';
 
 // Events
@@ -66,10 +65,6 @@ class ManageWatchlistBloc
   ManageWatchlistBloc(this._watchlistService)
       : super(ManageWatchlistInitial()) {
     on<LoadWatchlist>(_onLoadWatchlist);
-    on<AddMovieToWatchlist>(_onAddMovieToWatchlist,
-        transformer: (events, mapper) => events
-            .debounceTime(const Duration(milliseconds: 300))
-            .switchMap(mapper));
     on<RemoveMovieFromWatchlist>(_onRemoveMovieFromWatchlist);
     on<UpdateWatchlistName>(_onUpdateWatchlistName);
     on<ToggleWatchlistPrivacy>(_onToggleWatchlistPrivacy);
@@ -89,30 +84,6 @@ class ManageWatchlistBloc
       }
     } catch (e) {
       emit(ManageWatchlistError(e.toString()));
-    }
-  }
-
-  Future<void> _onAddMovieToWatchlist(
-      AddMovieToWatchlist event, Emitter<ManageWatchlistState> emit) async {
-    final currentState = state;
-    if (currentState is ManageWatchlistLoaded) {
-      try {
-        await _watchlistService.addMovieToWatchlist(
-            currentState.watchlist.userID,
-            currentState.watchlist.id,
-            event.movie.id);
-
-        final updatedMovies = List<int>.from(currentState.watchlist.movies)
-          ..add(event.movie.id);
-        final updatedWatchlist = currentState.watchlist.copyWith(
-          movies: updatedMovies,
-        );
-
-        final updatedMovieList = [...currentState.movies, event.movie];
-        emit(ManageWatchlistLoaded(updatedWatchlist, updatedMovieList));
-      } catch (e) {
-        emit(ManageWatchlistError('Failed to add movie: ${e.toString()}'));
-      }
     }
   }
 
@@ -194,8 +165,7 @@ class ManageWatchlistPage extends StatefulWidget {
   State<ManageWatchlistPage> createState() => _ManageWatchlistPageState();
 }
 
-class _ManageWatchlistPageState extends State<ManageWatchlistPage>
-    with WidgetsBindingObserver {
+class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
   late ManageWatchlistBloc _manageWatchlistBloc;
   final UserService _userService = UserService();
   MyUser? user;
@@ -204,25 +174,12 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage>
   void initState() {
     super.initState();
     _manageWatchlistBloc = ManageWatchlistBloc(WatchlistService());
-    _loadWatchlist();
-    _loadUser();
-    WidgetsBinding.instance.addObserver(this);
+    _loadBasics();
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _loadWatchlist();
-      _loadUser();
-    }
-  }
-
-  Future<void> _loadUser() async {
-    user = await _userService.getUser(widget.userId);
-  }
-
-  void _loadWatchlist() {
+  Future<void> _loadBasics() async {
     _manageWatchlistBloc.add(LoadWatchlist(widget.userId, widget.watchlistId));
+    user = await _userService.getUser(widget.userId);
   }
 
   @override
@@ -268,7 +225,7 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage>
       expandedHeight: 20.0,
       floating: false,
       pinned: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.black,
       elevation: 0,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
@@ -447,7 +404,7 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage>
                 watchlist: watchlist,
               ),
             ),
-          ).then((_) => _loadWatchlist());
+          ).then((_) => _loadBasics());
         },
         icon: const Icon(Icons.add),
         label: const Text('Add a movie'),
@@ -487,7 +444,7 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage>
       ),
     ).then((_) {
       // Refresh the watchlist when returning from FilmDetailsPage
-      _loadWatchlist();
+      _loadBasics();
     });
   }
 
@@ -538,7 +495,6 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage>
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     _manageWatchlistBloc.close();
     super.dispose();
   }
