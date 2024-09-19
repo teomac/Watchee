@@ -136,20 +136,6 @@ class UserService {
     return null;
   }
 
-  // Add a movie to user's liked movies
-  Future<void> addLikedMovie(String userId, String movieId) async {
-    await _firestore.collection('users').doc(userId).update({
-      'likedMovies': FieldValue.arrayUnion([movieId])
-    });
-  }
-
-  // Remove a movie from user's liked movies
-  Future<void> removeLikedMovie(String userId, String movieId) async {
-    await _firestore.collection('users').doc(userId).update({
-      'likedMovies': FieldValue.arrayRemove([movieId])
-    });
-  }
-
   // Add a custom movie list
   Future<void> addCustomList(
       String userId, String listName, List<String> movies) async {
@@ -302,11 +288,33 @@ class UserService {
     });
   }
 
+  // add movie to seen movies
+  Future<void> addToSeenMovies(String userId, int movieId) async {
+    await _firestore.collection('users').doc(userId).update({
+      'seenMovies': FieldValue.arrayUnion([movieId])
+    });
+  }
+
+  // remove movie from aeen movies
+  Future<void> removeFromSeenMovies(String userId, int movieId) async {
+    await _firestore.collection('users').doc(userId).update({
+      'seenMovies': FieldValue.arrayRemove([movieId])
+    });
+  }
+
   // check if movie is in liked movies
   Future<bool> checkLikedMovies(String userId, int movieId) async {
     DocumentSnapshot userDoc =
         await _firestore.collection('users').doc(userId).get();
     List<dynamic> likedMovies = userDoc['likedMovies'];
+    return likedMovies.contains(movieId);
+  }
+
+  // check if movie is in seen movies
+  Future<bool> checkSeenMovies(String userId, int movieId) async {
+    DocumentSnapshot userDoc =
+        await _firestore.collection('users').doc(userId).get();
+    List<dynamic> likedMovies = userDoc['seenMovies'];
     return likedMovies.contains(movieId);
   }
 
