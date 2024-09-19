@@ -4,6 +4,7 @@ import 'package:dima_project/models/watchlist.dart';
 import 'package:dima_project/services/watchlist_service.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:logger/logger.dart';
+import 'package:dima_project/models/user_model.dart'; // Add this line to import MyUser class
 import 'package:dima_project/pages/watchlists/manage_watchlist_page.dart';
 import 'dart:async';
 import 'package:dima_project/services/user_menu_manager.dart';
@@ -67,7 +68,6 @@ class MyListsBloc extends Bloc<MyListsEvent, MyListsState> {
     on<LoadMyLists>(_onLoadMyLists);
     on<CreateWatchlist>(_onCreateWatchlist);
     on<DeleteWatchlist>(_onDeleteWatchlist);
-    add(LoadMyLists());
   }
 
   Future<void> _onLoadMyLists(
@@ -136,80 +136,41 @@ class MyLists extends StatefulWidget {
 
 class _MyListsState extends State<MyLists> {
   late final Logger logger = Logger();
+  late MyListsBloc myListsBloc;
+  MyUser? currentUser;
+
+  @override
+  void initState() {
+    super.initState();
+    myListsBloc = MyListsBloc(WatchlistService(), UserService());
+    loadBasics();
+  }
+
+  void loadBasics() async {
+    currentUser = await UserService().getCurrentUser();
+    myListsBloc.add(LoadMyLists());
+  }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) {
-        final watchlistService = WatchlistService();
-        logger.d('Creating MyListsBloc');
-        return MyListsBloc(watchlistService, UserService())..add(LoadMyLists());
-      },
-      child: BlocConsumer<MyListsBloc, MyListsState>(
-        listener: (context, state) {
-          logger.d('MyLists state changed: $state');
-          if (state is MyListsError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
-          }
-        },
+    return BlocProvider.value(
+      value: myListsBloc,
+      child: BlocBuilder<MyListsBloc, MyListsState>(
         builder: (context, state) {
-          if (state is MyListsLoaded) {
-            return MyListsView(
-              ownWatchlists: state.ownWatchlists,
-              followedWatchlists: state.followedWatchlists,
-              userId: state.ownWatchlists[0].userID,
-            );
-          } else {
-            return const Center(child: CircularProgressIndicator());
-          }
+          return Scaffold(
+            body: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: _buildBody(context, state),
+              ),
+            ),
+            floatingActionButton: FloatingActionButton(
+              onPressed: () => _showCreateWatchlistDialog(context),
+              child: const Icon(Icons.add),
+            ),
+          );
         },
       ),
-    );
-  }
-}
-
-class MyListsView extends StatelessWidget {
-  final List<WatchList> ownWatchlists;
-  final List<WatchList> followedWatchlists;
-  final String userId;
-
-  const MyListsView({
-    super.key,
-    required this.ownWatchlists,
-    required this.followedWatchlists,
-    required this.userId,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocConsumer<MyListsBloc, MyListsState>(
-      listener: (context, state) {
-        if (state is WatchlistCreated) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Watchlist created successfully')),
-          );
-        } else if (state is WatchlistCreationError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
-          );
-        }
-      },
-      builder: (context, state) {
-        return Scaffold(
-          body: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: _buildBody(context, state),
-            ),
-          ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () => _showCreateWatchlistDialog(context),
-            child: const Icon(Icons.add),
-          ),
-        );
-      },
     );
   }
 
@@ -237,17 +198,17 @@ class MyListsView extends StatelessWidget {
           SliverToBoxAdapter(
             child: Column(
               children: [
-                _buildLikedSection(context, userId),
-                _buildSeenSection(context, userId), // New section
+                _buildLikedSection(context, currentUser!.id), // New section
+                _buildSeenSection(context, currentUser!.id), // New section
               ],
             ),
           ),
           SliverList(
             delegate: SliverChildListDelegate([
               _buildWatchlistSection(
-                  context, 'My Watchlists', ownWatchlists, true),
-              _buildWatchlistSection(
-                  context, 'Followed Watchlists', followedWatchlists, false),
+                  context, 'My Watchlists', state.ownWatchlists, true),
+              _buildWatchlistSection(context, 'Followed Watchlists',
+                  state.followedWatchlists, false),
             ]),
           ),
         ],
@@ -259,7 +220,7 @@ class MyListsView extends StatelessWidget {
           children: [
             Text(state.message),
             ElevatedButton(
-              onPressed: () => context.read<MyListsBloc>().add(LoadMyLists()),
+              onPressed: () => myListsBloc.add(LoadMyLists()),
               child: const Text('Try Again'),
             ),
           ],
@@ -276,7 +237,7 @@ class MyListsView extends StatelessWidget {
         return CreateWatchlistDialog(
           onCreateWatchlist: (String name, bool isPrivate) {
             Navigator.of(dialogContext).pop();
-            context.read<MyListsBloc>().add(CreateWatchlist(name, isPrivate));
+            myListsBloc.add(CreateWatchlist(name, isPrivate));
           },
         );
       },
@@ -357,7 +318,7 @@ class MyListsView extends StatelessWidget {
                   ),
                 ).then((_) {
                   if (context.mounted) {
-                    context.read<MyListsBloc>().add(LoadMyLists());
+                    myListsBloc.add(LoadMyLists());
                   }
                 });
               },
@@ -365,8 +326,7 @@ class MyListsView extends StatelessWidget {
                   context,
                   watchlist,
                   isOwnWatchlist,
-                  (WatchList wl) =>
-                      context.read<MyListsBloc>().add(DeleteWatchlist(wl))),
+                  (WatchList wl) => myListsBloc.add(DeleteWatchlist(wl))),
             )),
         const SizedBox(height: 16),
       ],
@@ -486,6 +446,12 @@ class MyListsView extends StatelessWidget {
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    myListsBloc.close();
+    super.dispose();
   }
 }
 

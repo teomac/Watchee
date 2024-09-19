@@ -18,10 +18,7 @@ class DispatcherState extends State<Dispatcher> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: index,
-        children: screens,
-      ),
+      body: screens[index],
       bottomNavigationBar: NavigationBar(
         selectedIndex: index,
         onDestinationSelected: (index) => setState(() => this.index = index),
