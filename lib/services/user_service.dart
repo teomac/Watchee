@@ -339,6 +339,36 @@ class UserService {
     }
   }
 
+  // retrieve user notifications
+  Future<List<Map<String, dynamic>>> getNotifications(String userId) async {
+    QuerySnapshot snapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('notifications')
+        .orderBy('timestamp', descending: true)
+        .get();
+
+    return snapshot.docs
+        .map((doc) => doc.data() as Map<String, dynamic>)
+        .toList();
+  }
+
+  // clear notifications
+  Future<void> clearNotifications(String userId) async {
+    WriteBatch batch = _firestore.batch();
+    QuerySnapshot snapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('notifications')
+        .get();
+
+    for (var doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+
+    await batch.commit();
+  }
+
   Future<bool> signOut() async {
     try {
       await _auth.signOut();

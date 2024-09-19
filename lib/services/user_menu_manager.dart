@@ -1,3 +1,4 @@
+import 'package:dima_project/pages/account/notifications_page.dart';
 import 'package:dima_project/pages/account/user_profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:dima_project/models/user_model.dart';
@@ -95,6 +96,15 @@ class _UserInfoState extends State<UserInfo> {
                       MaterialPageRoute(
                           builder: (context) =>
                               UserProfilePage(user: _currentUser!)));
+                },
+                onNotificationsTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => NotificationsPage(
+                                user: _currentUser!,
+                              )));
                 },
               ),
             );

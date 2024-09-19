@@ -50,6 +50,24 @@ exports.sendFollowNotification = functions
               },
             });
             console.log(`Notification sent for new follower: ${followerName}`);
+
+            // store notification in firestore
+            const notificationsRef = admin.firestore().collection(`users/${userId}/notifications`);
+            notificationsRef.add({
+                  message,
+                  timestamp: admin.firestore.FieldValue.serverTimestamp(),
+                  type: "new_follower",
+                  followerId,
+                });
+
+            // notifications number check
+            const snapshot = await notificationsRef.orderBy('timestamp').limit(11).get();
+
+            if (snapshot.size > 10) {
+              const oldestDoc = snapshot.docs[0];
+              await oldestDoc.ref.delete();
+            }
+
           } else {
             console.log("No FCM token found for user");
           }
@@ -99,6 +117,25 @@ exports.sendReviewNotification = functions
             });
             console.log(
                 `Notification sent to follower ${followerData.username}`);
+
+            // store notification in firestore
+            const notificationsRef = admin.firestore().collection(`users/${followerId}/notifications`);
+            notificationsRef.add({
+              message,
+              timestamp: admin.firestore.FieldValue.serverTimestamp(),
+              type: "new_review",
+              reviewAuthorId,
+              reviewAuthorName,
+            });
+
+            // notifications number check
+            const snapshot = await notificationsRef.orderBy('timestamp').limit(11).get();
+
+            if (snapshot.size > 10) {
+              const oldestDoc = snapshot.docs[0];
+              await oldestDoc.ref.delete();
+            }
+
           } else {
             console.log(`No FCM token found for follower ${followerId}`);
           }
