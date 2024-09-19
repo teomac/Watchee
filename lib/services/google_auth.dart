@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dima_project/models/user_model.dart';
+import 'package:dima_project/services/user_service.dart'; // Import UserService
 import 'package:logger/logger.dart';
 
 class AuthService {
@@ -46,6 +47,9 @@ class AuthService {
             .doc(userCredential.user!.uid)
             .set(newUser.toMap());
       }
+
+      await UserService().updateUserWithNameLowerCase(
+          userCredential.user!.uid, googleUser.displayName ?? "");
 
       return userCredential;
     } catch (e) {

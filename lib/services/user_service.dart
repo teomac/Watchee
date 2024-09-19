@@ -118,13 +118,56 @@ class UserService {
   // Search for users
   Future<List<MyUser>> searchUsers(String query) async {
     query = query.toLowerCase();
-    QuerySnapshot snapshot = await _firestore
-        .collection('users')
-        .where('username', isGreaterThanOrEqualTo: query)
-        .where('username', isLessThan: '${query}z')
-        .get();
+    try {
+      // Username query (starts with)
+      QuerySnapshot usernameSnapshot = await _firestore
+          .collection('users')
+          .where('username', isGreaterThanOrEqualTo: query)
+          .where('username', isLessThan: '${query}z')
+          .get();
 
-    return snapshot.docs.map((doc) => MyUser.fromFirestore(doc)).toList();
+      // Name query (contains)
+      QuerySnapshot nameSnapshot = await _firestore
+          .collection('users')
+          .where('nameLowerCase', arrayContains: query)
+          .get();
+
+      // Combine results and remove duplicates
+      Set<String> uniqueUserIds = {};
+      List<MyUser> results = [];
+
+      for (var doc in usernameSnapshot.docs + nameSnapshot.docs) {
+        String userId = doc.id;
+        if (!uniqueUserIds.contains(userId)) {
+          uniqueUserIds.add(userId);
+          results.add(MyUser.fromFirestore(doc));
+        }
+      }
+
+      return results;
+    } catch (e) {
+      logger.e('Error searching users: $e');
+      return [];
+    }
+  }
+
+  // Method to update user document with nameLowerCase field
+  Future<void> updateUserWithNameLowerCase(String userId, String name) async {
+    try {
+      List<String> nameParts = name.toLowerCase().split(' ');
+      List<String> nameSubstrings = [];
+      for (String part in nameParts) {
+        for (int i = 0; i < part.length; i++) {
+          nameSubstrings.add(part.substring(0, i + 1));
+        }
+      }
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .update({'nameLowerCase': nameSubstrings});
+    } catch (e) {
+      logger.e('Error updating user with nameLowerCase: $e');
+    }
   }
 
   // Get current logged-in user
