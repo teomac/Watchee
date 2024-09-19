@@ -288,6 +288,20 @@ class UserService {
     });
   }
 
+  // retrieve liked movie ids
+  Future<List<int>> getLikedMovieIds(String userId) async {
+    try {
+      DocumentSnapshot userDoc =
+          await _firestore.collection('users').doc(userId).get();
+      List<dynamic> likedMovieIds = userDoc['likedMovies'] ?? [];
+
+      return likedMovieIds.map((id) => id as int).toList();
+    } catch (e) {
+      logger.d('Failed to retrieve liked movie IDs: $e');
+      return [];
+    }
+  }
+
   // add movie to seen movies
   Future<void> addToSeenMovies(String userId, int movieId) async {
     await _firestore.collection('users').doc(userId).update({
@@ -295,11 +309,25 @@ class UserService {
     });
   }
 
-  // remove movie from aeen movies
+  // remove movie from seen movies
   Future<void> removeFromSeenMovies(String userId, int movieId) async {
     await _firestore.collection('users').doc(userId).update({
       'seenMovies': FieldValue.arrayRemove([movieId])
     });
+  }
+
+  // retrieve seen movie ids
+  Future<List<int>> getSeenMovieIds(String userId) async {
+    try {
+      DocumentSnapshot userDoc =
+          await _firestore.collection('users').doc(userId).get();
+      List<dynamic> seenMovieIds = userDoc['seenMovies'] ?? [];
+
+      return seenMovieIds.map((id) => id as int).toList();
+    } catch (e) {
+      logger.d('Failed to retrieve seen movie IDs: $e');
+      return [];
+    }
   }
 
   // check if movie is in liked movies

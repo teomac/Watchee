@@ -28,10 +28,10 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   MyUser? _currentUser;
   final UserService _userService = UserService();
   List<MovieReview> _friendsReviews = [];
-  bool _isLiked = false;
-  bool _isSeen = false;
   final WatchlistService _watchlistService = WatchlistService();
   List<WatchList> _userWatchlists = [];
+  List<int> _likedMovies = [];
+  List<int> _seenMovies = [];
 
   @override
   void dispose() {
@@ -52,10 +52,6 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
       final currentUser = await _userService.getCurrentUser();
       if (currentUser != null) {
         _currentUser = currentUser;
-        _isLiked = await _userService.checkLikedMovies(
-            _currentUser!.id, widget.movie.id);
-        _isSeen = await _userService.checkSeenMovies(
-            _currentUser!.id, widget.movie.id);
       }
     } catch (e) {
       if (mounted) {
@@ -63,6 +59,27 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
           SnackBar(content: Text('Error initializing data: $e')),
         );
       }
+    }
+  }
+
+  Future<void> _fetchLikedMovies() async {
+    if (_currentUser == null) return;
+    List<int> likedMovies =
+        await _userService.getLikedMovieIds(_currentUser!.id);
+    if (mounted) {
+      setState(() {
+        _likedMovies = likedMovies;
+      });
+    }
+  }
+
+  Future<void> _fetchSeenMovies() async {
+    if (_currentUser == null) return;
+    List<int> seenMovies = await _userService.getSeenMovieIds(_currentUser!.id);
+    if (mounted) {
+      setState(() {
+        _seenMovies = seenMovies;
+      });
     }
   }
 
@@ -211,6 +228,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
           iconSize: 25,
           onPressed: () async {
             await _fetchUserWatchlists();
+            await _fetchLikedMovies();
+            await _fetchSeenMovies();
             _showWatchlistModal();
           },
         ),
@@ -565,6 +584,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
       builder: (context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter modalsetState) {
+            final bool isLiked = _likedMovies.contains(widget.movie.id);
+            final bool isSeen = _seenMovies.contains(widget.movie.id);
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -577,31 +598,35 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                 ),
                 ListTile(
                   title: const Text('Liked movies'),
-                  trailing: _isLiked
-                      ? const Icon(Icons.favorite, color: Colors.red)
-                      : IconButton(
-                          icon: const Icon(Icons.favorite_border,
-                              color: Colors.grey),
-                          onPressed: () async {
-                            if (!_isLiked) {
-                              await _toggleLiked(modalsetState);
-                            }
-                          },
-                        ),
+                  trailing: IconButton(
+                    icon: Icon(
+                      isLiked ? Icons.favorite : Icons.favorite_border,
+                      color: isLiked ? Colors.red : Colors.grey,
+                    ),
+                    onPressed: () async {
+                      if (isLiked) {
+                        await _removeFromLiked(_likedMovies, modalsetState);
+                      } else {
+                        await _addToLiked(_likedMovies, modalsetState);
+                      }
+                    },
+                  ),
                 ),
                 ListTile(
                   title: const Text('Seen movies'),
-                  trailing: _isSeen
-                      ? const Icon(Icons.check_box, color: Colors.green)
-                      : IconButton(
-                          icon: const Icon(Icons.check_box_outline_blank,
-                              color: Colors.grey),
-                          onPressed: () async {
-                            if (!_isSeen) {
-                              await _toggleSeen(modalsetState);
-                            }
-                          },
-                        ),
+                  trailing: IconButton(
+                    icon: Icon(
+                      isSeen ? Icons.check_box : Icons.check_box_outline_blank,
+                      color: isSeen ? Colors.green : Colors.grey,
+                    ),
+                    onPressed: () async {
+                      if (isSeen) {
+                        await _removeFromSeen(_seenMovies, modalsetState);
+                      } else {
+                        await _addToSeen(_seenMovies, modalsetState);
+                      }
+                    },
+                  ),
                 ),
                 const Divider(),
                 Expanded(
@@ -613,22 +638,21 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                         watchlist.movies.contains(widget.movie.id);
 
                     return ListTile(
-                      title: Text(watchlist.name),
-                      trailing: isInWatchlist
-                          ? const Icon(Icons.check, color: Colors.green)
-                          : IconButton(
-                              icon: const Icon(Icons.add),
-                              onPressed: () async {
-                                if (!isInWatchlist) {
-                                  await _addMovieInWatchlist(
-                                      watchlist, isInWatchlist, modalsetState);
-                                  modalsetState(() {
-                                    watchlist.movies.add(widget.movie.id);
-                                  });
-                                }
-                              },
+                        title: Text(watchlist.name),
+                        trailing: IconButton(
+                            icon: Icon(
+                              isInWatchlist ? Icons.check : Icons.add,
+                              color: isInWatchlist ? Colors.green : Colors.grey,
                             ),
-                    );
+                            onPressed: () async {
+                              if (isInWatchlist) {
+                                await _removeMovieFromWatchlist(
+                                    watchlist, modalsetState);
+                              } else {
+                                await _addMovieInWatchlist(
+                                    watchlist, modalsetState);
+                              }
+                            }));
                   },
                 ))
               ],
@@ -639,61 +663,115 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     );
   }
 
-  Future<void> _toggleLiked(StateSetter modalSetState) async {
-    setState(() {
-      _isLiked = !_isLiked;
-    });
-    if (_isLiked) {
-      try {
-        _userService.addToLikedMovies(_currentUser!.id, widget.movie.id);
-        setState(() {});
-        modalSetState(() {});
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to add movie to liked movies: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _toggleSeen(StateSetter modalSetState) async {
-    setState(() {
-      _isSeen = !_isSeen;
-    });
-    if (_isSeen) {
-      try {
-        _userService.addToSeenMovies(_currentUser!.id, widget.movie.id);
-        setState(() {});
-        modalSetState(() {});
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to add movie to seen movies: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _addMovieInWatchlist(WatchList watchlist, bool isInWatchlist,
-      StateSetter modalSetState) async {
+  Future<void> _addToLiked(
+      List<int> likedMovies, StateSetter modalSetState) async {
+    if (_currentUser == null) return;
     try {
-      await _watchlistService.addMovieToWatchlist(
-          watchlist.userID, watchlist.id, widget.movie.id);
-      watchlist.movies.add(widget.movie.id);
-
+      await _userService.addToLikedMovies(_currentUser!.id, widget.movie.id);
       setState(() {});
-      modalSetState(() {});
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Movie added to watchlist')),
-        );
-      }
+      modalSetState(() {
+        likedMovies.add(widget.movie.id);
+      });
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to add movie to watchlist: $e')),
+          SnackBar(content: Text('Failed to add to liked: $e')),
         );
       }
+    }
+  }
+
+  Future<void> _removeFromLiked(
+      List<int> likedMovies, StateSetter modalSetState) async {
+    if (_currentUser == null) return;
+    try {
+      await _userService.removeFromLikedMovies(
+          _currentUser!.id, widget.movie.id);
+      setState(() {});
+      modalSetState(() {
+        likedMovies.remove(widget.movie.id);
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to remove from liked: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _addToSeen(
+      List<int> seenMovies, StateSetter modalSetState) async {
+    if (_currentUser == null) return;
+    try {
+      await _userService.addToSeenMovies(_currentUser!.id, widget.movie.id);
+      setState(() {});
+      modalSetState(() {
+        seenMovies.add(widget.movie.id);
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to add to seen: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _removeFromSeen(
+      List<int> seenMovies, StateSetter modalSetState) async {
+    if (_currentUser == null) return;
+    try {
+      await _userService.removeFromSeenMovies(
+          _currentUser!.id, widget.movie.id);
+      setState(() {});
+      modalSetState(() {
+        seenMovies.remove(widget.movie.id);
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to remove from seen: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _addMovieInWatchlist(
+      WatchList watchlist, StateSetter modalSetState) async {
+    try {
+      await _watchlistService.addMovieToWatchlist(
+          watchlist.userID, watchlist.id, widget.movie.id);
+      setState(() {});
+      modalSetState(() {
+        watchlist.movies.add(widget.movie.id);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Movie added to watchlist')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to add movie to watchlist: $e')),
+      );
+    }
+  }
+
+  Future<void> _removeMovieFromWatchlist(
+      WatchList watchlist, StateSetter modalSetState) async {
+    try {
+      await _watchlistService.removeMovieFromWatchlist(
+          watchlist.userID, watchlist.id, widget.movie.id);
+      setState(() {});
+      modalSetState(() {
+        watchlist.movies.remove(widget.movie.id);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Movie removed from watchlist')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to remove movie from watchlist: $e')),
+      );
     }
   }
 }
