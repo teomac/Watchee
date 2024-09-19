@@ -88,7 +88,12 @@ class _SearchPageState extends State<SearchPage> {
                   title: Text(movie.title),
                   subtitle: Text(movie.releaseDate ?? 'Release date unknown'),
                   trailing: (movieAlreadyAdded)
-                      ? const Icon(Icons.check)
+                      ? IconButton(
+                          icon: const Icon(Icons.check),
+                          onPressed: () {
+                            _removeMovie(movie.id);
+                          },
+                        )
                       : IconButton(
                           icon: const Icon(Icons.add),
                           onPressed: () {
@@ -183,6 +188,85 @@ class _SearchPageState extends State<SearchPage> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Failed to add movie to seen movies'),
+              ),
+            );
+          }
+        }
+      }
+    }
+  }
+
+  void _removeMovie(int movieId) async {
+    if (widget.watchlist != null) {
+      try {
+        await _watchlistService.removeMovieFromWatchlist(
+          widget.watchlist!.userID,
+          widget.watchlist!.id,
+          movieId,
+        );
+        setState(() {
+          _addedMovies.remove(movieId);
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Successfully removed from watchlist'),
+            ),
+          );
+        }
+      } catch (e) {
+        logger.e('Error removing movie from watchlist: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to remove movie from watchlist'),
+            ),
+          );
+        }
+      }
+    } else {
+      if (widget.isLiked!) {
+        try {
+          await _userService.removeFromLikedMovies(widget.userId!, movieId);
+          setState(() {
+            _addedMovies.remove(movieId);
+          });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Successfully removed from liked movies'),
+              ),
+            );
+          }
+        } catch (e) {
+          logger.e('Error removing movie from liked movies: $e');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Failed to remove movie from liked movies'),
+              ),
+            );
+          }
+        }
+      } else if (widget.isLiked == false) {
+        try {
+          await _userService.removeFromSeenMovies(widget.userId!, movieId);
+          setState(() {
+            _addedMovies.remove(movieId);
+          });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Successfully removed from seen movies'),
+              ),
+            );
+          }
+        } catch (e) {
+          logger.e('Error removing movie from seen movies: $e');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Failed to remove movie from seen movies'),
               ),
             );
           }

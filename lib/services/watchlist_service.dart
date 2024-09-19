@@ -150,4 +150,23 @@ class WatchlistService {
       logger.e(e);
     }
   }
+
+  Future<void> removeMovieFromWatchlist(
+      String userId, String watchlistId, int movieId) async {
+    try {
+      DocumentSnapshot doc = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('my_watchlists')
+          .doc(watchlistId)
+          .get();
+      //add movie id to the watchlist
+      WatchList watchlist = WatchList.fromFirestore(doc);
+      watchlist.movies.remove(movieId);
+      watchlist = watchlist.copyWith(updatedAt: DateTime.now().toString());
+      await updateWatchList(watchlist);
+    } catch (e) {
+      logger.e(e);
+    }
+  }
 }
