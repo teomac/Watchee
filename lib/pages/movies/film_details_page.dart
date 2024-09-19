@@ -29,6 +29,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   final UserService _userService = UserService();
   List<MovieReview> _friendsReviews = [];
   bool _isLiked = false;
+  bool _isSeen = false;
   final WatchlistService _watchlistService = WatchlistService();
   List<WatchList> _userWatchlists = [];
 
@@ -52,6 +53,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
       if (currentUser != null) {
         _currentUser = currentUser;
         _isLiked = await _userService.checkLikedMovies(
+            _currentUser!.id, widget.movie.id);
+        _isSeen = await _userService.checkSeenMovies(
             _currentUser!.id, widget.movie.id);
       }
     } catch (e) {
@@ -213,11 +216,22 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         ),
         IconButton(
           icon: Icon(
+            Icons.visibility,
+            color: _isSeen ? Colors.green : Colors.grey,
+          ),
+          iconSize: 25,
+          onPressed: _toggleSeen,
+          padding: EdgeInsets.zero,
+          highlightColor: Colors.grey,
+          color: _isSeen ? Colors.green : Colors.grey,
+        ),
+        IconButton(
+          icon: Icon(
             Icons.favorite,
             color: _isLiked ? Colors.red : Colors.grey,
           ),
           iconSize: 25,
-          onPressed: _toggle,
+          onPressed: _toggleLiked,
           padding: EdgeInsets.zero,
           highlightColor: Colors.grey,
           color: _isLiked ? Colors.red : Colors.grey,
@@ -226,7 +240,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     );
   }
 
-  void _toggle() {
+  void _toggleLiked() {
     setState(() {
       _isLiked = !_isLiked;
     });
@@ -245,6 +259,30 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text('Failed to remove movie from liked movies: $e')),
+        );
+      }
+    }
+  }
+
+  void _toggleSeen() {
+    setState(() {
+      _isSeen = !_isSeen;
+    });
+    if (_isSeen) {
+      try {
+        _userService.addToSeenMovies(_currentUser!.id, widget.movie.id);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to add movie to seen movies: $e')),
+        );
+      }
+    } else {
+      try {
+        _userService.removeFromSeenMovies(_currentUser!.id, widget.movie.id);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Failed to remove movie from seen movies: $e')),
         );
       }
     }
