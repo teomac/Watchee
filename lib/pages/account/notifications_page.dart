@@ -7,10 +7,10 @@ import 'package:intl/intl.dart';
 class NotificationsPage extends StatefulWidget {
   final MyUser user;
 
-  NotificationsPage({Key? key, required this.user}) : super(key: key);
+  const NotificationsPage({super.key, required this.user});
 
   @override
-  _NotificationsPageState createState() => _NotificationsPageState();
+  State<NotificationsPage> createState() => _NotificationsPageState();
 }
 
 class _NotificationsPageState extends State<NotificationsPage> {
@@ -30,7 +30,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         title: const Text('Notifications'),
         actions: [
           IconButton(
-            icon: Icon(Icons.clear_all),
+            icon: const Icon(Icons.clear_all),
             onPressed: () async {
               await _userService.clearNotifications(widget.user.id);
               setState(() {

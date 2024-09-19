@@ -168,7 +168,9 @@ class ManageWatchlistPage extends StatefulWidget {
 class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
   late ManageWatchlistBloc _manageWatchlistBloc;
   final UserService _userService = UserService();
-  MyUser? user;
+  MyUser? user, currentUser;
+  bool canEdit = false;
+  WatchList? actualWatchlist;
 
   @override
   void initState() {
@@ -179,7 +181,17 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
 
   Future<void> _loadBasics() async {
     _manageWatchlistBloc.add(LoadWatchlist(widget.userId, widget.watchlistId));
+    actualWatchlist = await _manageWatchlistBloc._watchlistService
+        .getWatchList(widget.userId, widget.watchlistId);
     user = await _userService.getUser(widget.userId);
+    currentUser = await _userService.getCurrentUser();
+    if (currentUser != null &&
+            actualWatchlist != null &&
+            user != null &&
+            (currentUser!.id == widget.userId) ||
+        actualWatchlist!.collaborators.contains(currentUser!.id)) {
+      canEdit = true;
+    }
   }
 
   @override
@@ -319,31 +331,36 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ListTile(
-                leading: const Icon(Icons.edit),
-                title: const Text('Rename watchlist'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showRenameDialog(context, watchlist);
-                },
-              ),
-              ListTile(
-                leading: Icon(watchlist.isPrivate ? Icons.public : Icons.lock),
-                title: Text(
-                    watchlist.isPrivate ? 'Make it public' : 'Make it private'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _manageWatchlistBloc.add(ToggleWatchlistPrivacy());
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.person_add),
-                title: const Text('Invite as collaborator'),
-                onTap: () {
-                  Navigator.pop(context);
-                  // TODO: Implement invite functionality
-                },
-              ),
+              if (canEdit)
+                ListTile(
+                  leading: const Icon(Icons.edit),
+                  title: const Text('Rename watchlist'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showRenameDialog(context, watchlist);
+                  },
+                ),
+              if (canEdit)
+                ListTile(
+                  leading:
+                      Icon(watchlist.isPrivate ? Icons.public : Icons.lock),
+                  title: Text(watchlist.isPrivate
+                      ? 'Make it public'
+                      : 'Make it private'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _manageWatchlistBloc.add(ToggleWatchlistPrivacy());
+                  },
+                ),
+              if (canEdit)
+                ListTile(
+                  leading: const Icon(Icons.person_add),
+                  title: const Text('Invite as collaborator'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    // TODO: Implement invite functionality
+                  },
+                ),
               ListTile(
                 leading: const Icon(Icons.share),
                 title: const Text('Share'),
@@ -393,6 +410,9 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
   }
 
   Widget _buildAddMovieButton(BuildContext context, WatchList watchlist) {
+    if (!canEdit) {
+      return const SizedBox.shrink();
+    }
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: ElevatedButton.icon(
@@ -427,8 +447,9 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
             title: Text(movie.title),
             subtitle: Text(movie.releaseDate ?? 'Release date unknown'),
             onTap: () => _navigateToFilmDetails(context, movie),
-            onLongPress: () =>
-                _showRemoveMovieMenu(context, movie, state.watchlist.name),
+            onLongPress: () => canEdit
+                ? _showRemoveMovieMenu(context, movie, state.watchlist.name)
+                : null,
           );
         },
         childCount: state.movies.length,

@@ -3,6 +3,9 @@ import 'package:dima_project/pages/account/edit_reviews_page.dart';
 import 'package:flutter/material.dart';
 import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/services/user_service.dart';
+import 'package:dima_project/services/watchlist_service.dart';
+import 'package:dima_project/models/watchlist.dart';
+import 'package:dima_project/pages/watchlists/manage_watchlist_page.dart'; // Add this import
 
 class UserProfilePage extends StatefulWidget {
   final MyUser user;
@@ -23,6 +26,11 @@ class _UserProfilePageState extends State<UserProfilePage> {
   List<MovieReview> _userReviews = [];
   bool _showAllReviews = false;
 
+  //for watchlists retrieval
+  final WatchlistService _watchlistService = WatchlistService();
+  List<WatchList> _publicWatchlists = [];
+  bool _isLoadingWatchlists = true;
+
   @override
   void initState() {
     super.initState();
@@ -38,6 +46,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
           _checkFollowStatus(),
           _fetchFollowedByUsers(),
           _fetchUserReviews(),
+          _fetchPublicWatchlists(),
         ]);
       }
       if (mounted) {
@@ -123,6 +132,29 @@ class _UserProfilePageState extends State<UserProfilePage> {
     }
   }
 
+  Future<void> _fetchPublicWatchlists() async {
+    if (_currentUser == null) return;
+    try {
+      List<WatchList> watchlists =
+          await _watchlistService.getPublicWatchLists(widget.user.id);
+      if (mounted) {
+        setState(() {
+          _publicWatchlists = watchlists;
+          _isLoadingWatchlists = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to fetch public watchlists: $e')),
+        );
+        setState(() {
+          _isLoadingWatchlists = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -143,7 +175,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
             ? const Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -225,13 +257,38 @@ class _UserProfilePageState extends State<UserProfilePage> {
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
-        Container(
-          height: 200,
-          color: Colors.grey[900],
-          child: const Center(
-            child: Text('Public watchlists coming soon!'),
-          ),
-        ),
+        _isLoadingWatchlists
+            ? const Center(child: CircularProgressIndicator())
+            : _publicWatchlists.isEmpty
+                ? const Text('No public watchlists available.')
+                : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _publicWatchlists.length,
+                    itemBuilder: (context, index) {
+                      final watchlist = _publicWatchlists[index];
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor:
+                              Colors.primaries[index % Colors.primaries.length],
+                          child: Text(watchlist.name[0].toUpperCase()),
+                        ),
+                        title: Text(watchlist.name),
+                        subtitle: Text('${watchlist.movies.length} movies'),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ManageWatchlistPage(
+                                userId: watchlist.userID,
+                                watchlistId: watchlist.id,
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
       ],
     );
   }
