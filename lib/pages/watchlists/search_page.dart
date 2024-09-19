@@ -5,13 +5,20 @@ import 'package:dima_project/models/movie.dart';
 import 'package:dima_project/pages/movies/film_details_page.dart';
 import 'package:dima_project/services/watchlist_service.dart';
 import 'package:logger/logger.dart';
+import 'package:dima_project/services/user_service.dart';
 
 class SearchPage extends StatefulWidget {
-  final WatchList watchlist;
+  final WatchList? watchlist;
+  final String? userId;
+  final List<Movie>? movieList;
+  final bool? isLiked;
 
   const SearchPage({
     super.key,
-    required this.watchlist,
+    this.watchlist,
+    this.userId,
+    this.movieList,
+    this.isLiked,
   });
 
   @override
@@ -21,13 +28,25 @@ class SearchPage extends StatefulWidget {
 class _SearchPageState extends State<SearchPage> {
   List<Movie> _searchResults = [];
   final WatchlistService _watchlistService = WatchlistService();
+  final UserService _userService = UserService();
   final Logger logger = Logger();
   final Set<int> _addedMovies = {};
+  List<int> _moviesIds = [];
 
   @override
   void initState() {
     super.initState();
-    _addedMovies.addAll(widget.watchlist.movies);
+    if (widget.movieList != null) {
+      _moviesIds = generateList(widget.movieList!);
+      _addedMovies.addAll(_moviesIds);
+    } else if (widget.watchlist != null) {
+      _addedMovies.addAll(widget.watchlist!.movies);
+    }
+  }
+
+  List<int> generateList(List<Movie> movies) {
+    List<int> moviesIds = movies.map((e) => e.id).toList();
+    return moviesIds;
   }
 
   @override
@@ -94,30 +113,80 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   void _addMovie(int movieId) async {
-    try {
-      await _watchlistService.addMovieToWatchlist(
-        widget.watchlist.userID,
-        widget.watchlist.id,
-        movieId,
-      );
-      setState(() {
-        _addedMovies.add(movieId);
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Successfully added to watchlist'),
-          ),
+    if (widget.watchlist != null) {
+      try {
+        await _watchlistService.addMovieToWatchlist(
+          widget.watchlist!.userID,
+          widget.watchlist!.id,
+          movieId,
         );
+        setState(() {
+          _addedMovies.add(movieId);
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Successfully added to watchlist'),
+            ),
+          );
+        }
+      } catch (e) {
+        logger.e('Error adding movie to watchlist: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to add movie to watchlist'),
+            ),
+          );
+        }
       }
-    } catch (e) {
-      logger.e('Error adding movie to watchlist: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to add movie to watchlist'),
-          ),
-        );
+    } else {
+      if (widget.isLiked!) {
+        try {
+          await _userService.addToLikedMovies(widget.userId!, movieId);
+          setState(() {
+            _addedMovies.add(movieId);
+          });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Successfully added to liked movies'),
+              ),
+            );
+          }
+        } catch (e) {
+          logger.e('Error adding movie to liked movies: $e');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Failed to add movie to liked movies'),
+              ),
+            );
+          }
+        }
+      } else if (widget.isLiked == false) {
+        try {
+          await _userService.addToSeenMovies(widget.userId!, movieId);
+          setState(() {
+            _addedMovies.add(movieId);
+          });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Successfully added to seen movies'),
+              ),
+            );
+          }
+        } catch (e) {
+          logger.e('Error adding movie to seen movies: $e');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Failed to add movie to seen movies'),
+              ),
+            );
+          }
+        }
       }
     }
   }

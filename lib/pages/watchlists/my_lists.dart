@@ -7,6 +7,7 @@ import 'package:logger/logger.dart';
 import 'package:dima_project/pages/watchlists/manage_watchlist_page.dart';
 import 'dart:async';
 import 'package:dima_project/services/user_menu_manager.dart';
+import 'package:dima_project/pages/watchlists/liked_seen_movies_page.dart';
 
 // Events
 abstract class MyListsEvent {}
@@ -158,6 +159,7 @@ class _MyListsState extends State<MyLists> {
             return MyListsView(
               ownWatchlists: state.ownWatchlists,
               followedWatchlists: state.followedWatchlists,
+              userId: state.ownWatchlists[0].userID,
             );
           } else {
             return const Center(child: CircularProgressIndicator());
@@ -171,11 +173,13 @@ class _MyListsState extends State<MyLists> {
 class MyListsView extends StatelessWidget {
   final List<WatchList> ownWatchlists;
   final List<WatchList> followedWatchlists;
+  final String userId;
 
   const MyListsView({
     super.key,
     required this.ownWatchlists,
     required this.followedWatchlists,
+    required this.userId,
   });
 
   @override
@@ -233,8 +237,8 @@ class MyListsView extends StatelessWidget {
           SliverToBoxAdapter(
             child: Column(
               children: [
-                _buildLikedSection(),
-                _buildSeenSection(), // New section
+                _buildLikedSection(context, userId),
+                _buildSeenSection(context, userId), // New section
               ],
             ),
           ),
@@ -279,7 +283,7 @@ class MyListsView extends StatelessWidget {
     );
   }
 
-  Widget _buildLikedSection() {
+  Widget _buildLikedSection(context, String userId) {
     return ListTile(
       leading: const CircleAvatar(
         backgroundColor: Colors.purple,
@@ -288,12 +292,20 @@ class MyListsView extends StatelessWidget {
       title: const Text('Liked Movies'),
       subtitle: const Text('All your favorite movies in one place'),
       onTap: () {
-        // TODO: Navigate to Liked Movies page
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LikedSeenMoviesPage(
+              userId: userId, // Make sure to get the current user's ID
+              isLiked: true, // For liked movies
+            ),
+          ),
+        );
       },
     );
   }
 
-  Widget _buildSeenSection() {
+  Widget _buildSeenSection(context, String userId) {
     return ListTile(
       leading: const CircleAvatar(
         backgroundColor: Colors.green,
@@ -302,7 +314,15 @@ class MyListsView extends StatelessWidget {
       title: const Text('Seen Movies'),
       subtitle: const Text('Movies you have already watched'),
       onTap: () {
-        // TODO: Navigate to Seen Movies page
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LikedSeenMoviesPage(
+              userId: userId, // Make sure to get the current user's ID
+              isLiked: false, // For liked movies
+            ),
+          ),
+        );
       },
     );
   }
