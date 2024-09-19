@@ -7,6 +7,7 @@ class MyUser {
   final String name;
   final String email;
   final String? profilePicture;
+  final List<String>? nameLowerCase;
   final List<String> favoriteGenres;
   final List<String> following; // Changed from friendList
   final List<String> followers; // New field
@@ -18,6 +19,7 @@ class MyUser {
     required this.username,
     required this.name,
     required this.email,
+    this.nameLowerCase,
     this.profilePicture,
     this.favoriteGenres = const [],
     this.following = const [], // Changed from friendList
@@ -33,6 +35,7 @@ class MyUser {
       'username': username,
       'name': name,
       'email': email,
+      'nameLowerCase': nameLowerCase,
       'profilePicture': profilePicture,
       'favoriteGenres': favoriteGenres,
       'following': following, // Changed from friendList
@@ -50,6 +53,7 @@ class MyUser {
       username: data['username'] ?? '',
       name: data['name'] ?? '',
       email: data['email'] ?? '',
+      nameLowerCase: List<String>.from(data['nameLowerCase'] ?? []),
       profilePicture: data['profilePicture'],
       favoriteGenres: List<String>.from(data['favoriteGenres'] ?? []),
       following:
@@ -62,7 +66,7 @@ class MyUser {
 
   @override
   String toString() {
-    return 'MyUser(id: $id, username: $username, name: $name, email: $email, profilePicture: $profilePicture, favoriteGenres: $favoriteGenres, following: $following, followers: $followers, likedMovies: $likedMovies, seenMovies: $seenMovies)';
+    return 'MyUser(id: $id, username: $username, name: $name, email: $email, nameLowerCase: $nameLowerCase, profilePicture: $profilePicture, favoriteGenres: $favoriteGenres, following: $following, followers: $followers, likedMovies: $likedMovies, seenMovies: $seenMovies)';
   }
 
   @override
@@ -75,6 +79,7 @@ class MyUser {
         other.name == name &&
         other.email == email &&
         other.profilePicture == profilePicture &&
+        listEquals(nameLowerCase, nameLowerCase) &&
         listEquals(other.favoriteGenres, favoriteGenres) &&
         listEquals(other.following, following) &&
         listEquals(other.followers, followers) &&
@@ -88,6 +93,7 @@ class MyUser {
         username.hashCode ^
         name.hashCode ^
         email.hashCode ^
+        nameLowerCase.hashCode ^
         profilePicture.hashCode ^
         favoriteGenres.hashCode ^
         following.hashCode ^

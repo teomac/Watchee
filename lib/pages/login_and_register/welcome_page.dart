@@ -67,6 +67,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         if (profilePictureUrl != null) 'profilePicture': profilePictureUrl,
       });
 
+      await UserService()
+          .updateUserWithNameLowerCase(uid, _controllerName.text);
+
       logger.d("User document updated successfully");
 
       if (mounted) {
