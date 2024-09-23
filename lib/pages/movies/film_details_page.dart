@@ -746,13 +746,17 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
       modalSetState(() {
         watchlist.movies.add(widget.movie.id);
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Movie added to watchlist')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Movie added to watchlist')),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to add movie to watchlist: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to add movie to watchlist: $e')),
+        );
+      }
     }
   }
 
@@ -765,13 +769,17 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
       modalSetState(() {
         watchlist.movies.remove(widget.movie.id);
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Movie removed from watchlist')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Movie removed from watchlist')),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to remove movie from watchlist: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to remove movie from watchlist: $e')),
+        );
+      }
     }
   }
 }

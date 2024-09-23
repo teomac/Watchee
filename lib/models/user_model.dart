@@ -13,6 +13,7 @@ class MyUser {
   final List<String> followers; // New field
   final List<int> likedMovies;
   final List<int> seenMovies;
+  final Map<String, List<dynamic>> followedWatchlists;
 
   MyUser({
     required this.id,
@@ -26,6 +27,7 @@ class MyUser {
     this.followers = const [], // New field
     this.likedMovies = const [],
     this.seenMovies = const [],
+    this.followedWatchlists = const {},
   });
 
   // Convert User object to a map for Firestore
@@ -42,6 +44,7 @@ class MyUser {
       'followers': followers, // New field
       'likedMovies': likedMovies,
       'seenMovies': seenMovies,
+      'followedWatchlists': followedWatchlists,
     };
   }
 
@@ -61,12 +64,14 @@ class MyUser {
       followers: List<String>.from(data['followers'] ?? []), // New field
       likedMovies: List<int>.from(data['likedMovies'] ?? []),
       seenMovies: List<int>.from(data['seenMovies'] ?? []),
+      followedWatchlists:
+          Map<String, List<dynamic>>.from(data['followedWatchlists'] ?? {}),
     );
   }
 
   @override
   String toString() {
-    return 'MyUser(id: $id, username: $username, name: $name, email: $email, nameLowerCase: $nameLowerCase, profilePicture: $profilePicture, favoriteGenres: $favoriteGenres, following: $following, followers: $followers, likedMovies: $likedMovies, seenMovies: $seenMovies)';
+    return 'MyUser(id: $id, username: $username, name: $name, email: $email, nameLowerCase: $nameLowerCase, profilePicture: $profilePicture, favoriteGenres: $favoriteGenres, following: $following, followers: $followers, likedMovies: $likedMovies, seenMovies: $seenMovies, followedWatchlists: $followedWatchlists)';
   }
 
   @override
@@ -84,7 +89,8 @@ class MyUser {
         listEquals(other.following, following) &&
         listEquals(other.followers, followers) &&
         listEquals(other.likedMovies, likedMovies) &&
-        listEquals(other.seenMovies, seenMovies);
+        listEquals(other.seenMovies, seenMovies) &&
+        mapEquals(other.followedWatchlists, followedWatchlists);
   }
 
   @override
@@ -99,6 +105,7 @@ class MyUser {
         following.hashCode ^
         followers.hashCode ^
         likedMovies.hashCode ^
-        seenMovies.hashCode;
+        seenMovies.hashCode ^
+        followedWatchlists.hashCode;
   }
 }

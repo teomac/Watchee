@@ -39,6 +39,7 @@ class AuthService {
           following: [],
           likedMovies: [],
           seenMovies: [],
+          followedWatchlists: {},
         );
 
         // Save user data to Firestore

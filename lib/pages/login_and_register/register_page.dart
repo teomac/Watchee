@@ -107,6 +107,7 @@ class _RegisterPageState extends State<RegisterPage> {
           followers: [],
           likedMovies: [],
           seenMovies: [],
+          followedWatchlists: {},
         );
 
         logger.d("Saving user data to Firestore");

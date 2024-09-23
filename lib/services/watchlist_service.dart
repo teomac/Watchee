@@ -2,10 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/models/watchlist.dart';
 import 'package:logger/logger.dart';
+import 'package:dima_project/services/user_service.dart';
 
 class WatchlistService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final Logger logger = Logger();
+  final UserService _userService = UserService();
 
   Future<void> createWatchList(MyUser user, String name, bool isPrivate) async {
     WatchList watchList = WatchList(
@@ -103,32 +105,66 @@ class WatchlistService {
 
   Future<List<WatchList>> getFollowingWatchlists(MyUser user) async {
     List<WatchList> watchLists = [];
-    Map<String, List<String>> followedWatchlists = {};
 
-    try {
-      QuerySnapshot tempDoc = await _firestore
-          .collection('users')
-          .doc(user.id)
-          .collection('followed_watchlists')
-          .get();
-
-      for (DocumentSnapshot doc in tempDoc.docs) {
-        followedWatchlists.addAll(doc.data() as Map<String, List<String>>);
-      }
-
-      for (String userId in followedWatchlists.keys) {
-        for (String watchlistId in followedWatchlists[userId]!) {
-          WatchList? watchlist = await getWatchList(userId, watchlistId);
-          if (watchlist != null) {
-            watchLists.add(watchlist);
-          }
+    for (var entry in user.followedWatchlists.entries) {
+      var key = entry.key;
+      var value = entry.value;
+      for (var watchlistId in value) {
+        WatchList? watchlist = await getWatchList(key, watchlistId);
+        if (watchlist != null) {
+          watchLists.add(watchlist);
         }
       }
+    }
+    return watchLists;
+  }
 
-      return watchLists;
+  Future<void> followWatchlist(
+      String userId, String watchlistId, String watchlistOwner) async {
+    MyUser? user = await _userService.getUser(userId);
+
+    try {
+      if (user!.followedWatchlists.containsKey(watchlistOwner)) {
+        user.followedWatchlists[watchlistOwner]!.add(watchlistId);
+      } else {
+        user.followedWatchlists[watchlistOwner] = [watchlistId];
+      }
+      _userService.updateUser(user);
+
+      //add follower to the watchlist
+      await _firestore
+          .collection('users')
+          .doc(watchlistOwner)
+          .collection('my_watchlists')
+          .doc(watchlistId)
+          .update({
+        'followers': FieldValue.arrayUnion([userId])
+      });
     } catch (e) {
       logger.e(e);
-      return [];
+    }
+  }
+
+  Future<void> unfollowWatchlist(
+      String userId, String watchlistId, String watchlistOwner) async {
+    MyUser? user = await _userService.getUser(userId);
+
+    try {
+      if (user!.followedWatchlists.containsKey(watchlistOwner)) {
+        user.followedWatchlists[watchlistOwner]!.remove(watchlistId);
+        _userService.updateUser(user);
+      }
+      //remove follower from the watchlist
+      await _firestore
+          .collection('users')
+          .doc(watchlistOwner)
+          .collection('my_watchlists')
+          .doc(watchlistId)
+          .update({
+        'followers': FieldValue.arrayRemove([userId])
+      });
+    } catch (e) {
+      logger.e(e);
     }
   }
 

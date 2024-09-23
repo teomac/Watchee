@@ -10,6 +10,7 @@ import 'package:dima_project/pages/movies/film_details_page.dart';
 import 'package:dima_project/pages/watchlists/search_page.dart';
 import 'package:dima_project/pages/account/user_profile_page.dart'; // Add this import
 import 'package:dima_project/models/user_model.dart';
+import 'package:dima_project/pages/watchlists/followers_list_page.dart'; // Add this import
 
 // Events
 abstract class ManageWatchlistEvent {}
@@ -171,6 +172,7 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
   MyUser? user, currentUser;
   bool canEdit = false;
   WatchList? actualWatchlist;
+  bool isFollowing = false;
 
   @override
   void initState() {
@@ -191,6 +193,13 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
             (currentUser!.id == widget.userId) ||
         actualWatchlist!.collaborators.contains(currentUser!.id)) {
       canEdit = true;
+    }
+    if (currentUser != null && user != null && currentUser!.id != user!.id) {
+      // Check if the current user is following this watchlist
+      isFollowing = currentUser!.followedWatchlists
+              .containsKey(actualWatchlist!.userID) &&
+          currentUser!.followedWatchlists[actualWatchlist!.userID]!
+              .contains(actualWatchlist!.id);
     }
   }
 
@@ -244,6 +253,11 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
         onPressed: () => Navigator.of(context).pop(),
       ),
       actions: [
+        if (!canEdit && !watchlist.isPrivate)
+          IconButton(
+            icon: Icon(isFollowing ? Icons.favorite : Icons.favorite_border),
+            onPressed: _toggleFollowWatchlist,
+          ),
         IconButton(
           icon: const Icon(Icons.more_vert),
           onPressed: () => _showWatchlistOptions(context, watchlist),
@@ -293,7 +307,37 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
           ),
           const SizedBox(height: 8),
           _buildCreatedByText(context, watchlist.userID),
+          _buildFollowersCount(context, watchlist),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFollowersCount(BuildContext context, WatchList watchlist) {
+    return GestureDetector(
+      onTap: () => watchlist.followers.isNotEmpty
+          ? _showFollowersList(context, watchlist)
+          : (),
+      child: Row(
+        children: [
+          const Icon(Icons.people, size: 16),
+          const SizedBox(width: 4),
+          Text(
+            '${watchlist.followers.length} followers',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFollowersList(BuildContext context, WatchList watchlist) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FollowersListPage(watchlist: watchlist),
       ),
     );
   }
@@ -374,6 +418,36 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
         );
       },
     );
+  }
+
+  Future<void> _toggleFollowWatchlist() async {
+    if (currentUser == null) return;
+    try {
+      if (isFollowing == false) {
+        await _manageWatchlistBloc._watchlistService.followWatchlist(
+            currentUser!.id, actualWatchlist!.id, actualWatchlist!.userID);
+      } else {
+        await _manageWatchlistBloc._watchlistService.unfollowWatchlist(
+            currentUser!.id, actualWatchlist!.id, actualWatchlist!.userID);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  isFollowing ? 'Watchlist unfollowed' : 'Watchlist followed')),
+        );
+      }
+      setState(() {
+        isFollowing = !isFollowing;
+      });
+    } catch (e) {
+      // Revert the state if the operation fails
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update follow status')),
+        );
+      }
+    }
   }
 
   void _showRenameDialog(BuildContext context, WatchList watchlist) {
