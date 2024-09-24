@@ -440,6 +440,16 @@ class UserService {
     await batch.commit();
   }
 
+  // remove single notification
+  Future<void> removeNotification(String userId, String notificationId) async {
+    await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('notifications')
+        .doc(notificationId)
+        .delete();
+  }
+
   Future<bool> signOut() async {
     try {
       await _auth.signOut();

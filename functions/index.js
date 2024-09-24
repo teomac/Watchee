@@ -51,14 +51,16 @@ exports.sendFollowNotification = functions
             });
             console.log(`Notification sent for new follower: ${followerName}`);
 
-            // store notification in firestore
+            // store notification in firestore with notificationId
             const notificationsRef = admin.firestore().collection(`users/${userId}/notifications`);
-            notificationsRef.add({
-                  message,
-                  timestamp: admin.firestore.FieldValue.serverTimestamp(),
-                  type: "new_follower",
-                  followerId,
-                });
+            const notificationId = notificationsRef.doc().id;
+            await notificationsRef.doc(notificationId).set({
+              notificationId,
+              message,
+              timestamp: admin.firestore.FieldValue.serverTimestamp(),
+              type: "new_follower",
+              followerId,
+            });
 
             // notifications number check
             const snapshot = await notificationsRef.orderBy('timestamp').limit(11).get();
@@ -118,9 +120,11 @@ exports.sendReviewNotification = functions
             console.log(
                 `Notification sent to follower ${followerData.username}`);
 
-            // store notification in firestore
+            // store notification in firestore with notificationId
             const notificationsRef = admin.firestore().collection(`users/${followerId}/notifications`);
-            notificationsRef.add({
+            const notificationId = notificationsRef.doc().id;
+            await notificationsRef.doc(notificationId).set({
+              notificationId,
               message,
               timestamp: admin.firestore.FieldValue.serverTimestamp(),
               type: "new_review",

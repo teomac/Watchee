@@ -3,6 +3,7 @@ import 'package:dima_project/services/user_service.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class NotificationsPage extends StatefulWidget {
   final MyUser user;
@@ -59,22 +60,80 @@ class _NotificationsPageState extends State<NotificationsPage> {
             } else {
               List<Map<String, dynamic>> notifications = snapshot.data!;
               return ListView.builder(
+                padding: const EdgeInsets.all(8),
                 itemCount: notifications.length,
                 itemBuilder: (context, index) {
                   final notification = notifications[index];
                   final DateTime timestamp =
                       (notification['timestamp'] as Timestamp).toDate();
-                  final formattedTimestamp =
-                      DateFormat('dd-MM-yyyy - kk:mm').format(timestamp);
+                  final formattedTimestamp = timeago.format(timestamp);
 
-                  return ListTile(
-                    title: Text(notification['message']),
-                    subtitle: Text(formattedTimestamp),
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5),
+                    child: Dismissible(
+                      key: Key(notification['notificationId'].toString()),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        color: Colors.red,
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: const Icon(Icons.delete, color: Colors.white),
+                      ),
+                      onDismissed: (direction) async {
+                        await _userService.removeNotification(
+                            widget.user.id, notification['notificationId']);
+
+                        setState(() {
+                          notifications.removeAt(index);
+                        });
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Notification dismissed'),
+                          ),
+                        );
+                      },
+                      child: Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: ListTile(
+                          leading: _getNotificationIcon(notification['type']),
+                          title: Text(
+                            notification['message'],
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          subtitle: Text(
+                            formattedTimestamp,
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                            ),
+                          ),
+                          onTap: () {},
+                        ),
+                      ),
+                    ),
                   );
                 },
               );
             }
           }),
     );
+  }
+
+  Icon _getNotificationIcon(String type) {
+    switch (type) {
+      case 'new_follower':
+        return const Icon(Icons.person_add, color: Colors.blue);
+      case 'new_review':
+        return const Icon(Icons.comment, color: Colors.green);
+      default:
+        return const Icon(Icons.notifications, color: Colors.grey);
+    }
   }
 }
