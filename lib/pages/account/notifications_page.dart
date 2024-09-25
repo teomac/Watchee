@@ -1,4 +1,5 @@
 import 'package:dima_project/models/user_model.dart';
+import 'package:dima_project/pages/account/user_profile_page.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -74,6 +75,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     final DateTime timestamp =
                         (notification['timestamp'] as Timestamp).toDate();
                     final formattedTimestamp = timeago.format(timestamp);
+                    final String userId = notification['type'] == 'new_review'
+                        ? notification['reviewAuthorId']
+                        : notification['followerId'];
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 5),
@@ -121,7 +125,18 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                 fontSize: 12,
                               ),
                             ),
-                            onTap: () {},
+                            onTap: () async {
+                              MyUser? user = await _userService.getUser(userId);
+                              if (user != null) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        UserProfilePage(user: user),
+                                  ),
+                                );
+                              }
+                            },
                           ),
                         ),
                       ),
