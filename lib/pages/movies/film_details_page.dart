@@ -32,6 +32,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   List<WatchList> _userWatchlists = [];
   List<int> _likedMovies = [];
   List<int> _seenMovies = [];
+  bool _isSubmitButtonEnabled = false;
 
   @override
   void dispose() {
@@ -44,6 +45,14 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     super.initState();
     _initializeData().then((_) {
       _fetchFriendsReviews();
+    });
+
+    _reviewController.addListener(_updateSubmitButton);
+  }
+
+  void _updateSubmitButton() {
+    setState(() {
+      _isSubmitButtonEnabled = _reviewController.text.trim().isNotEmpty;
     });
   }
 
@@ -502,15 +511,18 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
             ),
             const SizedBox(height: 8),
             ElevatedButton(
-              onPressed: () {
-                if (_reviewController.text.isNotEmpty) {
-                  _submitReview();
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please enter a review')),
-                  );
-                }
-              },
+              onPressed: _isSubmitButtonEnabled
+                  ? () {
+                      if (_reviewController.text.isNotEmpty) {
+                        _submitReview();
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Please enter a review')),
+                        );
+                      }
+                    }
+                  : null,
               child: const Text('Submit your review'),
             ),
           ],
