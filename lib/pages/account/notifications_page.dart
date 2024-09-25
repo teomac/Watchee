@@ -23,6 +23,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
     _notificationsFuture = _userService.getNotifications(widget.user.id);
   }
 
+  Future<void> _refreshNotifications() async {
+    setState(() {
+      _notificationsFuture = _userService.getNotifications(widget.user.id);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,67 +64,70 @@ class _NotificationsPageState extends State<NotificationsPage> {
               );
             } else {
               List<Map<String, dynamic>> notifications = snapshot.data!;
-              return ListView.builder(
-                padding: const EdgeInsets.all(8),
-                itemCount: notifications.length,
-                itemBuilder: (context, index) {
-                  final notification = notifications[index];
-                  final DateTime timestamp =
-                      (notification['timestamp'] as Timestamp).toDate();
-                  final formattedTimestamp = timeago.format(timestamp);
+              return RefreshIndicator(
+                onRefresh: _refreshNotifications,
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(8),
+                  itemCount: notifications.length,
+                  itemBuilder: (context, index) {
+                    final notification = notifications[index];
+                    final DateTime timestamp =
+                        (notification['timestamp'] as Timestamp).toDate();
+                    final formattedTimestamp = timeago.format(timestamp);
 
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 5),
-                    child: Dismissible(
-                      key: Key(notification['notificationId'].toString()),
-                      direction: DismissDirection.endToStart,
-                      background: Container(
-                        color: Colors.red,
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: const Icon(Icons.delete, color: Colors.white),
-                      ),
-                      onDismissed: (direction) async {
-                        await _userService.removeNotification(
-                            widget.user.id, notification['notificationId']);
-
-                        setState(() {
-                          notifications.removeAt(index);
-                        });
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Notification dismissed'),
-                          ),
-                        );
-                      },
-                      child: Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 5),
+                      child: Dismissible(
+                        key: Key(notification['notificationId'].toString()),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          color: Colors.red,
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: const Icon(Icons.delete, color: Colors.white),
                         ),
-                        child: ListTile(
-                          leading: _getNotificationIcon(notification['type']),
-                          title: Text(
-                            notification['message'],
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                        onDismissed: (direction) async {
+                          await _userService.removeNotification(
+                              widget.user.id, notification['notificationId']);
+
+                          setState(() {
+                            notifications.removeAt(index);
+                          });
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Notification dismissed'),
                             ),
+                          );
+                        },
+                        child: Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          subtitle: Text(
-                            formattedTimestamp,
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12,
+                          child: ListTile(
+                            leading: _getNotificationIcon(notification['type']),
+                            title: Text(
+                              notification['message'],
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
+                            subtitle: Text(
+                              formattedTimestamp,
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
+                            ),
+                            onTap: () {},
                           ),
-                          onTap: () {},
                         ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               );
             }
           }),
