@@ -30,122 +30,159 @@ class _NotificationsPageState extends State<NotificationsPage> {
     });
   }
 
+  Future<void> _confirmClearAll() async {
+    final bool? result = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Clear All Notifications'),
+          content:
+              const Text('Are you sure you want to clear all notifications?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Clear'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result == true) {
+      await _userService.clearNotifications(widget.user.id);
+      setState(() {
+        _notificationsFuture = _userService.getNotifications(widget.user.id);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notifications'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.clear_all),
-            onPressed: () async {
-              await _userService.clearNotifications(widget.user.id);
-              setState(() {
-                _notificationsFuture =
-                    _userService.getNotifications(widget.user.id);
-              });
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (String value) async {
+              if (value == 'clear') {
+                await _confirmClearAll();
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return [
+                const PopupMenuItem<String>(
+                  value: 'clear',
+                  child: Text('Clear all notifications'),
+                ),
+              ];
             },
           )
         ],
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
-          future: _notificationsFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            } else if (snapshot.hasError) {
-              return Center(
-                child: Text('Error: ${snapshot.error}'),
-              );
-            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Center(
-                child: Text('No notifications'),
-              );
-            } else {
-              List<Map<String, dynamic>> notifications = snapshot.data!;
-              return RefreshIndicator(
-                onRefresh: _refreshNotifications,
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(8),
-                  itemCount: notifications.length,
-                  itemBuilder: (context, index) {
-                    final notification = notifications[index];
-                    final DateTime timestamp =
-                        (notification['timestamp'] as Timestamp).toDate();
-                    final formattedTimestamp = timeago.format(timestamp);
-                    final String userId = notification['type'] == 'new_review'
-                        ? notification['reviewAuthorId']
-                        : notification['followerId'];
+        future: _notificationsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          } else if (snapshot.hasError) {
+            return Center(
+              child: Text('Error: ${snapshot.error}'),
+            );
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(
+              child: Text('No notifications'),
+            );
+          } else {
+            List<Map<String, dynamic>> notifications = snapshot.data!;
+            return RefreshIndicator(
+              onRefresh: _refreshNotifications,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(8),
+                itemCount: notifications.length,
+                itemBuilder: (context, index) {
+                  final notification = notifications[index];
+                  final DateTime timestamp =
+                      (notification['timestamp'] as Timestamp).toDate();
+                  final formattedTimestamp = timeago.format(timestamp);
+                  final String userId = notification['type'] == 'new_review'
+                      ? notification['reviewAuthorId']
+                      : notification['followerId'];
 
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 5),
-                      child: Dismissible(
-                        key: Key(notification['notificationId'].toString()),
-                        direction: DismissDirection.endToStart,
-                        background: Container(
-                          color: Colors.red,
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: const Icon(Icons.delete, color: Colors.white),
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5),
+                    child: Dismissible(
+                      key: Key(notification['notificationId'].toString()),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        color: Colors.red,
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: const Icon(Icons.delete, color: Colors.white),
+                      ),
+                      onDismissed: (direction) async {
+                        await _userService.removeNotification(
+                            widget.user.id, notification['notificationId']);
+
+                        setState(() {
+                          notifications.removeAt(index);
+                        });
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Notification dismissed'),
+                          ),
+                        );
+                      },
+                      child: Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        onDismissed: (direction) async {
-                          await _userService.removeNotification(
-                              widget.user.id, notification['notificationId']);
-
-                          setState(() {
-                            notifications.removeAt(index);
-                          });
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Notification dismissed'),
+                        child: ListTile(
+                          leading: _getNotificationIcon(notification['type']),
+                          title: Text(
+                            notification['message'],
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
                             ),
-                          );
-                        },
-                        child: Card(
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
                           ),
-                          child: ListTile(
-                            leading: _getNotificationIcon(notification['type']),
-                            title: Text(
-                              notification['message'],
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
+                          subtitle: Text(
+                            formattedTimestamp,
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
                             ),
-                            subtitle: Text(
-                              formattedTimestamp,
-                              style: const TextStyle(
-                                color: Colors.grey,
-                                fontSize: 12,
-                              ),
-                            ),
-                            onTap: () async {
-                              MyUser? user = await _userService.getUser(userId);
-                              if (user != null) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        UserProfilePage(user: user),
-                                  ),
-                                );
-                              }
-                            },
                           ),
+                          onTap: () async {
+                            MyUser? user = await _userService.getUser(userId);
+                            if (user != null) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      UserProfilePage(user: user),
+                                ),
+                              );
+                            }
+                          },
                         ),
                       ),
-                    );
-                  },
-                ),
-              );
-            }
-          }),
+                    ),
+                  );
+                },
+              ),
+            );
+          }
+        },
+      ),
     );
   }
 
