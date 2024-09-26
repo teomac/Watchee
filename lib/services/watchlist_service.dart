@@ -10,8 +10,14 @@ class WatchlistService {
   final UserService _userService = UserService();
 
   Future<void> createWatchList(MyUser user, String name, bool isPrivate) async {
+    DocumentReference docRef = await _firestore
+        .collection('users')
+        .doc(user.id)
+        .collection('my_watchlists')
+        .add({});
+
     WatchList watchList = WatchList(
-      id: user.id + DateTime.now().toString(),
+      id: docRef.id,
       userID: user.id,
       name: name,
       isPrivate: isPrivate,

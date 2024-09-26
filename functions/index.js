@@ -149,3 +149,98 @@ exports.sendReviewNotification = functions
       }
       return null;
     });
+
+
+exports.getSharedWatchlist = functions.https.onRequest(async (request, response) => {
+      // Enable CORS
+    response.set('Access-Control-Allow-Origin', '*');
+    
+    if (request.method === 'OPTIONS') {
+        // Send response to OPTIONS requests
+        response.set('Access-Control-Allow-Methods', 'GET');
+        response.set('Access-Control-Allow-Headers', 'Content-Type');
+        response.set('Access-Control-Max-Age', '3600');
+        response.status(204).send('');
+        return;
+      }
+    
+      const watchlistId = request.query.watchlistId;
+      const userId = request.query.userId;
+      const invitedBy = request.query.invitedBy;
+    
+      if (!watchlistId || !userId || !invitedBy) {
+        response.status(400).send('Missing watchlistId or userId');
+        return;
+      }
+    
+      try {
+        // Get the watchlist document
+        const watchlistDoc = await admin.firestore()
+          .collection('users').doc(userId)
+          .collection('my_watchlists').doc(watchlistId)
+          .get();
+    
+        if (!watchlistDoc.exists) {
+          response.status(404).send('Watchlist not found');
+          return;
+        }
+    
+        const watchlistData = watchlistDoc.data();
+    
+        // Check if the watchlist is private
+        if (watchlistData.isPrivate) {
+          response.status(403).send('This watchlist is private');
+          return;
+        }
+    
+        // Get the user document
+        const userDoc = await admin.firestore()
+          .collection('users').doc(userId)
+          .get();
+    
+        if (!userDoc.exists) {
+          response.status(404).send('User not found');
+          return;
+        }
+    
+        const userData = userDoc.data();
+
+        // Get the user document of the person who shared the watchlist
+        const sharedByDoc = await admin.firestore()
+          .collection('users').doc(invitedBy)
+          .get();
+
+        if (!sharedByDoc.exists) {
+          response.status(404).send('User not found');
+          return;
+        }
+
+        const sharedByData = sharedByDoc.data();
+    
+    
+        // Prepare the response data
+        const responseData = {
+          watchlist: {
+            id: watchlistDoc.id,
+            name: watchlistData.name,
+            createdAt: watchlistData.createdAt,
+            updatedAt: watchlistData.updatedAt,
+          },
+          user: {
+            username: userData.username,
+            name: userData.name,
+            profilePicture: userData.profilePicture,
+          },
+          sharedBy: {
+            username: sharedByData.username,
+            name: sharedByData.name,
+            profilePicture: sharedByData.profilePicture,
+          },
+        };
+    
+        response.status(200).json(responseData);
+      } catch (error) {
+        console.error('Error retrieving watchlist:', error);
+        response.status(500).send('Internal server error');
+      }
+    });

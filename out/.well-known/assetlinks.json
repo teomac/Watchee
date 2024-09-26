@@ -1,0 +1,9 @@
+[{
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "AnyMovie",
+      "package_name": "com.example.dima_project",
+      "sha256_cert_fingerprints":
+      ["25:D0:9C:E9:11:21:3A:28:12:4B:75:51:39:53:A5:F9:C6:E8:89:9C:57:65:10:CD:27:21:A1:E4:1F:57:61:08"]
+    }
+  }]

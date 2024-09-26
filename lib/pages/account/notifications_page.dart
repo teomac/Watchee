@@ -97,12 +97,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
                           setState(() {
                             notifications.removeAt(index);
                           });
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Notification dismissed'),
-                            ),
-                          );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Notification dismissed'),
+                              ),
+                            );
+                          }
                         },
                         child: Card(
                           elevation: 4,
@@ -128,13 +129,15 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             onTap: () async {
                               MyUser? user = await _userService.getUser(userId);
                               if (user != null) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        UserProfilePage(user: user),
-                                  ),
-                                );
+                                if (context.mounted) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          UserProfilePage(user: user),
+                                    ),
+                                  );
+                                }
                               }
                             },
                           ),

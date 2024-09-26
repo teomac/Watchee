@@ -184,7 +184,7 @@ class _LikedSeenMoviesPageState extends State<LikedSeenMoviesPage> {
       expandedHeight: 20.0,
       floating: false,
       pinned: true,
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       elevation: 0,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
@@ -192,12 +192,12 @@ class _LikedSeenMoviesPageState extends State<LikedSeenMoviesPage> {
       ),
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Colors.black.withOpacity(0.7),
+                Colors.transparent,
                 Colors.transparent,
               ],
             ),

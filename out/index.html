@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnyMovie - Share Your Watchlists</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/material-design-icons/3.0.1/iconfont/material-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="profile-picture.css">    <style>
+
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        header {
+            background-color: #6200ee;
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 500;
+        }
+        #content {
+            background-color: white;
+            border-radius: 4px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        }
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+        .spinner {
+            border: 4px solid rgba(0,0,0,0.1);
+            border-left-color: #6200ee;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .watchlist-content {
+            display: none;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .inviter-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .watchlist-title {
+            font-size: 24px;
+            font-weight: 500;
+            margin: 15px 0;
+        }
+        .creator-info {
+            font-size: 14px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .creator-info .user-avatar {
+            width: 30px;
+            height: 30px;
+        }
+        .download-btn {
+            display: inline-block;
+            background-color: #6200ee;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+        .download-btn:hover {
+            background-color: #3700b3;
+        }
+        .dev-note {
+            background-color: #ff0000c1;
+            border-left: 4px solid #ff0000c1;
+            padding: 10px;
+            margin-top: 20px;
+            font-style: italic;
+        }
+        .homepage {
+            text-align: center;
+        }
+        .homepage h2 {
+            color: #6200ee;
+            margin-bottom: 20px;
+        }
+        .homepage p {
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Welcome to AnyMovie</h1>
+        </div>
+    </header>
+    <main class="container">
+        <div id="content">
+            <!-- Content will be dynamically inserted here -->
+        </div>
+
+        <div class="dev-note">
+            <p><strong>Developer Note:</strong> AnyMovie is currently in development. If you have the app installed, it should open automatically when accessing a shared watchlist. If not, this page will display the shared watchlist information or provide information about the app.</p>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const watchlistId = urlParams.get('watchlistId');
+            const userId = urlParams.get('userId');
+            const invitedBy = urlParams.get('invitedBy');
+            const contentDiv = document.getElementById('content');
+
+            if (watchlistId && userId && invitedBy) {
+                // Watchlist sharing mode
+                contentDiv.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                    <div class="watchlist-content">
+                        <div class="inviter-info">
+                            <div class="profile-picture">
+                            <img src="/api/placeholder/40/40" alt="Inviter Avatar" class="user-avatar inviter-avatar">
+                            </div>
+                            <span><strong class="inviter-name"></strong> shared with you this watchlist:</span>
+                        </div>
+                        <h2 class="watchlist-title"></h2>
+                        <div class="creator-info">
+                            <span>Created by: &nbsp;</span>
+                            <div class = "profile-picture">
+                                <img src="/api/placeholder/30/30" alt="Creator Avatar" class="user-avatar creator-avatar">
+                            </div>
+                            <span class="creator-name"></span>
+                        </div>
+                        <p>Go check it out in the AnyMovieApp!</p>
+                        <a href="#" id="downloadBtn" class="download-btn">Download AnyMovie</a>
+                    </div>`;
+                    
+                    
+                fetch(`https://us-central1-dima-project-matteo.cloudfunctions.net/getSharedWatchlist?watchlistId=${watchlistId}&userId=${userId}&invitedBy=${invitedBy}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.querySelector('.loading').style.display = 'none';
+                        document.querySelector('.watchlist-content').style.display = 'block';
+                        
+                        document.querySelector('.inviter-name').textContent = data.sharedBy.name;
+                        document.querySelector('.inviter-avatar').src = data.sharedBy.profilePicture || '/api/placeholder/40/40';
+                        document.querySelector('.watchlist-title').textContent = data.watchlist.name;
+                        document.querySelector('.creator-name').textContent = data.user.name;
+                        document.querySelector('.creator-avatar').src = data.user.profilePicture || '/api/placeholder/30/30';
+
+                        const downloadBtn = document.getElementById('downloadBtn');
+                        downloadBtn.href = `anymovie://watchlist/?watchlistId=${watchlistId}&userId=${userId}&invitedBy=${invitedBy}`;
+                        downloadBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            setTimeout(function() {
+                                window.location.href = 'https://github.com/matteolaini';
+                            }, 500);
+                            window.location.href = this.href;
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        contentDiv.innerHTML = error.message;
+                    });
+            } else {
+                // Homepage mode
+                contentDiv.innerHTML = `
+                    <div class="homepage">
+                        <h2>Discover, Share, and Enjoy Movies Together</h2>
+                        <p>AnyMovie is your ultimate companion for creating and sharing movie watchlists with friends. Whether you're a film enthusiast or just looking for your next movie night pick, AnyMovie has got you covered!</p>
+                        <p>Create personalized watchlists, discover new films, and share your favorites with friends. With AnyMovie, you'll never run out of great movies to watch!</p>
+                        <a href="https://github.com/matteolaini" class="download-btn">Download AnyMovie App</a>
+                    </div>`;
+            }
+        });
+    </script>
+</body>
+</html>

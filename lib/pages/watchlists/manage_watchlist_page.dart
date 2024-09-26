@@ -8,9 +8,10 @@ import 'package:dima_project/api/constants.dart';
 import 'package:dima_project/api/tmdb_api.dart';
 import 'package:dima_project/pages/movies/film_details_page.dart';
 import 'package:dima_project/pages/watchlists/search_page.dart';
-import 'package:dima_project/pages/account/user_profile_page.dart'; // Add this import
+import 'package:dima_project/pages/account/user_profile_page.dart';
 import 'package:dima_project/models/user_model.dart';
-import 'package:dima_project/pages/watchlists/followers_list_page.dart'; // Add this import
+import 'package:dima_project/pages/watchlists/followers_list_page.dart';
+import 'package:share_plus/share_plus.dart';
 
 // Events
 abstract class ManageWatchlistEvent {}
@@ -182,11 +183,12 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
   }
 
   Future<void> _loadBasics() async {
-    _manageWatchlistBloc.add(LoadWatchlist(widget.userId, widget.watchlistId));
     actualWatchlist = await _manageWatchlistBloc._watchlistService
         .getWatchList(widget.userId, widget.watchlistId);
     user = await _userService.getUser(widget.userId);
     currentUser = await _userService.getCurrentUser();
+
+    _manageWatchlistBloc.add(LoadWatchlist(widget.userId, widget.watchlistId));
     if (currentUser != null &&
             actualWatchlist != null &&
             user != null &&
@@ -200,6 +202,26 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
               .containsKey(actualWatchlist!.userID) &&
           currentUser!.followedWatchlists[actualWatchlist!.userID]!
               .contains(actualWatchlist!.id);
+    }
+  }
+
+  Future<void> _shareWatchlist(WatchList watchlist) async {
+    // Generate a deep link for the watchlist
+    final String deepLink =
+        'https://dima-project-matteo.web.app/?watchlistId=${watchlist.id}&userId=${watchlist.userID}&invitedBy=${currentUser!.id}';
+
+    // Create the share message
+    final String shareMessage =
+        '${currentUser!.name} has shared a watchlist with you. Check out "${watchlist.name}"!\n\n$deepLink';
+
+    try {
+      await Share.share(shareMessage, subject: 'Check out this watchlist!');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to share watchlist')),
+        );
+      }
     }
   }
 
@@ -238,7 +260,7 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
     } else if (state is ManageWatchlistError) {
       return Center(child: Text('Error: ${state.message}'));
     }
-    return const Center(child: Text('Something went wrong'));
+    return const Center(child: CircularProgressIndicator());
   }
 
   Widget _buildSliverAppBar(BuildContext context, WatchList watchlist) {
@@ -246,7 +268,7 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
       expandedHeight: 20.0,
       floating: false,
       pinned: true,
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       elevation: 0,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
@@ -265,12 +287,12 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
       ],
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Colors.black.withOpacity(0.7),
+                Colors.transparent,
                 Colors.transparent,
               ],
             ),
@@ -322,12 +344,19 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
         children: [
           const Icon(Icons.people, size: 16),
           const SizedBox(width: 4),
-          Text(
-            '${watchlist.followers.length} followers',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+          watchlist.followers.length != 1
+              ? Text(
+                  '${watchlist.followers.length} followers',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                )
+              : Text(
+                  '${watchlist.followers.length} follower',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
-          ),
         ],
       ),
     );
@@ -410,7 +439,7 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
                 title: const Text('Share'),
                 onTap: () {
                   Navigator.pop(context);
-                  // TODO: Implement share functionality
+                  _shareWatchlist(watchlist);
                 },
               ),
             ],

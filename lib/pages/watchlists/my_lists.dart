@@ -307,7 +307,9 @@ class _MyListsState extends State<MyLists> {
                 child: Text(watchlist.name[0].toUpperCase()),
               ),
               title: Text(watchlist.name),
-              subtitle: Text('${watchlist.movies.length} movies'),
+              subtitle: watchlist.movies.length != 1
+                  ? Text('${watchlist.movies.length} movies')
+                  : Text('${watchlist.movies.length} movie'),
               trailing: watchlist.isPrivate ? const Icon(Icons.lock) : null,
               onTap: () {
                 Navigator.push(
