@@ -130,20 +130,31 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         await _userService.removeNotification(
                             widget.user.id, notification['notificationId']);
 
-                          setState(() {
-                            notifications.removeAt(index);
-                          });
-                        if(context.mounted){
+                        setState(() {
+                          notifications.removeAt(index);
+                        });
+
+                        if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Notification dismissed'),
                             ),
-                          );}
-                        },
-                        child: Card(
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                          );
+                        }
+                      },
+                      child: Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: ListTile(
+                          leading: _getNotificationIcon(notification['type']),
+                          title: Text(
+                            notification['message'],
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
                           subtitle: Text(
                             formattedTimestamp,
@@ -151,29 +162,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
                               color: Colors.grey,
                               fontSize: 12,
                             ),
-                            subtitle: Text(
-                              formattedTimestamp,
-                              style: const TextStyle(
-                                color: Colors.grey,
-                                fontSize: 12,
-                              ),
-                            ),
-                            onTap: () async {
-                              MyUser? user = await _userService.getUser(userId);
-                              if (user != null) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        UserProfilePage(user: user),
-                                  ),
-                                );
-                              }
-                            },
                           ),
                           onTap: () async {
                             MyUser? user = await _userService.getUser(userId);
-                            if (user != null) {
+                            if (user != null && context.mounted) {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
