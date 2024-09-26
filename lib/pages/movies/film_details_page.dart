@@ -470,6 +470,38 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   }
 
   Widget _buildAddYourReview() {
+    final releaseDate = widget.movie.releaseDate != null
+        ? DateTime.tryParse(widget.movie.releaseDate!)
+        : null;
+    final currentDate = DateTime.now();
+
+    final isBeforeReleaseDate =
+        releaseDate != null && currentDate.isBefore(releaseDate);
+
+    if (isBeforeReleaseDate) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Add your review',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(
+                height: 8,
+              ),
+              Text(
+                'You cannot leave a review until the movie is released on ${DateFormat.yMMMMd().format(releaseDate)}.',
+                style: const TextStyle(fontSize: 16),
+              )
+            ],
+          ),
+        ),
+      );
+    }
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
