@@ -1,6 +1,7 @@
 import 'package:dima_project/models/movie_review.dart';
 import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/models/watchlist.dart';
+import 'package:dima_project/pages/movies/friends_reviews.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:dima_project/services/watchlist_service.dart';
 import 'package:flutter/material.dart';
@@ -434,6 +435,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
       );
     }
 
+    final recentReviews = _friendsReviews.take(2);
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -441,11 +444,11 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Friend Reviews',
+              'Friends Reviews',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            ..._friendsReviews.map((review) {
+            ...recentReviews.map((review) {
               return ListTile(
                 leading: CircleAvatar(
                   child: Text(review.username.isNotEmpty
@@ -463,6 +466,17 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                 ),
               );
             }),
+            if (_friendsReviews.length > 2)
+              const SizedBox(
+                height: 16,
+              ),
+            ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) =>
+                          FriendsReviews(friendsReviews: _friendsReviews)));
+                },
+                child: const Text('See all friends reviews'))
           ],
         ),
       ),

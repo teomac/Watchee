@@ -305,7 +305,6 @@ class UserService {
           .where('userId', whereIn: followedUserIds)
           .where('movieId', isEqualTo: movieId)
           .orderBy('timestamp', descending: true)
-          .limit(2)
           .get();
 
       return reviewsSnapshot.docs
