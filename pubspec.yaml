@@ -59,7 +59,8 @@ dependencies:
   #permission for camera access
   permission_handler: ^11.3.1
   #yt player for trailers
-  youtube_player_flutter: ^9.0.3
+  url_launcher: ^6.3.0
+  youtube_player_iframe: ^5.2.0
 
   rxdart: ^0.28.0
 

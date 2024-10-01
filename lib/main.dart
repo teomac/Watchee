@@ -4,7 +4,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
 import 'package:dima_project/widget_tree.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:dima_project/theme/theme_provider.dart';
 import 'package:app_links/app_links.dart';
@@ -18,10 +17,10 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Set the app to only portrait mode
-  await SystemChrome.setPreferredOrientations([
+  /*await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
-  ]);
+  ]);*/
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,

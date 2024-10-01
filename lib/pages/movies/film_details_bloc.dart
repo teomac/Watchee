@@ -1,14 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dima_project/api/tmdb_api.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:dima_project/models/movie.dart';
 
 class FilmDetailsBloc extends Bloc<FilmDetailsEvent, FilmDetailsState> {
-  YoutubePlayerController? _youtubeController;
-
   FilmDetailsBloc() : super(FilmDetailsInitial()) {
     on<LoadFilmDetails>(_onLoadFilmDetails);
-    on<DisposeYoutubePlayer>(_onDisposeYoutubePlayer);
   }
 
   Future<void> _onLoadFilmDetails(
@@ -21,31 +17,10 @@ class FilmDetailsBloc extends Bloc<FilmDetailsEvent, FilmDetailsState> {
       final trailerKey = await retrieveTrailer(event.movieId);
       final cast = await retrieveCast(event.movieId);
 
-      if (trailerKey.isNotEmpty) {
-        _youtubeController = YoutubePlayerController(
-          initialVideoId: trailerKey,
-          flags: const YoutubePlayerFlags(autoPlay: false, mute: false),
-        );
-      }
-
       emit(FilmDetailsLoaded(movie, trailerKey: trailerKey, cast: cast));
     } catch (e) {
       emit(FilmDetailsError(e.toString()));
     }
-  }
-
-  void _onDisposeYoutubePlayer(
-    DisposeYoutubePlayer event,
-    Emitter<FilmDetailsState> emit,
-  ) {
-    _youtubeController?.dispose();
-    _youtubeController = null;
-  }
-
-  @override
-  Future<void> close() {
-    _youtubeController?.dispose();
-    return super.close();
   }
 }
 

@@ -7,10 +7,11 @@ import 'package:dima_project/services/watchlist_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dima_project/models/movie.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:dima_project/pages/movies/film_details_bloc.dart';
 import 'package:dima_project/api/constants.dart';
+import 'package:youtube_player_iframe/youtube_player_iframe.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class FilmDetailsPage extends StatefulWidget {
   final Movie movie;
@@ -34,6 +35,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   List<int> _likedMovies = [];
   List<int> _seenMovies = [];
   bool _isSubmitButtonEnabled = false;
+  YoutubePlayerController? _youtubePlayerController;
 
   @override
   void dispose() {
@@ -120,6 +122,26 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     }
   }
 
+  Future<void> _launchYouTubeVideo(String? videoId) async {
+    if (videoId == null || videoId.isEmpty) return;
+
+    final Uri youtubeUrl =
+        Uri.parse('https://www.youtube.com/watch?v=$videoId');
+    try {
+      if (await canLaunchUrl(youtubeUrl)) {
+        await launchUrl(youtubeUrl, mode: LaunchMode.externalApplication);
+      } else {
+        throw 'Could not launch $youtubeUrl';
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error opening YouTube: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -133,7 +155,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
               if (didPop) return;
               if (!_isDisposing) {
                 setState(() => _isDisposing = true);
-                context.read<FilmDetailsBloc>().add(DisposeYoutubePlayer());
+                _youtubePlayerController?.close();
                 // Allow the frame to rebuild without the YouTube player
                 await Future.microtask(() {});
                 if (context.mounted) Navigator.of(context).pop();
@@ -401,6 +423,17 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     if (trailerKey == null || trailerKey.isEmpty) {
       return const SizedBox.shrink();
     }
+
+    _youtubePlayerController = YoutubePlayerController.fromVideoId(
+      videoId: trailerKey,
+      autoPlay: false,
+      params: const YoutubePlayerParams(
+        mute: false,
+        showControls: true,
+        showFullscreenButton: false,
+      ),
+    );
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -412,13 +445,20 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            YoutubePlayer(
-              controller: YoutubePlayerController(
-                initialVideoId: trailerKey,
-                flags: const YoutubePlayerFlags(autoPlay: false, mute: false),
-              ),
-              showVideoProgressIndicator: true,
+            YoutubePlayerScaffold(
+              controller: _youtubePlayerController!,
+              aspectRatio: 16 / 9,
+              builder: (context, player) => player,
             ),
+            const SizedBox(height: 8),
+            ElevatedButton.icon(
+              onPressed: () => _launchYouTubeVideo(trailerKey),
+              icon: const Icon(Icons.open_in_new),
+              label: const Text('Watch on YouTube'),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+              ),
+            )
           ],
         ),
       ),
