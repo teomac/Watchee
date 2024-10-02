@@ -1,3 +1,4 @@
+import 'package:dima_project/pages/account/notifications_page.dart';
 import 'package:dima_project/services/fcm_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -7,20 +8,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:dima_project/theme/theme_provider.dart';
 import 'package:app_links/app_links.dart';
-import 'package:dima_project/pages/watchlists/manage_watchlist_page.dart ';
+import 'package:dima_project/pages/watchlists/manage_watchlist_page.dart';
 import 'dart:async';
 import 'package:logger/logger.dart';
+import 'package:dima_project/models/user_model.dart';
+import 'package:dima_project/services/user_service.dart';
 
 enum ThemeOptions { light, dark, system }
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Set the app to only portrait mode
-  /*await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);*/
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -49,6 +46,20 @@ Future<void> main() async {
       child: MyApp(initialUri: initialUri),
     ),
   );
+
+  // Handle notification clicks
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
+    if (message.data['screen'] == 'notifications') {
+      MyUser? currentUser = await UserService().getCurrentUser();
+      if (currentUser != null) {
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            builder: (context) => NotificationsPage(user: currentUser),
+          ),
+        );
+      }
+    }
+  });
 }
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -121,17 +132,16 @@ class _MyAppState extends State<MyApp> {
         return MaterialApp(
           navigatorKey: navigatorKey,
           theme: ThemeData.light(useMaterial3: true).copyWith(
-            // Customize your light theme here
             scaffoldBackgroundColor: Colors.white,
           ),
           darkTheme: ThemeData.dark(useMaterial3: true).copyWith(
-            // Customize your dark theme here
             scaffoldBackgroundColor: Colors.black,
             snackBarTheme: const SnackBarThemeData(
-                actionTextColor: Colors.red,
-                backgroundColor: Colors.black,
-                contentTextStyle: TextStyle(color: Colors.white),
-                elevation: 20),
+              actionTextColor: Colors.red,
+              backgroundColor: Colors.black,
+              contentTextStyle: TextStyle(color: Colors.white),
+              elevation: 20,
+            ),
           ),
           themeMode: themeProvider.themeMode,
           home: const WidgetTree(),

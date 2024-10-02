@@ -48,6 +48,9 @@ exports.sendFollowNotification = functions
                 title: "New follower!",
                 body: message,
               },
+              data: {
+                screen: 'notifications'
+              }
             });
             console.log(`Notification sent for new follower: ${followerName}`);
 
@@ -115,6 +118,9 @@ exports.sendReviewNotification = functions
               notification: {
                 title: "New review posted!",
                 body: message,
+              },
+              data: {
+                screen: 'notifications'
               },
             });
             console.log(
