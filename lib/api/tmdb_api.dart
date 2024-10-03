@@ -108,3 +108,16 @@ Future<List<Movie>> searchMovie(String query) async {
     throw Exception('Failed to search movies');
   }
 }
+
+// Function used to retrieve movies by release date
+Future<List<Movie>> fetchMoviesByReleaseDate(String releaseDate) async {
+  final response = await http.get(Uri.parse(
+      'https://api.themoviedb.org/3/discover/movie?api_key=${Constants.apiKey}&primary_release_date.gte=$releaseDate&primary_release_date.lte=$releaseDate'));
+
+  if (response.statusCode == 200) {
+    final decodedData = json.decode(response.body)['results'] as List;
+    return decodedData.map((movie) => Movie.fromJson(movie)).toList();
+  } else {
+    throw Exception('Failed to load movies releasing on $releaseDate');
+  }
+}

@@ -194,6 +194,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
         return const Icon(Icons.person_add, color: Colors.blue);
       case 'new_review':
         return const Icon(Icons.comment, color: Colors.green);
+      case 'movie_release':
+        return const Icon(Icons.movie, color: Colors.red);
       default:
         return const Icon(Icons.notifications, color: Colors.grey);
     }

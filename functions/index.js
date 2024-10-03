@@ -1,5 +1,6 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const axios = require('axios');
 admin.initializeApp();
 
 // notification for new follower
@@ -250,3 +251,102 @@ exports.getSharedWatchlist = functions.https.onRequest(async (request, response)
         response.status(500).send('Internal server error');
       }
     });
+
+const TMDB_API_KEY = '7deda61e05cd28b32ad0a2b510923eff';
+
+// Function to fetch movies releasing on a specific date from TMDB
+async function fetchMoviesReleasingTomorrow() {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const releaseDate = tomorrow.toISOString().split('T')[0];  // Format as 'YYYY-MM-DD'
+
+  try {
+    const response = await axios.get(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&primary_release_date.gte=${releaseDate}&primary_release_date.lte=${releaseDate}`);
+    return response.data.results;
+  } catch (error) {
+    console.error("Error fetching movies releasing tomorrow:", error);
+    throw error;
+  }
+}
+
+// Scheduled function to send notifications for movie releases everyday at 11:45am CET
+exports.sendReleaseNotifications = functions.pubsub
+  .schedule('45 11 * * *')
+  .timeZone('Europe/Paris')
+  .onRun(async (context) => {
+    try {
+      //Fetch movies releasing tomorrow
+      const moviesReleasingTomorrow = await fetchMoviesReleasingTomorrow();
+
+      if (moviesReleasingTomorrow.length === 0) {
+        console.log("No movies are releasing tomorrow.");
+        return null;
+      }
+
+      // Extract movie IDs of movies releasing tomorrow
+      const movieIdsReleasingTomorrow = moviesReleasingTomorrow.map(movie => movie.id);
+
+      //Fetch all users who have liked movies
+      const usersSnapshot = await admin.firestore().collection('users').get();
+
+      usersSnapshot.forEach(async (userDoc) => {
+        const userData = userDoc.data();
+        const likedMovies = userData.likedMovies || [];
+
+        //Check if any liked movies are releasing tomorrow
+        const matchingMovies = likedMovies.filter(movieId => movieIdsReleasingTomorrow.includes(movieId));
+
+        if (matchingMovies.length === 0) {
+          return;
+        }
+
+        // Send a notification for each matching movie
+        for (const movieId of matchingMovies) {
+          const movieDetails = moviesReleasingTomorrow.find(movie => movie.id === movieId);
+
+          if (movieDetails) {
+            const message = `The movie '${movieDetails.title}' you liked is releasing tomorrow!`;
+
+            if (userData.fcmToken) {
+              await admin.messaging().send({
+                token: userData.fcmToken,
+                notification: {
+                  title: "Movie Release Alert",
+                  body: message,
+                },
+                data: {
+                  screen: 'movie_details',
+                  movieId: movieId.toString(),
+                },
+              });
+
+              console.log(`Notification sent for movie release: ${movieDetails.title}`);
+
+              const notificationsRef = admin.firestore().collection(`users/${userDoc.id}/notifications`);
+              const notificationId = notificationsRef.doc().id;
+              await notificationsRef.doc(notificationId).set({
+                notificationId,
+                message,
+                timestamp: admin.firestore.FieldValue.serverTimestamp(),
+                type: "movie_release",
+                movieId,
+                movieTitle: movieDetails.title,
+              });
+
+              const snapshot = await notificationsRef.orderBy('timestamp').limit(11).get();
+              if (snapshot.size > 10) {
+                const oldestDoc = snapshot.docs[0];
+                await oldestDoc.ref.delete();
+              }
+            } else {
+              console.log(`No FCM token found for user ${userDoc.id}`);
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.error("Error sending release notifications:", error);
+    }
+
+    return null;
+  });
