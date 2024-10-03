@@ -36,6 +36,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   List<int> _seenMovies = [];
   bool _isSubmitButtonEnabled = false;
   YoutubePlayerController? _youtubePlayerController;
+  bool _showAllReviews = false;
 
   @override
   void dispose() {
@@ -475,7 +476,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
       );
     }
 
-    final recentReviews = _friendsReviews.take(2);
+    final reviewsToShow =
+        _showAllReviews ? _friendsReviews : _friendsReviews.take(2).toList();
 
     return Card(
       child: Padding(
@@ -488,14 +490,13 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            ...recentReviews.map((review) {
+            ...reviewsToShow.map((review) {
               return ListTile(
                 leading: CircleAvatar(
-                  child: Text(review.username.isNotEmpty
-                      ? review.username[0]
-                      : '?'), // Placeholder for user initial
+                  child: Text(
+                      review.username.isNotEmpty ? review.username[0] : '?'),
                 ),
-                title: Text(review.username), // Placeholder for user name
+                title: Text(review.username),
                 subtitle: Text(review.text),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -507,16 +508,15 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
               );
             }),
             if (_friendsReviews.length > 2)
-              const SizedBox(
-                height: 16,
-              ),
-            ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) =>
-                          FriendsReviews(friendsReviews: _friendsReviews)));
-                },
-                child: const Text('See all friends reviews'))
+              TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _showAllReviews = !_showAllReviews;
+                    });
+                  },
+                  child: Text(_showAllReviews
+                      ? 'Show less reviews'
+                      : 'Show all friends reviews'))
           ],
         ),
       ),
