@@ -658,7 +658,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(
-                  width: 50,
+                  width: 100,
                   child: DropdownButton<String>(
                     value: _selectedCountry,
                     isExpanded: true,
@@ -681,20 +681,46 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
             ),
             const SizedBox(height: 12),
             if (providers.isNotEmpty)
-              Wrap(
-                spacing: 8,
-                children: providers
-                    .map((provider) => Chip(
-                          label: Text(provider['provider_name']),
-                          avatar: provider['logo_path'] != null
-                              ? Image.network(
-                                  'https://image.tmdb.org/t/p/w92${provider['logo_path']}',
-                                  width: 24,
-                                  height: 24,
-                                )
-                              : null,
-                        ))
-                    .toList(),
+              SizedBox(
+                height: 110,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: providers.length,
+                  itemBuilder: (context, index) {
+                    final provider = providers[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 16.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          CircleAvatar(
+                            radius: 30,
+                            backgroundImage: provider['logo_path'] != null
+                                ? NetworkImage(
+                                    'https://image.tmdb.org/t/p/w92${provider['logo_path']}')
+                                : null,
+                            child: provider['logo_path'] == null
+                                ? Text(provider['provider_name'][0])
+                                : null,
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            constraints: const BoxConstraints(
+                              maxWidth: 80,
+                            ),
+                            child: Text(
+                              provider['provider_name'],
+                              maxLines: 2, // Allow up to 2 lines
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 12),
+                              textAlign: TextAlign.center, // Center text
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               )
             else
               const Text('No providers available for this country'),
