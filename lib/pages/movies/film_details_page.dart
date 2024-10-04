@@ -134,9 +134,11 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         _allProviders = providers;
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load providers: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load providers: $e')),
+        );
+      }
     }
   }
 
