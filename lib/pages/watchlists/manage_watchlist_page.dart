@@ -12,6 +12,7 @@ import 'package:dima_project/pages/account/user_profile_page.dart';
 import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/pages/watchlists/followers_list_page.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:dima_project/pages/watchlists/invite_collaborators_page.dart';
 
 // Events
 abstract class ManageWatchlistEvent {}
@@ -174,6 +175,7 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
   bool canEdit = false;
   WatchList? actualWatchlist;
   bool isFollowing = false;
+  bool isCollaborator = false;
 
   @override
   void initState() {
@@ -183,6 +185,7 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
   }
 
   Future<void> _loadBasics() async {
+    isCollaborator = false;
     actualWatchlist = await _manageWatchlistBloc._watchlistService
         .getWatchList(widget.userId, widget.watchlistId);
     user = await _userService.getUser(widget.userId);
@@ -190,11 +193,15 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
 
     _manageWatchlistBloc.add(LoadWatchlist(widget.userId, widget.watchlistId));
     if (currentUser != null &&
-            actualWatchlist != null &&
-            user != null &&
-            (currentUser!.id == widget.userId) ||
-        actualWatchlist!.collaborators.contains(currentUser!.id)) {
+        actualWatchlist != null &&
+        user != null &&
+        (currentUser!.id == widget.userId)) {
       canEdit = true;
+      isCollaborator = false;
+    }
+    if (actualWatchlist!.collaborators.contains(currentUser!.id)) {
+      canEdit = true;
+      isCollaborator = true;
     }
     if (currentUser != null && user != null && currentUser!.id != user!.id) {
       // Check if the current user is following this watchlist
@@ -404,7 +411,7 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (canEdit)
+              if (canEdit || isCollaborator)
                 ListTile(
                   leading: const Icon(Icons.edit),
                   title: const Text('Rename watchlist'),
@@ -413,7 +420,7 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
                     _showRenameDialog(context, watchlist);
                   },
                 ),
-              if (canEdit)
+              if (canEdit && !isCollaborator)
                 ListTile(
                   leading:
                       Icon(watchlist.isPrivate ? Icons.public : Icons.lock),
@@ -425,13 +432,19 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
                     _manageWatchlistBloc.add(ToggleWatchlistPrivacy());
                   },
                 ),
-              if (canEdit)
+              if (canEdit && !isCollaborator)
                 ListTile(
                   leading: const Icon(Icons.person_add),
                   title: const Text('Invite as collaborator'),
                   onTap: () {
                     Navigator.pop(context);
-                    // TODO: Implement invite functionality
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            InviteCollaboratorsPage(watchlist: watchlist),
+                      ),
+                    );
                   },
                 ),
               ListTile(
