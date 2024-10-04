@@ -13,6 +13,7 @@ import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/pages/watchlists/followers_list_page.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:dima_project/pages/watchlists/invite_collaborators_page.dart';
+import 'package:dima_project/pages/watchlists/collaborators_list_page.dart';
 
 // Events
 abstract class ManageWatchlistEvent {}
@@ -364,6 +365,21 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
                         fontWeight: FontWeight.bold,
                       ),
                 ),
+          //add number of movies in the watchlist. If there is only one movie, display "1 movie", otherwise "n movies"
+          const SizedBox(width: 4),
+          watchlist.movies.length != 1
+              ? Text(
+                  '· ${watchlist.movies.length} movies',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                )
+              : Text(
+                  '· ${watchlist.movies.length} movie',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
         ],
       ),
     );
@@ -382,6 +398,9 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
     if (user == null) {
       return const Text('Created by Unknown');
     }
+
+    int collaboratorsCount = actualWatchlist!.collaborators.length;
+
     return Row(
       children: [
         const Text('Created by '),
@@ -399,6 +418,24 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
             ),
           ),
         ),
+        if (collaboratorsCount > 0) ...[
+          const Text(' and '),
+          GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    CollaboratorsListPage(watchlist: actualWatchlist!),
+              ),
+            ),
+            child: Text(
+              '$collaboratorsCount ${collaboratorsCount == 1 ? 'other' : 'others'}',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
