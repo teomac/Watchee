@@ -86,6 +86,10 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
           .collection('users')
           .doc(uid)
           .update(updateData);
+
+      await UserService()
+          .updateUsernameInReviews(uid, _usernameController.text);
+
       await UserService()
           .updateUserWithNameLowerCase(uid, _nameController.text);
       if (mounted) {
