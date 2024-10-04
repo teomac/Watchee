@@ -449,6 +449,31 @@ class UserService {
         .delete();
   }
 
+  // update username in reviews upon username change
+  Future<void> updateUsernameInReviews(
+      String userId, String newUsername) async {
+    try {
+      QuerySnapshot reviewsSnapshot = await _firestore
+          .collection('reviews')
+          .where('userId', isEqualTo: userId)
+          .get();
+
+      WriteBatch batch = _firestore.batch();
+
+      for (var doc in reviewsSnapshot.docs) {
+        DocumentReference reviewRef = doc.reference;
+        batch.update(reviewRef, {'username': newUsername});
+      }
+
+      await batch.commit();
+      logger.d(
+          'Successfully updated username in ${reviewsSnapshot.docs.length} reviews for user $userId');
+    } catch (e) {
+      logger.e('Failed to update username in reviews: $e');
+      throw Exception('Failed to update username in reviews: $e');
+    }
+  }
+
   Future<bool> signOut() async {
     try {
       await _auth.signOut();
