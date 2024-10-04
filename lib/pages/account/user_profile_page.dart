@@ -311,13 +311,20 @@ class _UserProfilePageState extends State<UserProfilePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Reviews',
-          style: Theme.of(context).textTheme.titleMedium,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Reviews',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            if (_currentUser != null && _currentUser!.id == widget.user.id)
+              TextButton(
+                onPressed: _openEditReviewsPage,
+                child: const Icon(Icons.edit),
+              ),
+          ],
         ),
-        if (_currentUser != null && _currentUser!.id == widget.user.id)
-          TextButton(
-              onPressed: _openEditReviewsPage, child: const Icon(Icons.edit)),
         const SizedBox(height: 8),
         ListView.builder(
           shrinkWrap: true,
