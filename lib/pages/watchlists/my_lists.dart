@@ -30,8 +30,8 @@ class MyListsInitial extends MyListsState {}
 class MyListsLoading extends MyListsState {}
 
 class MyListsLoaded extends MyListsState {
-  final List<WatchList> ownWatchlists;
-  final List<WatchList> followedWatchlists;
+  final Map<MyUser, List<WatchList>> ownWatchlists;
+  final Map<MyUser, List<WatchList>> followedWatchlists;
 
   MyListsLoaded(this.ownWatchlists, this.followedWatchlists);
 }
@@ -76,10 +76,42 @@ class MyListsBloc extends Bloc<MyListsEvent, MyListsState> {
     try {
       final currentUser = await _userService.getCurrentUser();
       if (currentUser != null) {
-        final ownWatchlists =
+        final tempOwnWatchlists =
             await _watchlistService.getOwnWatchLists(currentUser.id);
-        final followedWatchlists =
+        final tempCollaboratorWatchlists =
+            await _watchlistService.getCollabWatchLists(currentUser.id);
+        for (final watchlist in tempCollaboratorWatchlists) {
+          tempOwnWatchlists.add(watchlist);
+        }
+        final tempFollowedWatchlists =
             await _watchlistService.getFollowingWatchlists(currentUser);
+
+        //for each watchlist in ownWatchlist, create the map with the MyUser object as key and its watchlists as value
+        Map<MyUser, List<WatchList>> ownWatchlists = {};
+        for (var watchlist in tempOwnWatchlists) {
+          MyUser? user = await _userService.getUser(watchlist.userID);
+          if (user != null) {
+            if (ownWatchlists.containsKey(user)) {
+              ownWatchlists[user]!.add(watchlist);
+            } else {
+              ownWatchlists[user] = [watchlist];
+            }
+          }
+        }
+
+        //for each watchlist in followedWatchlist, create the map with the MyUser object as key and its watchlists as value
+        Map<MyUser, List<WatchList>> followedWatchlists = {};
+        for (var watchlist in tempFollowedWatchlists) {
+          MyUser? user = await _userService.getUser(watchlist.userID);
+          if (user != null) {
+            if (followedWatchlists.containsKey(user)) {
+              followedWatchlists[user]!.add(watchlist);
+            } else {
+              followedWatchlists[user] = [watchlist];
+            }
+          }
+        }
+
         emit(MyListsLoaded(ownWatchlists, followedWatchlists));
       } else {
         emit(MyListsError("User not found"));
@@ -289,7 +321,7 @@ class _MyListsState extends State<MyLists> {
   }
 
   Widget _buildWatchlistSection(BuildContext context, String title,
-      List<WatchList> watchlists, bool isOwnWatchlist) {
+      Map<MyUser, List<WatchList>> watchlists, bool isOwnWatchlist) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -300,36 +332,42 @@ class _MyListsState extends State<MyLists> {
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
         ),
-        ...watchlists.map((watchlist) => ListTile(
-              leading: CircleAvatar(
-                backgroundColor: Colors
-                    .primaries[watchlist.name.length % Colors.primaries.length],
-                child: Text(watchlist.name[0].toUpperCase()),
-              ),
-              title: Text(watchlist.name),
-              subtitle: watchlist.movies.length != 1
-                  ? Text('${watchlist.movies.length} movies')
-                  : Text('${watchlist.movies.length} movie'),
-              trailing: watchlist.isPrivate ? const Icon(Icons.lock) : null,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ManageWatchlistPage(
-                        userId: watchlist.userID, watchlistId: watchlist.id),
-                  ),
-                ).then((_) {
-                  if (context.mounted) {
-                    myListsBloc.add(LoadMyLists());
-                  }
-                });
-              },
-              onLongPress: () => _showWatchlistOptions(
-                  context,
-                  watchlist,
-                  isOwnWatchlist,
-                  (WatchList wl) => myListsBloc.add(DeleteWatchlist(wl))),
-            )),
+        ...watchlists.entries.expand((entry) {
+          final user = entry.key;
+          final userWatchlists = entry.value;
+          return userWatchlists.map((watchlist) => ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Colors.primaries[
+                      watchlist.name.length % Colors.primaries.length],
+                  child: Text(watchlist.name[0].toUpperCase()),
+                ),
+                title: Text(watchlist.name),
+                subtitle: watchlist.movies.length != 1
+                    ? Text(
+                        '${watchlist.movies.length} movies · ${user.username}')
+                    : Text(
+                        '${watchlist.movies.length} movie · ${user.username}'),
+                trailing: watchlist.isPrivate ? const Icon(Icons.lock) : null,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ManageWatchlistPage(
+                          userId: watchlist.userID, watchlistId: watchlist.id),
+                    ),
+                  ).then((_) {
+                    if (context.mounted) {
+                      myListsBloc.add(LoadMyLists());
+                    }
+                  });
+                },
+                onLongPress: () => _showWatchlistOptions(
+                    context,
+                    watchlist,
+                    isOwnWatchlist,
+                    (WatchList wl) => myListsBloc.add(DeleteWatchlist(wl))),
+              ));
+        }),
         const SizedBox(height: 16),
       ],
     );

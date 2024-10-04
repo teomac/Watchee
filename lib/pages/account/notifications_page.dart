@@ -1,6 +1,7 @@
 import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/pages/account/user_profile_page.dart';
 import 'package:dima_project/services/user_service.dart';
+import 'package:dima_project/services/watchlist_service.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -16,6 +17,8 @@ class NotificationsPage extends StatefulWidget {
 
 class _NotificationsPageState extends State<NotificationsPage> {
   final UserService _userService = UserService();
+  final WatchlistService _watchlistService = WatchlistService();
+
   late Future<List<Map<String, dynamic>>> _notificationsFuture;
 
   @override
@@ -113,7 +116,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   final formattedTimestamp = timeago.format(timestamp);
                   final String userId = notification['type'] == 'new_review'
                       ? notification['reviewAuthorId']
-                      : notification['followerId'];
+                      : notification['type'] == 'new_follower'
+                          ? notification['followerId']
+                          : notification['watchlistOwner'];
 
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 5),
@@ -147,34 +152,64 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: ListTile(
-                          leading: _getNotificationIcon(notification['type']),
-                          title: Text(
-                            notification['message'],
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          subtitle: Text(
-                            formattedTimestamp,
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12,
-                            ),
-                          ),
-                          onTap: () async {
-                            MyUser? user = await _userService.getUser(userId);
-                            if (user != null && context.mounted) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      UserProfilePage(user: user),
+                        child: Column(
+                          children: [
+                            ListTile(
+                              leading:
+                                  _getNotificationIcon(notification['type']),
+                              title: Text(
+                                notification['message'],
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
                                 ),
-                              );
-                            }
-                          },
+                              ),
+                              subtitle: Text(
+                                formattedTimestamp,
+                                style: const TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              onTap: notification['type'] != 'new_invitation'
+                                  ? () async {
+                                      MyUser? user =
+                                          await _userService.getUser(userId);
+                                      if (user != null && context.mounted) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                UserProfilePage(user: user),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  : null,
+                            ),
+                            if (notification['type'] == 'new_invitation')
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    ElevatedButton(
+                                      onPressed: () => _acceptInvitation(
+                                          widget.user.id,
+                                          notification), // Unclickable for now
+                                      child: const Text('Accept'),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    ElevatedButton(
+                                      onPressed: () => _declineInvitation(
+                                          widget.user.id,
+                                          notification), // Unclickable for now
+                                      child: const Text('Decline'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                     ),
@@ -196,8 +231,34 @@ class _NotificationsPageState extends State<NotificationsPage> {
         return const Icon(Icons.comment, color: Colors.green);
       case 'movie_release':
         return const Icon(Icons.movie, color: Colors.red);
+      case 'new_invitation':
+        return const Icon(Icons.playlist_add, color: Colors.orange);
       default:
         return const Icon(Icons.notifications, color: Colors.grey);
     }
+  }
+
+  Future<void> _acceptInvitation(
+      String userId, Map<String, dynamic> notification) async {
+    await _watchlistService.acceptInvite(
+        notification['watchlistId'], notification['watchlistOwner'], userId);
+    //remove notification
+    await _userService.removeNotification(
+        userId, notification['notificationId']);
+    setState(() {
+      _notificationsFuture = _userService.getNotifications(widget.user.id);
+    });
+  }
+
+  Future<void> _declineInvitation(
+      String userId, Map<String, dynamic> notification) async {
+    await _watchlistService.declineInvite(
+        notification['watchlistId'], notification['watchlistOwner'], userId);
+    //remove notification
+    await _userService.removeNotification(
+        userId, notification['notificationId']);
+    setState(() {
+      _notificationsFuture = _userService.getNotifications(widget.user.id);
+    });
   }
 }

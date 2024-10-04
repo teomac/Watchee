@@ -14,6 +14,8 @@ class MyUser {
   final List<int> likedMovies;
   final List<int> seenMovies;
   final Map<String, List<dynamic>> followedWatchlists;
+  final Map<String, List<dynamic>> pendingInvites;
+  final Map<String, List<dynamic>> collabWatchlists;
 
   MyUser({
     required this.id,
@@ -28,6 +30,8 @@ class MyUser {
     this.likedMovies = const [],
     this.seenMovies = const [],
     this.followedWatchlists = const {},
+    this.pendingInvites = const {},
+    this.collabWatchlists = const {},
   });
 
   // Convert User object to a map for Firestore
@@ -45,6 +49,8 @@ class MyUser {
       'likedMovies': likedMovies,
       'seenMovies': seenMovies,
       'followedWatchlists': followedWatchlists,
+      'pendingInvites': pendingInvites,
+      'collabWatchlists': collabWatchlists,
     };
   }
 
@@ -66,12 +72,16 @@ class MyUser {
       seenMovies: List<int>.from(data['seenMovies'] ?? []),
       followedWatchlists:
           Map<String, List<dynamic>>.from(data['followedWatchlists'] ?? {}),
+      pendingInvites:
+          Map<String, List<dynamic>>.from(data['pendingInvites'] ?? {}),
+      collabWatchlists:
+          Map<String, List<dynamic>>.from(data['collabWatchlists'] ?? {}),
     );
   }
 
   @override
   String toString() {
-    return 'MyUser(id: $id, username: $username, name: $name, email: $email, nameLowerCase: $nameLowerCase, profilePicture: $profilePicture, favoriteGenres: $favoriteGenres, following: $following, followers: $followers, likedMovies: $likedMovies, seenMovies: $seenMovies, followedWatchlists: $followedWatchlists)';
+    return 'MyUser(id: $id, username: $username, name: $name, email: $email, nameLowerCase: $nameLowerCase, profilePicture: $profilePicture, favoriteGenres: $favoriteGenres, following: $following, followers: $followers, likedMovies: $likedMovies, seenMovies: $seenMovies, followedWatchlists: $followedWatchlists, pendingInvites: $pendingInvites, collabWatchlists: $collabWatchlists)';
   }
 
   @override
@@ -90,7 +100,9 @@ class MyUser {
         listEquals(other.followers, followers) &&
         listEquals(other.likedMovies, likedMovies) &&
         listEquals(other.seenMovies, seenMovies) &&
-        mapEquals(other.followedWatchlists, followedWatchlists);
+        mapEquals(other.followedWatchlists, followedWatchlists) &&
+        mapEquals(other.pendingInvites, pendingInvites) &&
+        mapEquals(other.collabWatchlists, collabWatchlists);
   }
 
   @override
@@ -106,6 +118,8 @@ class MyUser {
         followers.hashCode ^
         likedMovies.hashCode ^
         seenMovies.hashCode ^
-        followedWatchlists.hashCode;
+        followedWatchlists.hashCode ^
+        pendingInvites.hashCode ^
+        collabWatchlists.hashCode;
   }
 }

@@ -54,6 +54,26 @@ class WatchlistService {
 
   Future<void> deleteWatchList(WatchList watchList) async {
     try {
+      //check if it has collaborators
+      if (watchList.collaborators.isNotEmpty) {
+        //remove watchlist value from collabWatchlist map in each collaborator
+        for (var collaborator in watchList.collaborators) {
+          await _firestore.collection('users').doc(collaborator).update({
+            'collabWatchlists.${watchList.userID}':
+                FieldValue.arrayRemove([watchList.id])
+          });
+        }
+      }
+
+      //remove watchlist for each follower
+      for (var follower in watchList.followers) {
+        await _firestore.collection('users').doc(follower).update({
+          'followedWatchlists.${watchList.userID}':
+              FieldValue.arrayRemove([watchList.id])
+        });
+      }
+
+      //delete watchlist
       await _firestore
           .collection('users')
           .doc(watchList.userID)
@@ -76,6 +96,34 @@ class WatchlistService {
     } catch (e) {
       logger.e(e);
       return [];
+    }
+  }
+
+  Future<List<WatchList>> getCollabWatchLists(String userId) async {
+    List<WatchList> watchLists = [];
+    try {
+      //get user document
+      MyUser? user = await _userService.getUser(userId);
+      for (var key in user!.collabWatchlists.keys) {
+        for (var watchlistId in user.collabWatchlists[key]!) {
+          QuerySnapshot querySnapshot = await _firestore
+              .collection('users')
+              .doc(key)
+              .collection('my_watchlists')
+              .where(FieldPath.documentId, isEqualTo: watchlistId)
+              .get();
+
+          //return watchlist if it exists
+          if (querySnapshot.docs.isNotEmpty) {
+            //add watchlist to the list
+            watchLists.add(WatchList.fromFirestore(querySnapshot.docs.first));
+          }
+        }
+      }
+      return watchLists;
+    } catch (e) {
+      logger.e(e);
+      return watchLists;
     }
   }
 
@@ -117,7 +165,7 @@ class WatchlistService {
       var value = entry.value;
       for (var watchlistId in value) {
         WatchList? watchlist = await getWatchList(key, watchlistId);
-        if (watchlist != null) {
+        if (watchlist != null && !watchlist.isPrivate) {
           watchLists.add(watchlist);
         }
       }
@@ -207,6 +255,61 @@ class WatchlistService {
       watchlist.movies.remove(movieId);
       watchlist = watchlist.copyWith(updatedAt: DateTime.now().toString());
       await updateWatchList(watchlist);
+    } catch (e) {
+      logger.e(e);
+    }
+  }
+
+  //functions for invite collaborators
+  Future<bool> inviteCollaborator(
+      String watchlistId, String watchlistOwner, String userId) async {
+    try {
+      final user = await _userService.getUser(userId);
+
+      if ((!user!.pendingInvites.containsKey(watchlistOwner) ||
+              !user.pendingInvites[watchlistOwner]!.contains(watchlistId)) &&
+          (!user.collabWatchlists.containsKey(watchlistOwner) ||
+              !user.collabWatchlists[watchlistOwner]!.contains(watchlistId)) &&
+          watchlistOwner != userId) {
+        await _firestore.collection('users').doc(userId).update({
+          'pendingInvites.$watchlistOwner': FieldValue.arrayUnion([watchlistId])
+        });
+        return true;
+      }
+    } catch (e) {
+      logger.e(e);
+      return false;
+    }
+    return false;
+  }
+
+  Future<void> acceptInvite(
+      String watchlistId, String watchlistOwner, String userId) async {
+    try {
+      await _firestore.collection('users').doc(userId).update({
+        'pendingInvites.$watchlistOwner': FieldValue.arrayRemove([watchlistId]),
+        'collabWatchlists.$watchlistOwner': FieldValue.arrayUnion([watchlistId])
+      });
+
+      await _firestore
+          .collection('users')
+          .doc(watchlistOwner)
+          .collection('my_watchlists')
+          .doc(watchlistId)
+          .update({
+        'collaborators': FieldValue.arrayUnion([userId])
+      });
+    } catch (e) {
+      logger.e(e);
+    }
+  }
+
+  Future<void> declineInvite(
+      String watchlistId, String watchlistOwner, String userId) async {
+    try {
+      await _firestore.collection('users').doc(userId).update({
+        'pendingInvites.$watchlistOwner': FieldValue.arrayRemove([watchlistId])
+      });
     } catch (e) {
       logger.e(e);
     }
