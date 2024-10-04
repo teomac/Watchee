@@ -116,8 +116,10 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     try {
       List<WatchList> watchlists =
           await _watchlistService.getOwnWatchLists(_currentUser!.id);
+      List<WatchList> collabWatchlists =
+          await _watchlistService.getCollabWatchLists(_currentUser!.id);
       setState(() {
-        _userWatchlists = watchlists;
+        _userWatchlists = watchlists + collabWatchlists;
       });
     } catch (e) {
       if (mounted) {
