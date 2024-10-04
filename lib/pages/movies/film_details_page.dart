@@ -1,3 +1,4 @@
+import 'package:dima_project/api/tmdb_api.dart';
 import 'package:dima_project/models/movie_review.dart';
 import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/models/watchlist.dart';
@@ -36,6 +37,9 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   bool _isSubmitButtonEnabled = false;
   YoutubePlayerController? _youtubePlayerController;
   bool _showAllReviews = false;
+  final List<String> _countries = ['US', 'IT', 'UK', 'FR', 'DE', 'CH', 'ES'];
+  String _selectedCountry = 'US';
+  Map<String, List<Map<String, dynamic>>> _allProviders = {};
 
   @override
   void dispose() {
@@ -47,6 +51,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   void initState() {
     super.initState();
     _initializeData().then((_) {
+      _fetchAllProviders();
       _fetchFriendsReviews();
     });
 
@@ -119,6 +124,19 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Failed to fetch watchlists: $e')));
       }
+    }
+  }
+
+  Future<void> _fetchAllProviders() async {
+    try {
+      final providers = await fetchAllProviders(widget.movie.id);
+      setState(() {
+        _allProviders = providers;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load providers: $e')),
+      );
     }
   }
 
@@ -206,6 +224,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                   _buildRating(state.movie),
                   const SizedBox(height: 16),
                   _buildOverview(state.movie),
+                  const SizedBox(height: 16),
+                  _buildProvidersSection(),
                   const SizedBox(height: 16),
                   _buildCast(state.cast),
                   const SizedBox(height: 16),
@@ -610,6 +630,74 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                   : null,
               child: const Text('Submit your review'),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProvidersSection() {
+    final providers = _allProviders[_selectedCountry] ?? [];
+
+    return Card(
+      elevation: 4,
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Available On',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(
+                  width: 50,
+                  child: DropdownButton<String>(
+                    value: _selectedCountry,
+                    isExpanded: true,
+                    items: _countries
+                        .map((country) => DropdownMenuItem(
+                              value: country,
+                              child: Text(country),
+                            ))
+                        .toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          _selectedCountry = newValue;
+                        });
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (providers.isNotEmpty)
+              Wrap(
+                spacing: 8,
+                children: providers
+                    .map((provider) => Chip(
+                          label: Text(provider['provider_name']),
+                          avatar: provider['logo_path'] != null
+                              ? Image.network(
+                                  'https://image.tmdb.org/t/p/w92${provider['logo_path']}',
+                                  width: 24,
+                                  height: 24,
+                                )
+                              : null,
+                        ))
+                    .toList(),
+              )
+            else
+              const Text('No providers available for this country'),
           ],
         ),
       ),

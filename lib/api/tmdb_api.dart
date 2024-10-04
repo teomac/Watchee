@@ -121,3 +121,35 @@ Future<List<Movie>> fetchMoviesByReleaseDate(String releaseDate) async {
     throw Exception('Failed to load movies releasing on $releaseDate');
   }
 }
+
+// function used to retrieve movie providers
+Future<Map<String, List<Map<String, dynamic>>>> fetchAllProviders(
+    int movieId) async {
+  final response = await http.get(Uri.parse(
+      '${Constants.movieBaseUrl}/$movieId/watch/providers?api_key=${Constants.apiKey}'));
+
+  if (response.statusCode == 200) {
+    final decodedData =
+        json.decode(response.body)['results'] as Map<String, dynamic>;
+
+    Map<String, List<Map<String, dynamic>>> providersByCountry = {};
+
+    decodedData.forEach((countryCode, data) {
+      if (data['flatrate'] != null) {
+        final providers = data['flatrate'] as List<dynamic>;
+        providersByCountry[countryCode] = providers
+            .map((provider) => {
+                  'provider_name': provider['provider_name'],
+                  'logo_path': provider['logo_path'],
+                })
+            .toList();
+      } else {
+        providersByCountry[countryCode] = [];
+      }
+    });
+
+    return providersByCountry;
+  } else {
+    throw Exception('Failed to load providers');
+  }
+}
