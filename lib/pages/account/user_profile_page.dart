@@ -5,7 +5,7 @@ import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:dima_project/services/watchlist_service.dart';
 import 'package:dima_project/models/watchlist.dart';
-import 'package:dima_project/pages/watchlists/manage_watchlist_page.dart'; // Add this import
+import 'package:dima_project/pages/watchlists/manage_watchlist_page.dart';
 
 class UserProfilePage extends StatefulWidget {
   final MyUser user;
@@ -260,7 +260,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
         _isLoadingWatchlists
             ? const Center(child: CircularProgressIndicator())
             : _publicWatchlists.isEmpty
-                ? const Text('No public watchlists available.')
+                ? const Center(child: Text('No public watchlists available.'))
                 : ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -294,20 +294,6 @@ class _UserProfilePageState extends State<UserProfilePage> {
   }
 
   Widget _buildLatestReviews() {
-    if (_userReviews.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.only(top: 16.0),
-        child: Text('No reviews yet.'),
-      );
-    }
-
-    int reviewsToShow = 0;
-    if (_userReviews.length <= 2) {
-      reviewsToShow = _userReviews.length;
-    } else {
-      reviewsToShow = _showAllReviews ? _userReviews.length : 2;
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -326,42 +312,52 @@ class _UserProfilePageState extends State<UserProfilePage> {
           ],
         ),
         const SizedBox(height: 8),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: reviewsToShow,
-          itemBuilder: (context, index) {
-            final review = _userReviews[index];
-            return ListTile(
-              title: Text(
-                (review.title),
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text(
-                review.text,
-                style: const TextStyle(fontSize: 16),
-              ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '${review.rating}/5',
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(width: 4),
-                  const Icon(
-                    Icons.star,
-                    color: Colors.amber,
-                    size: 20,
-                  )
-                ],
-              ),
-              isThreeLine: true,
-            );
-          },
-        ),
+        if (_userReviews.isEmpty)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.only(top: 16.0),
+              child: Text('No reviews yet.'),
+            ),
+          )
+        else
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _showAllReviews
+                ? _userReviews.length
+                : (_userReviews.length <= 2 ? _userReviews.length : 2),
+            itemBuilder: (context, index) {
+              final review = _userReviews[index];
+              return ListTile(
+                title: Text(
+                  (review.title),
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  review.text,
+                  style: const TextStyle(fontSize: 16),
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${review.rating}/5',
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.star,
+                      color: Colors.amber,
+                      size: 20,
+                    ),
+                  ],
+                ),
+                isThreeLine: true,
+              );
+            },
+          ),
         if (_userReviews.length > 2)
           TextButton(
             onPressed: () {
