@@ -201,12 +201,8 @@ class HomeMoviesState extends State<HomeMovies> {
         SizedBox(
           child: movies != null
               ? sliderBuilder(movies)
-              : Center(
-                  child: Text(
-                    'Failed to load $title',
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ),
+              : //show a loading indicator while movies are being fetched
+              const Center(child: CircularProgressIndicator()),
         ),
         const SizedBox(height: 20),
       ],
