@@ -4,7 +4,6 @@ import 'package:dima_project/services/fcm_service.dart';
 import 'package:dima_project/services/google_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dima_project/widgets/my_textfield.dart';
 import 'package:flutter/gestures.dart';
 import 'package:dima_project/pages/login_and_register/register_page.dart';
@@ -27,10 +26,12 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _controllerPassword = TextEditingController();
 
   Future<void> signInWithEmailAndPassword() async {
+    BuildContext dialogContext = context;
     //show loading circle
     showDialog(
         context: context,
         builder: (BuildContext context) {
+          dialogContext = context;
           return const Center(
             child: CircularProgressIndicator(),
           );
@@ -48,13 +49,15 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       FMCService.setupTokenRefreshListener();
-    } on FirebaseAuthException catch (e) {
+    } catch (e) {
       setState(() {
-        errorMessage = e.message;
+        // Set a more specific error message if possible
+        errorMessage = e.toString();
       });
-    }
-    if (mounted) {
-      Navigator.pop(context);
+    } finally {
+      if (dialogContext.mounted) {
+        Navigator.pop(dialogContext);
+      }
     }
   }
 
