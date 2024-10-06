@@ -230,8 +230,12 @@ class _MyListsState extends State<MyLists> {
           SliverToBoxAdapter(
             child: Column(
               children: [
+                const SizedBox(height: 4),
                 _buildLikedSection(context, currentUser!.id), // New section
-                _buildSeenSection(context, currentUser!.id), // New section
+                _buildSeenSection(context, currentUser!.id),
+                const SizedBox(
+                  height: 8,
+                ) // New section
               ],
             ),
           ),
@@ -322,55 +326,89 @@ class _MyListsState extends State<MyLists> {
 
   Widget _buildWatchlistSection(BuildContext context, String title,
       Map<MyUser, List<WatchList>> watchlists, bool isOwnWatchlist) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Text(
-            title,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+    if (watchlists.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: isOwnWatchlist
+                ? const Text(
+                    'My Watchlists',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  )
+                : const Text(
+                    'Followed Watchlists',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
           ),
-        ),
-        ...watchlists.entries.expand((entry) {
-          final user = entry.key;
-          final userWatchlists = entry.value;
-          return userWatchlists.map((watchlist) => ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: Colors.primaries[
-                      watchlist.name.length % Colors.primaries.length],
-                  child: Text(watchlist.name[0].toUpperCase()),
-                ),
-                title: Text(watchlist.name),
-                subtitle: watchlist.movies.length != 1
-                    ? Text(
-                        '${watchlist.movies.length} movies · ${user.username}')
-                    : Text(
-                        '${watchlist.movies.length} movie · ${user.username}'),
-                trailing: watchlist.isPrivate ? const Icon(Icons.lock) : null,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ManageWatchlistPage(
-                          userId: watchlist.userID, watchlistId: watchlist.id),
-                    ),
-                  ).then((_) {
-                    if (context.mounted) {
-                      myListsBloc.add(LoadMyLists());
-                    }
-                  });
-                },
-                onLongPress: () => _showWatchlistOptions(
-                    context,
-                    watchlist,
-                    isOwnWatchlist,
-                    (WatchList wl) => myListsBloc.add(DeleteWatchlist(wl))),
-              ));
-        }),
-        const SizedBox(height: 16),
-      ],
-    );
+          const SizedBox(height: 48),
+          Center(
+            child: isOwnWatchlist
+                ? Text(
+                    'Press the + button to create your first watchlist',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  )
+                : Text(
+                    'You are currently not following any watchlists',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+          ),
+          const SizedBox(height: 16),
+        ],
+      );
+    } else {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          ),
+          ...watchlists.entries.expand((entry) {
+            final user = entry.key;
+            final userWatchlists = entry.value;
+            return userWatchlists.map((watchlist) => ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.primaries[
+                        watchlist.name.length % Colors.primaries.length],
+                    child: Text(watchlist.name[0].toUpperCase()),
+                  ),
+                  title: Text(watchlist.name),
+                  subtitle: watchlist.movies.length != 1
+                      ? Text(
+                          '${watchlist.movies.length} movies · ${user.username}')
+                      : Text(
+                          '${watchlist.movies.length} movie · ${user.username}'),
+                  trailing: watchlist.isPrivate ? const Icon(Icons.lock) : null,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ManageWatchlistPage(
+                            userId: watchlist.userID,
+                            watchlistId: watchlist.id),
+                      ),
+                    ).then((_) {
+                      if (context.mounted) {
+                        myListsBloc.add(LoadMyLists());
+                      }
+                    });
+                  },
+                  onLongPress: () => _showWatchlistOptions(
+                      context,
+                      watchlist,
+                      isOwnWatchlist,
+                      (WatchList wl) => myListsBloc.add(DeleteWatchlist(wl))),
+                ));
+          }),
+          const SizedBox(height: 20),
+        ],
+      );
+    }
   }
 
   void _showWatchlistOptions(BuildContext context, WatchList watchlist,
