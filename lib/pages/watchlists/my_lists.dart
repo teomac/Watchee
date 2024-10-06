@@ -432,19 +432,6 @@ class _MyListsState extends State<MyLists> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (isOwnWatchlist)
-                  ListTile(
-                    leading: Icon(Icons.person_add,
-                        color: theme.colorScheme.secondary),
-                    title: Text('Invite', style: theme.textTheme.titleMedium),
-                    onTap: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Invite functionality coming soon')),
-                      );
-                    },
-                  ),
                 ListTile(
                   leading:
                       Icon(Icons.share, color: theme.colorScheme.secondary),
@@ -457,7 +444,8 @@ class _MyListsState extends State<MyLists> {
                     );
                   },
                 ),
-                if (isOwnWatchlist)
+                if (isOwnWatchlist &&
+                    !(watchlist.collaborators.contains(currentUser!.id)))
                   ListTile(
                     leading: Icon(Icons.delete, color: theme.colorScheme.error),
                     title: Text('Delete',
