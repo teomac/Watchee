@@ -74,13 +74,26 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  Widget _title() {
-    return const Text(
-      'Authentication logo here',
-      style: TextStyle(
-        color: Colors.black,
-        fontSize: 32,
-      ),
+  Widget _buildTitle() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.movie,
+          size: 40,
+          color: isDarkMode ? Colors.white : Theme.of(context).primaryColor,
+        ),
+        const SizedBox(width: 10),
+        Text(
+          'AnyMovie',
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color:
+                    isDarkMode ? Colors.white : Theme.of(context).primaryColor,
+              ),
+        ),
+      ],
     );
   }
 
@@ -115,18 +128,17 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         resizeToAvoidBottomInset: false,
-        appBar: AppBar(
-          title: _title(),
-        ),
-        body: Container(
-          height: double.infinity,
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          child: SafeArea(
+        body: SafeArea(
+            child: Center(
+                child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
+                  _buildTitle(),
+                  const SizedBox(height: 50),
                   MyTextField(
                       controller: _controllerEmail,
                       title: 'Email',
@@ -248,6 +260,6 @@ class _LoginPageState extends State<LoginPage> {
                   )
                 ]),
           ),
-        ));
+        ))));
   }
 }

@@ -174,6 +174,29 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
+  Widget _buildTitle() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.movie,
+          size: 40,
+          color: isDarkMode ? Colors.white : Theme.of(context).primaryColor,
+        ),
+        const SizedBox(width: 10),
+        Text(
+          'AnyMovie',
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color:
+                    isDarkMode ? Colors.white : Theme.of(context).primaryColor,
+              ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -187,6 +210,8 @@ class _RegisterPageState extends State<RegisterPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
+              _buildTitle(),
+              const SizedBox(height: 50),
               MyTextField(
                   controller: _controllerEmail,
                   title: 'Email',
