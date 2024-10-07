@@ -99,8 +99,17 @@ class _NotificationsPageState extends State<NotificationsPage> {
               child: Text('Error: ${snapshot.error}'),
             );
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(
-              child: Text('No notifications'),
+            return RefreshIndicator(
+              onRefresh: _refreshNotifications,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Container(
+                  height: MediaQuery.of(context).size.height,
+                  child: const Center(
+                    child: Text('No notifications'),
+                  ),
+                ),
+              ),
             );
           } else {
             List<Map<String, dynamic>> notifications = snapshot.data!;
