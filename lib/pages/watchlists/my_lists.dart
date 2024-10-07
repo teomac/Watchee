@@ -9,11 +9,19 @@ import 'package:dima_project/pages/watchlists/manage_watchlist_page.dart';
 import 'dart:async';
 import 'package:dima_project/services/user_menu_manager.dart';
 import 'package:dima_project/pages/watchlists/liked_seen_movies_page.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Events
 abstract class MyListsEvent {}
 
-class LoadMyLists extends MyListsEvent {}
+class LoadMyLists extends MyListsEvent {
+  String currentSortOptionOWN;
+  String currentSortOptionFOLLOWED;
+  LoadMyLists(
+      {this.currentSortOptionOWN = 'Latest Added',
+      this.currentSortOptionFOLLOWED = 'Latest Added'});
+}
 
 class CreateWatchlist extends MyListsEvent {
   final String name;
@@ -30,8 +38,8 @@ class MyListsInitial extends MyListsState {}
 class MyListsLoading extends MyListsState {}
 
 class MyListsLoaded extends MyListsState {
-  final Map<MyUser, List<WatchList>> ownWatchlists;
-  final Map<MyUser, List<WatchList>> followedWatchlists;
+  final List<WatchList> ownWatchlists;
+  final List<WatchList> followedWatchlists;
 
   MyListsLoaded(this.ownWatchlists, this.followedWatchlists);
 }
@@ -86,33 +94,46 @@ class MyListsBloc extends Bloc<MyListsEvent, MyListsState> {
         final tempFollowedWatchlists =
             await _watchlistService.getFollowingWatchlists(currentUser);
 
-        //for each watchlist in ownWatchlist, create the map with the MyUser object as key and its watchlists as value
-        Map<MyUser, List<WatchList>> ownWatchlists = {};
-        for (var watchlist in tempOwnWatchlists) {
-          MyUser? user = await _userService.getUser(watchlist.userID);
-          if (user != null) {
-            if (ownWatchlists.containsKey(user)) {
-              ownWatchlists[user]!.add(watchlist);
-            } else {
-              ownWatchlists[user] = [watchlist];
-            }
-          }
+        switch (event.currentSortOptionOWN) {
+          case 'Latest Added':
+            tempOwnWatchlists
+                .sort((a, b) => b.createdAt.compareTo(a.createdAt));
+            break;
+          case 'Name':
+            tempOwnWatchlists.sort(
+                (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+            break;
+          case 'Movie Count':
+            tempOwnWatchlists
+                .sort((a, b) => b.movies.length.compareTo(a.movies.length));
+            break;
+          case 'Latest Edit':
+            tempOwnWatchlists
+                .sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+            break;
         }
 
-        //for each watchlist in followedWatchlist, create the map with the MyUser object as key and its watchlists as value
-        Map<MyUser, List<WatchList>> followedWatchlists = {};
-        for (var watchlist in tempFollowedWatchlists) {
-          MyUser? user = await _userService.getUser(watchlist.userID);
-          if (user != null) {
-            if (followedWatchlists.containsKey(user)) {
-              followedWatchlists[user]!.add(watchlist);
-            } else {
-              followedWatchlists[user] = [watchlist];
-            }
-          }
+        switch (event.currentSortOptionFOLLOWED) {
+          case 'Latest Added':
+            tempFollowedWatchlists
+                .sort((a, b) => b.createdAt.compareTo(a.createdAt));
+            break;
+          case 'Name':
+            tempFollowedWatchlists.sort(
+                (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+
+            break;
+          case 'Movie Count':
+            tempFollowedWatchlists
+                .sort((a, b) => b.movies.length.compareTo(a.movies.length));
+            break;
+          case 'Latest Edit':
+            tempFollowedWatchlists
+                .sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+            break;
         }
 
-        emit(MyListsLoaded(ownWatchlists, followedWatchlists));
+        emit(MyListsLoaded(tempOwnWatchlists, tempFollowedWatchlists));
       } else {
         emit(MyListsError("User not found"));
       }
@@ -170,17 +191,37 @@ class _MyListsState extends State<MyLists> {
   late final Logger logger = Logger();
   late MyListsBloc myListsBloc;
   MyUser? currentUser;
+  String currentSortOptionOWN = 'Latest Added';
+  String currentSortOptionFOLLOWED = 'Latest Added';
+  bool needsReload = true;
+  final prefs = SharedPreferences.getInstance();
 
   @override
   void initState() {
     super.initState();
+    if (needsReload) {
+      _loadSortPreference();
+      loadBasics();
+    }
     myListsBloc = MyListsBloc(WatchlistService(), UserService());
-    loadBasics();
+    needsReload = true;
+  }
+
+  void _loadSortPreference() async {
+    final sharedPreferences = await prefs;
+    setState(() {
+      currentSortOptionOWN =
+          sharedPreferences.getString('sortOptionOWN') ?? 'Latest Added';
+      currentSortOptionFOLLOWED =
+          sharedPreferences.getString('sortOptionFOLLOWED') ?? 'Latest Added';
+    });
   }
 
   void loadBasics() async {
     currentUser = await UserService().getCurrentUser();
-    myListsBloc.add(LoadMyLists());
+    myListsBloc.add(LoadMyLists(
+        currentSortOptionOWN: currentSortOptionOWN,
+        currentSortOptionFOLLOWED: currentSortOptionFOLLOWED));
   }
 
   @override
@@ -215,7 +256,7 @@ class _MyListsState extends State<MyLists> {
           SliverAppBar(
             floating: true,
             pinned: true,
-            backgroundColor: Colors.transparent,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: const EdgeInsets.only(left: 12, bottom: 12),
               title: Text(
@@ -325,64 +366,64 @@ class _MyListsState extends State<MyLists> {
   }
 
   Widget _buildWatchlistSection(BuildContext context, String title,
-      Map<MyUser, List<WatchList>> watchlists, bool isOwnWatchlist) {
-    if (watchlists.isEmpty) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: isOwnWatchlist
-                ? const Text(
-                    'My Watchlists',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  )
-                : const Text(
-                    'Followed Watchlists',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      List<WatchList> watchlists, bool isOwnWatchlist) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 12, top: 12, right: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              TextButton.icon(
+                icon: const Icon(Icons.sort),
+                label: Text(
+                  isOwnWatchlist
+                      ? currentSortOptionOWN
+                      : currentSortOptionFOLLOWED,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).textTheme.bodySmall?.color,
                   ),
+                ),
+                onPressed: () =>
+                    _showSortingOptions(context, watchlists, isOwnWatchlist),
+              ),
+            ],
           ),
-          const SizedBox(height: 48),
+        ),
+        if (watchlists.isEmpty)
           Center(
-            child: isOwnWatchlist
-                ? Text(
-                    'Press the + button to create your first watchlist',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  )
-                : Text(
-                    'You are currently not following any watchlists',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-          ),
-          const SizedBox(height: 16),
-        ],
-      );
-    } else {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16.0),
+              child: Text(
+                isOwnWatchlist
+                    ? 'Press the + button to create your first watchlist'
+                    : 'You are currently not following any watchlists',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ),
-          ),
-          ...watchlists.entries.expand((entry) {
-            final user = entry.key;
-            final userWatchlists = entry.value;
-            return userWatchlists.map((watchlist) => ListTile(
+          )
+        else
+          ...watchlists.map((watchlist) {
+            return FutureBuilder<String>(
+              future: findCreatorUsername(watchlist),
+              builder: (context, snapshot) {
+                final username = snapshot.data ?? 'Unknown';
+                return ListTile(
                   leading: CircleAvatar(
                     backgroundColor: Colors.primaries[
                         watchlist.name.length % Colors.primaries.length],
                     child: Text(watchlist.name[0].toUpperCase()),
                   ),
                   title: Text(watchlist.name),
-                  subtitle: watchlist.movies.length != 1
-                      ? Text(
-                          '${watchlist.movies.length} movies · ${user.username}')
-                      : Text(
-                          '${watchlist.movies.length} movie · ${user.username}'),
+                  subtitle: Text(
+                      '${watchlist.movies.length} ${watchlist.movies.length == 1 ? 'movie' : 'movies'} · $username'),
                   trailing: watchlist.isPrivate ? const Icon(Icons.lock) : null,
                   onTap: () {
                     Navigator.push(
@@ -403,12 +444,95 @@ class _MyListsState extends State<MyLists> {
                       watchlist,
                       isOwnWatchlist,
                       (WatchList wl) => myListsBloc.add(DeleteWatchlist(wl))),
-                ));
+                );
+              },
+            );
           }),
-          const SizedBox(height: 20),
-        ],
-      );
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  void _showSortingOptions(
+      BuildContext context, List<WatchList> watchlists, bool isOwnWatchlist) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                title: const Text('Sort by Latest Added'),
+                leading: const Icon(Icons.add_circle_outline),
+                onTap: () =>
+                    _sortWatchlists(watchlists, 'Latest Added', isOwnWatchlist),
+              ),
+              ListTile(
+                title: const Text('Sort by Name'),
+                leading: const Icon(Icons.sort_by_alpha),
+                onTap: () =>
+                    _sortWatchlists(watchlists, 'Name', isOwnWatchlist),
+              ),
+              ListTile(
+                title: const Text('Sort by Movie Count'),
+                leading: const Icon(Icons.movie_filter),
+                onTap: () =>
+                    _sortWatchlists(watchlists, 'Movie Count', isOwnWatchlist),
+              ),
+              ListTile(
+                title: const Text('Sort by Latest Edit'),
+                leading: const Icon(Icons.edit),
+                onTap: () =>
+                    _sortWatchlists(watchlists, 'Latest Edit', isOwnWatchlist),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _sortWatchlists(
+      List<WatchList> watchlists, String sortOption, bool isOwnWatchlist) {
+    setState(() {
+      switch (sortOption) {
+        case 'Latest Added':
+          watchlists.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          break;
+        case 'Name':
+          watchlists.sort(
+              (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+          break;
+        case 'Movie Count':
+          watchlists.sort((a, b) => b.movies.length.compareTo(a.movies.length));
+          break;
+        case 'Latest Edit':
+          watchlists.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+          break;
+      }
+    });
+    _saveSortPreference(sortOption, isOwnWatchlist);
+    Navigator.pop(context);
+  }
+
+  void _saveSortPreference(String sortOption, bool isOwnWatchlist) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (isOwnWatchlist) {
+      currentSortOptionOWN = sortOption;
+      prefs.setString('sortOptionOWN', sortOption);
+    } else {
+      currentSortOptionFOLLOWED = sortOption;
+      prefs.setString('sortOptionFOLLOWED', sortOption);
     }
+  }
+
+  Future<String> findCreatorUsername(WatchList watchlist) async {
+    final user = await UserService().getUser(watchlist.userID);
+    if (user == null) {
+      return 'Unknown';
+    }
+    return user.username;
   }
 
   void _showWatchlistOptions(BuildContext context, WatchList watchlist,
@@ -438,10 +562,7 @@ class _MyListsState extends State<MyLists> {
                   title: Text('Share', style: theme.textTheme.titleMedium),
                   onTap: () {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Share functionality coming soon')),
-                    );
+                    _shareWatchlist(watchlist);
                   },
                 ),
                 if (isOwnWatchlist &&
@@ -462,6 +583,26 @@ class _MyListsState extends State<MyLists> {
         );
       },
     );
+  }
+
+  Future<void> _shareWatchlist(WatchList watchlist) async {
+    // Generate a deep link for the watchlist
+    final String deepLink =
+        'https://dima-project-matteo.web.app/?watchlistId=${watchlist.id}&userId=${watchlist.userID}&invitedBy=${currentUser!.id}';
+
+    // Create the share message
+    final String shareMessage =
+        '${currentUser!.name} has shared a watchlist with you. Check out "${watchlist.name}"!\n\n$deepLink';
+
+    try {
+      await Share.share(shareMessage, subject: 'Check out this watchlist!');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to share watchlist')),
+        );
+      }
+    }
   }
 
   void _showDeleteConfirmation(
