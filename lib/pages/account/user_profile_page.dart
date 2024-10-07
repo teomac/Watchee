@@ -254,7 +254,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
       children: [
         Text(
           'Public Watchlists',
-          style: Theme.of(context).textTheme.titleMedium,
+          style: Theme.of(context).textTheme.titleLarge,
         ),
         const SizedBox(height: 8),
         _isLoadingWatchlists
@@ -302,7 +302,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
           children: [
             Text(
               'Reviews',
-              style: Theme.of(context).textTheme.titleMedium,
+              style: Theme.of(context).textTheme.titleLarge,
             ),
             if (_currentUser != null &&
                 _currentUser!.id == widget.user.id &&
