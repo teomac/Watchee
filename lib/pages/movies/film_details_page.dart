@@ -266,6 +266,19 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
               )
             : Container(color: Colors.grey),
       ),
+      leading: Container(
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        margin: const EdgeInsets.all(8.0),
+        child: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
     );
   }
 
