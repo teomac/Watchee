@@ -304,7 +304,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
               'Reviews',
               style: Theme.of(context).textTheme.titleMedium,
             ),
-            if (_currentUser != null && _currentUser!.id == widget.user.id)
+            if (_currentUser != null &&
+                _currentUser!.id == widget.user.id &&
+                _userReviews.isNotEmpty)
               TextButton(
                 onPressed: _openEditReviewsPage,
                 child: const Icon(Icons.edit),
