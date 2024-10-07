@@ -507,7 +507,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
       return const Card(
         child: Padding(
           padding: EdgeInsets.all(16.0),
-          child: Text('No reviews from friends available.'),
+          child: Text('No reviews from followed users available.'),
         ),
       );
     }

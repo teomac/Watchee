@@ -98,15 +98,23 @@ Future<String> retrieveTrailer(int movieId) async {
 
 // function used to search movies
 Future<List<Movie>> searchMovie(String query) async {
-  final response = await http.get(Uri.parse(
-      'https://api.themoviedb.org/3/search/movie?api_key=${Constants.apiKey}&query=$query'));
+  List<Movie> movies = [];
+  List<Movie> tempMovies = [];
 
-  if (response.statusCode == 200) {
-    final decodedData = json.decode(response.body)['results'] as List;
-    return decodedData.map((movieJson) => Movie.fromJson(movieJson)).toList();
-  } else {
-    throw Exception('Failed to search movies');
+  for (int i = 1; i < 4; i++) {
+    final response = await http.get(Uri.parse(
+        'https://api.themoviedb.org/3/search/movie?api_key=${Constants.apiKey}&query=$query&page=$i'));
+
+    if (response.statusCode == 200) {
+      final decodedData = json.decode(response.body)['results'] as List;
+      tempMovies =
+          decodedData.map((movieJson) => Movie.fromJson(movieJson)).toList();
+      movies += tempMovies;
+    } else {
+      throw Exception('Failed to search movies');
+    }
   }
+  return movies;
 }
 
 // Function used to retrieve movies by release date
