@@ -103,7 +103,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               onRefresh: _refreshNotifications,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                child: Container(
+                child: SizedBox(
                   height: MediaQuery.of(context).size.height,
                   child: const Center(
                     child: Text('No notifications'),
