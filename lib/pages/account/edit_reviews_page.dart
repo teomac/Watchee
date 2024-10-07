@@ -117,30 +117,53 @@ class _EditReviewsPageState extends State<EditReviewsPage> {
           ),
         ],
       ),
-      body: ListView.builder(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView.builder(
           itemCount: widget.userReviews.length,
           itemBuilder: (context, index) {
             final review = widget.userReviews[index];
-            return ListTile(
-              leading: Checkbox(
-                value: _selectedReviews.contains(review),
-                onChanged: (bool? selected) {
-                  _toggleSelection(review);
-                },
+            return Card(
+              elevation: 4,
+              margin: const EdgeInsets.symmetric(vertical: 8.0),
+              child: ListTile(
+                leading: Checkbox(
+                  value: _selectedReviews.contains(review),
+                  onChanged: (bool? selected) {
+                    _toggleSelection(review);
+                  },
+                ),
+                title: Text(
+                  review.title,
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  review.text,
+                  style: const TextStyle(fontSize: 16),
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${review.rating}/5',
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.star,
+                      color: Colors.amber,
+                      size: 20,
+                    ),
+                  ],
+                ),
+                isThreeLine: true,
               ),
-              title: Text(
-                review.title,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text(
-                '${review.rating}/5',
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              isThreeLine: true,
             );
-          }),
+          },
+        ),
+      ),
     );
   }
 }

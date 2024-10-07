@@ -328,33 +328,37 @@ class _UserProfilePageState extends State<UserProfilePage> {
                 : (_userReviews.length <= 2 ? _userReviews.length : 2),
             itemBuilder: (context, index) {
               final review = _userReviews[index];
-              return ListTile(
-                title: Text(
-                  (review.title),
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+              return Card(
+                elevation: 4,
+                margin: const EdgeInsets.symmetric(vertical: 8.0),
+                child: ListTile(
+                  title: Text(
+                    review.title,
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    review.text,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${review.rating}/5',
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.star,
+                        color: Colors.amber,
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                  isThreeLine: true,
                 ),
-                subtitle: Text(
-                  review.text,
-                  style: const TextStyle(fontSize: 16),
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '${review.rating}/5',
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.star,
-                      color: Colors.amber,
-                      size: 20,
-                    ),
-                  ],
-                ),
-                isThreeLine: true,
               );
             },
           ),
