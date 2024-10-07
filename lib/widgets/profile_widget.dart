@@ -8,6 +8,7 @@ class ProfileMenu extends StatelessWidget {
   final VoidCallback onSignOutTap;
   final VoidCallback onUserTap;
   final VoidCallback onNotificationsTap;
+  final int unreadCount;
 
   const ProfileMenu({
     super.key,
@@ -17,6 +18,7 @@ class ProfileMenu extends StatelessWidget {
     required this.onSignOutTap,
     required this.onUserTap,
     required this.onNotificationsTap,
+    required this.unreadCount,
   });
 
   @override
@@ -41,7 +43,37 @@ class ProfileMenu extends StatelessWidget {
         ),
         const Divider(),
         ListTile(
-          leading: const Icon(Icons.notifications),
+          leading: Stack(
+            alignment: Alignment.center,
+            children: [
+              const Icon(Icons.notifications),
+              if (unreadCount > 0)
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      maxWidth: 16,
+                      maxHeight: 16,
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$unreadCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
           title: const Text('Notifications'),
           onTap: onNotificationsTap,
         ),

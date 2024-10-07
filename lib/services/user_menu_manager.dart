@@ -9,6 +9,7 @@ import 'package:dima_project/widgets/profile_widget.dart';
 import 'package:logger/logger.dart';
 import 'package:dima_project/theme/theme_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class UserInfo extends StatefulWidget {
   const UserInfo({super.key});
@@ -21,16 +22,26 @@ class _UserInfoState extends State<UserInfo> {
   MyUser? _currentUser;
   final Logger logger = Logger();
   final UserService _userService = UserService();
+  int _unreadCount = 0;
 
   @override
   void initState() {
     super.initState();
     _initializeData();
+    _initFCM();
+  }
+
+  Future<void> _initFCM() async {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      setState(() {
+        _unreadCount++;
+      });
+    });
   }
 
   Future<void> _initializeData() async {
     try {
-      final user = await UserService().getCurrentUser();
+      final user = await _userService.getCurrentUser();
 
       if (mounted) {
         setState(() {
@@ -66,15 +77,14 @@ class _UserInfoState extends State<UserInfo> {
                       name: '',
                       username: '',
                       email: '',
-                    ), // Provide a default value if _currentUser is null
+                    ),
                 onManageAccountTap: () {
-                  Navigator.pop(context); // Close the bottom sheet
+                  Navigator.pop(context);
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                         builder: (context) => const ManageAccountPage()),
                   ).then((_) {
-                    // Refresh user data when returning from ManageAccountPage
                     _initializeData();
                   });
                 },
@@ -104,8 +114,13 @@ class _UserInfoState extends State<UserInfo> {
                       MaterialPageRoute(
                           builder: (context) => NotificationsPage(
                                 user: _currentUser!,
-                              )));
+                              ))).then((_) {
+                    setState(() {
+                      _unreadCount = 0;
+                    });
+                  });
                 },
+                unreadCount: _unreadCount,
               ),
             );
           },
@@ -145,7 +160,7 @@ class _UserInfoState extends State<UserInfo> {
     final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
 
     return FutureBuilder<MyUser?>(
-      future: UserService().getCurrentUser(),
+      future: _userService.getCurrentUser(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const CircularProgressIndicator();
@@ -160,32 +175,63 @@ class _UserInfoState extends State<UserInfo> {
         final user = snapshot.data;
         return InkWell(
           onTap: () => _showProfileMenu(context),
-          child: CircleAvatar(
-            radius: 20,
-            backgroundColor: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-            child: user?.profilePicture != null
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(40),
-                    child: Image.network(
-                      user!.profilePicture!,
-                      width: 40,
-                      height: 40,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        logger.d('Error loading profile picture: $error');
-                        return Icon(
-                          Icons.person,
-                          size: 24,
-                          color: isDarkMode ? Colors.white : Colors.black,
-                        );
-                      },
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor:
+                    isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                child: user?.profilePicture != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(40),
+                        child: Image.network(
+                          user!.profilePicture!,
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            logger.d('Error loading profile picture: $error');
+                            return Icon(
+                              Icons.person,
+                              size: 24,
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            );
+                          },
+                        ),
+                      )
+                    : Icon(
+                        Icons.person,
+                        size: 24,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+              ),
+              if (_unreadCount > 0)
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
                     ),
-                  )
-                : Icon(
-                    Icons.person,
-                    size: 24,
-                    color: isDarkMode ? Colors.white : Colors.black,
+                    constraints: const BoxConstraints(
+                      maxWidth: 16,
+                      maxHeight: 16,
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$_unreadCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
                   ),
+                ),
+            ],
           ),
         );
       },
