@@ -380,27 +380,29 @@ class _MyListsState extends State<MyLists> {
                 style:
                     const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              TextButton.icon(
-                icon: const Icon(Icons.sort),
-                label: Text(
-                  isOwnWatchlist
-                      ? currentSortOptionOWN
-                      : currentSortOptionFOLLOWED,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Theme.of(context).textTheme.bodySmall?.color,
-                  ),
-                ),
-                onPressed: () =>
-                    _showSortingOptions(context, watchlists, isOwnWatchlist),
-              ),
+              watchlists.isNotEmpty
+                  ? TextButton.icon(
+                      icon: const Icon(Icons.sort),
+                      label: Text(
+                        isOwnWatchlist
+                            ? currentSortOptionOWN
+                            : currentSortOptionFOLLOWED,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(context).textTheme.bodySmall?.color,
+                        ),
+                      ),
+                      onPressed: () => _showSortingOptions(
+                          context, watchlists, isOwnWatchlist),
+                    )
+                  : const SizedBox.shrink(),
             ],
           ),
         ),
         if (watchlists.isEmpty)
           Center(
             child: Padding(
-              padding: const EdgeInsets.only(top: 16.0),
+              padding: const EdgeInsets.only(top: 48.0, bottom: 32),
               child: Text(
                 isOwnWatchlist
                     ? 'Press the + button to create your first watchlist'
