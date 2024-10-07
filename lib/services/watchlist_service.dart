@@ -233,6 +233,9 @@ class WatchlistService {
           .get();
       //add movie id to the watchlist
       WatchList watchlist = WatchList.fromFirestore(doc);
+      if (watchlist.movies.contains(movieId)) {
+        return;
+      }
       watchlist.movies.add(movieId);
       watchlist = watchlist.copyWith(updatedAt: DateTime.now().toString());
       await updateWatchList(watchlist);
