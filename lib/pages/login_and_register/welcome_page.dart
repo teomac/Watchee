@@ -18,9 +18,13 @@ class WelcomeScreen extends StatefulWidget {
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
   final TextEditingController _controllerName = TextEditingController();
+  final TextEditingController _controllerUsername = TextEditingController();
   File? _image;
   var logger = Logger();
   bool permissionGranted = false;
+  bool _isUsernameAvailable = true;
+  bool _isTooShort = false;
+  final UserService _userService = UserService();
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
@@ -34,10 +38,40 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     }
   }
 
+  Future<void> _checkUsernameAvailability(String username) async {
+    if (username.length < 3) {
+      setState(() {
+        _isTooShort = true;
+        _isUsernameAvailable = false;
+      });
+      return;
+    }
+    bool isAvailable = await _userService.isUsernameAvailable(username);
+    setState(() {
+      _isUsernameAvailable = isAvailable;
+      _isTooShort = false;
+    });
+  }
+
   void _submitForm() async {
-    if (_controllerName.text.isEmpty) {
+    if (_controllerName.text.isEmpty || _controllerUsername.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in name field')),
+        const SnackBar(content: Text('Please fill in all fields')),
+      );
+      return;
+    }
+
+    if (_isTooShort) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Username must be at least 3 characters long')),
+      );
+      return;
+    }
+
+    if (!_isUsernameAvailable) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Username is not available')),
       );
       return;
     }
@@ -54,7 +88,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       String uid = FirebaseAuth.instance.currentUser!.uid;
       String? profilePictureUrl;
 
-      // Only attempt to upload image if one has been selected
       if (_image != null) {
         logger.d("Starting image upload");
         profilePictureUrl = await UserService().uploadImage(_image!);
@@ -64,6 +97,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       logger.d("Updating user document for UID: $uid");
       await FirebaseFirestore.instance.collection('users').doc(uid).update({
         'name': _controllerName.text,
+        'username': _controllerUsername.text,
         if (profilePictureUrl != null) 'profilePicture': profilePictureUrl,
       });
 
@@ -138,6 +172,26 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   title: 'Name *',
                   obscureText: false,
                 ),
+                const SizedBox(height: 20),
+                MyTextField(
+                  controller: _controllerUsername,
+                  title: 'Username *',
+                  obscureText: false,
+                  suffixIcon: _isUsernameAvailable
+                      ? const Icon(Icons.check, color: Colors.green)
+                      : const Icon(Icons.close, color: Colors.red),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  _isUsernameAvailable
+                      ? 'Username is available'
+                      : !_isTooShort
+                          ? 'Username is not available'
+                          : 'Username must be at least 3 characters long',
+                  style: TextStyle(
+                    color: _isUsernameAvailable ? Colors.green : Colors.red,
+                  ),
+                ),
                 const SizedBox(height: 35),
                 CustomSubmitButton(
                   text: 'Next',
@@ -149,5 +203,20 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _controllerUsername.addListener(() {
+      _checkUsernameAvailability(_controllerUsername.text);
+    });
+  }
+
+  @override
+  void dispose() {
+    _controllerName.dispose();
+    _controllerUsername.dispose();
+    super.dispose();
   }
 }

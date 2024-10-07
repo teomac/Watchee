@@ -9,6 +9,7 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final Logger logger = Logger();
+  final UserService userService = UserService();
   Future<UserCredential?> signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
@@ -23,13 +24,24 @@ class AuthService {
 
       final userCredential = await _auth.signInWithCredential(credential);
 
+      String username = googleUser.email.split('@')[0];
+      //check if the username is unique
+      bool isUsernameAvailable =
+          await userService.isUsernameAvailable(username);
+      int index = 1;
+      while (!isUsernameAvailable) {
+        username = username + index.toString();
+        isUsernameAvailable = await userService.isUsernameAvailable(username);
+        index++;
+      }
+
       // Check if the user is new
       if (userCredential.additionalUserInfo?.isNewUser ?? false) {
         // Generate a unique username
 
         MyUser newUser = MyUser(
           id: userCredential.user!.uid,
-          username: googleUser.email.split('@')[0],
+          username: username,
           name: googleUser.displayName ?? "",
           email: googleUser.email,
           profilePicture:

@@ -5,7 +5,6 @@ import 'package:dima_project/widgets/my_textfield.dart';
 import 'package:dima_project/widgets/custom_submit_button.dart';
 import 'package:dima_project/pages/login_and_register/welcome_page.dart';
 import 'package:dima_project/models/user_model.dart';
-import 'package:dima_project/services/user_service.dart';
 import 'package:logger/logger.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -79,15 +78,6 @@ class _RegisterPageState extends State<RegisterPage> {
       );
 
       logger.d("Generating unique username");
-      String baseUsername = _controllerEmail.text
-          .trim()
-          .split('@')[0]
-          .toLowerCase()
-          .replaceAll(RegExp(r'[^a-z0-9]'), '');
-      String uniqueUsername =
-          await UserService().getUniqueUsername(baseUsername);
-      logger.d("Unique username generated: $uniqueUsername");
-
       logger.d("Creating user account with Firebase");
       UserCredential userCredential =
           await FirebaseAuth.instance.createUserWithEmailAndPassword(
@@ -99,7 +89,7 @@ class _RegisterPageState extends State<RegisterPage> {
         logger.d("User account created successfully");
         MyUser newUser = MyUser(
           id: userCredential.user!.uid,
-          username: uniqueUsername,
+          username: '',
           name: '',
           email: _controllerEmail.text.trim(),
           favoriteGenres: [],

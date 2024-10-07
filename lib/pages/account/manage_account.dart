@@ -19,6 +19,7 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
   late Future<MyUser?> _userFuture;
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
+  final UserService _userService = UserService();
   List<String> _selectedGenres = [];
   final List<String> _allGenres = [
     'Action',
@@ -67,6 +68,37 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
   }
 
   Future<void> _saveChanges() async {
+    if (_usernameController.text.isEmpty || _nameController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all fields')),
+      );
+      return;
+    }
+    if (_usernameController.text.length < 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Username must be at least 3 characters long')),
+      );
+      return;
+    }
+
+    bool isUsernameAvailable =
+        await _userService.isUsernameAvailable(_usernameController.text);
+
+    MyUser? currentUser = await _userService.getCurrentUser();
+    if (currentUser != null &&
+        currentUser.username == _usernameController.text) {
+      isUsernameAvailable = true;
+    }
+    if (!isUsernameAvailable) {
+      //display snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Selected username is not available')),
+        );
+        return;
+      }
+    }
     try {
       final String uid = FirebaseAuth.instance.currentUser!.uid;
       Map<String, dynamic> updateData = {

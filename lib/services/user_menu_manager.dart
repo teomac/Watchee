@@ -134,7 +134,7 @@ class _UserInfoState extends State<UserInfo> {
       bool success = await _userService.signOut();
       if (success) {
         logger.d('Sign out successful');
-        // No need to navigate here, WidgetTree will handle it
+        //come back to the login page
       } else {
         logger.e('Sign out failed');
         if (mounted) {

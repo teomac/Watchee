@@ -170,6 +170,20 @@ class UserService {
     }
   }
 
+  Future<bool> isUsernameAvailable(String username) async {
+    try {
+      QuerySnapshot result = await _firestore
+          .collection('users')
+          .where('username', isEqualTo: username)
+          .limit(1)
+          .get();
+      return result.docs.isEmpty;
+    } catch (e) {
+      logger.e('Error checking username availability: $e');
+      return false;
+    }
+  }
+
   // Get current logged-in user
   Future<MyUser?> getCurrentUser() async {
     auth.User? firebaseUser = _auth.currentUser;
