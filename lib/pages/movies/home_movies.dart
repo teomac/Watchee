@@ -34,6 +34,7 @@ class HomeMoviesState extends State<HomeMovies> {
       final trending = await fetchTrendingMovies();
       final topRated = await fetchTopRatedMovies();
       final upcoming = await fetchUpcomingMovies();
+      final nowPlaying = await fetchNowPlayingMovies();
 
       if (mounted) {
         setState(() {
@@ -41,6 +42,7 @@ class HomeMoviesState extends State<HomeMovies> {
             trendingMovies: trending,
             topRatedMovies: topRated,
             upcomingMovies: upcoming,
+            nowPlayingMovies: nowPlaying,
           );
         });
       }
@@ -181,6 +183,8 @@ class HomeMoviesState extends State<HomeMovies> {
           _buildMovieSection('Top rated movies', _data.topRatedMovies,
               (movies) => MoviesSlider(movies: movies), Theme.of(context)),
           _buildMovieSection('Upcoming Movies', _data.upcomingMovies,
+              (movies) => MoviesSlider(movies: movies), Theme.of(context)),
+          _buildMovieSection('Now Playing', _data.nowPlayingMovies,
               (movies) => MoviesSlider(movies: movies), Theme.of(context)),
         ],
       ),
