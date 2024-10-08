@@ -7,6 +7,7 @@ import 'package:rxdart/rxdart.dart';
 import 'package:logger/logger.dart';
 import 'package:dima_project/pages/account/user_profile_page.dart';
 import 'package:dima_project/widgets/user_search_bar_widget.dart';
+import 'package:lottie/lottie.dart';
 
 // Events
 abstract class FollowEvent {}
@@ -129,41 +130,26 @@ class FollowBloc extends Bloc<FollowEvent, FollowState> {
   }
 }
 
-class FollowPage extends StatefulWidget {
-  const FollowPage({super.key});
+class FollowView extends StatefulWidget {
+  const FollowView({super.key});
 
   @override
-  State<FollowPage> createState() => _FollowPageState();
+  State<FollowView> createState() => _FollowViewState();
 }
 
-class _FollowPageState extends State<FollowPage> {
-  bool _isSearchExpanded = false;
+class _FollowViewState extends State<FollowView> {
+  bool isSearchExpanded = false;
   late FollowBloc _followBloc;
+  bool isLoadingNecessary = true;
 
   @override
   void initState() {
     super.initState();
     _followBloc = FollowBloc(UserService());
-    _followBloc.add(LoadFollowData());
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: _followBloc,
-      child: FollowView(
-        isSearchExpanded: _isSearchExpanded,
-        onSearchExpandChanged: (expanded) {
-          setState(() {
-            _isSearchExpanded = expanded;
-          });
-          if (!expanded) {
-            // Reload follow data when search is closed
-            _followBloc.add(LoadFollowData());
-          }
-        },
-      ),
-    );
+    if (isLoadingNecessary) {
+      _followBloc.add(LoadFollowData());
+    }
+    isLoadingNecessary = true;
   }
 
   @override
@@ -171,40 +157,31 @@ class _FollowPageState extends State<FollowPage> {
     _followBloc.close();
     super.dispose();
   }
-}
-
-class FollowView extends StatelessWidget {
-  final bool isSearchExpanded;
-  final Function(bool) onSearchExpandChanged;
-
-  const FollowView({
-    super.key,
-    required this.isSearchExpanded,
-    required this.onSearchExpandChanged,
-  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(context, theme, isDarkMode),
-            Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: isSearchExpanded
-                    ? _buildSearchResults()
-                    : _buildFollowTabs(),
-              ),
+    return BlocProvider.value(
+        value: _followBloc,
+        child: Scaffold(
+          body: SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(context, theme, isDarkMode),
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: isSearchExpanded
+                        ? _buildSearchResults()
+                        : _buildFollowTabs(),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-    );
+          ),
+        ));
   }
 
   Widget _buildHeader(BuildContext context, ThemeData theme, bool isDarkMode) {
@@ -216,7 +193,20 @@ class FollowView extends StatelessWidget {
             child: SearchBarWidget(
               theme: theme,
               isDarkMode: isDarkMode,
-              onExpandChanged: onSearchExpandChanged,
+              onSearchChanged: (query) {
+                if (query.isNotEmpty) {
+                  _followBloc.add(SearchUsers(query));
+                }
+              },
+              onExpandChanged: (expanded) {
+                isLoadingNecessary = false;
+                if (_followBloc.state is SearchResultsLoaded) {
+                  isLoadingNecessary = true;
+                }
+                setState(() {
+                  isSearchExpanded = expanded;
+                });
+              },
             ),
           ),
           if (!isSearchExpanded) ...[
@@ -248,8 +238,13 @@ class FollowView extends StatelessWidget {
           leading: CircleAvatar(
             backgroundImage: user.profilePicture?.isNotEmpty == true
                 ? NetworkImage(user.profilePicture!)
-                : const AssetImage('lib/images/default_profile.jpg')
-                    as ImageProvider,
+                : null,
+            child: user.profilePicture == null
+                ? Icon(Icons.person,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white
+                        : Colors.black)
+                : null,
           ),
           title: Text(user.username),
           subtitle: Text(user.name),
@@ -267,6 +262,9 @@ class FollowView extends StatelessWidget {
   }
 
   Widget _buildFollowTabs() {
+    if (_followBloc.state is SearchResultsLoaded) {
+      _followBloc.add(LoadFollowData());
+    }
     return DefaultTabController(
       length: 2,
       child: Column(
@@ -298,10 +296,7 @@ class FollowView extends StatelessWidget {
         } else if (state is FollowDataLoaded) {
           final users = isFollowing ? state.following : state.followers;
           return users.isEmpty
-              ? Center(
-                  child: Text(isFollowing
-                      ? 'Not following anyone'
-                      : 'No followers yet'))
+              ? _buildEmptyState(isFollowing)
               : ListView.builder(
                   itemCount: users.length,
                   itemBuilder: (context, index) =>
@@ -309,9 +304,34 @@ class FollowView extends StatelessWidget {
                 );
         } else if (state is FollowError) {
           return Center(child: Text('Error: ${state.message}'));
+        } else if (state is SearchResultsLoaded) {
+          _followBloc.add(LoadFollowData());
         }
         return const SizedBox.shrink();
       },
+    );
+  }
+
+  Widget _buildEmptyState(bool isFollowing) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Lottie.asset(
+            'lib/assets/lottie_ghost.json',
+            width: 200,
+            height: 200,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(height: 20),
+          Text(
+            isFollowing
+                ? 'You are not following anyone yet'
+                : 'No followers yet',
+            style: const TextStyle(fontSize: 16),
+          ),
+        ],
+      ),
     );
   }
 
@@ -321,16 +341,20 @@ class FollowView extends StatelessWidget {
       leading: CircleAvatar(
         backgroundImage: user.profilePicture?.isNotEmpty == true
             ? NetworkImage(user.profilePicture!)
-            : const AssetImage('lib/images/default_profile.jpg')
-                as ImageProvider,
-        radius: 25,
+            : null,
+        child: user.profilePicture == null
+            ? Icon(Icons.person,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : Colors.black)
+            : null,
       ),
       title: Text(user.username, style: const TextStyle(fontSize: 15)),
       subtitle: Text(user.name, style: const TextStyle(fontSize: 12)),
       trailing: ElevatedButton(
         onPressed: () => isFollowing
-            ? context.read<FollowBloc>().add(UnfollowUser(user))
-            : context.read<FollowBloc>().add(RemoveFollower(user)),
+            ? _followBloc.add(UnfollowUser(user))
+            : _followBloc.add(RemoveFollower(user)),
         child: Text(isFollowing ? 'Unfollow' : 'Remove'),
       ),
       onTap: () async {
@@ -338,8 +362,10 @@ class FollowView extends StatelessWidget {
           context,
           MaterialPageRoute(builder: (context) => UserProfilePage(user: user)),
         );
-        if (result == true) {
-          if (context.mounted) context.read<FollowBloc>().add(LoadFollowData());
+        if (result == true || result == null) {
+          setState(() {
+            isLoadingNecessary = true;
+          });
         }
       },
     );

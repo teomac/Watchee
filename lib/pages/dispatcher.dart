@@ -13,7 +13,7 @@ class Dispatcher extends StatefulWidget {
 class DispatcherState extends State<Dispatcher> {
   int index = 0;
 
-  final screens = [const HomeMovies(), const MyLists(), const FollowPage()];
+  final screens = [const HomeMovies(), const MyLists(), const FollowView()];
 
   @override
   Widget build(BuildContext context) {
