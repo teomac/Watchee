@@ -10,6 +10,7 @@ import 'package:dima_project/models/movie.dart';
 import 'package:intl/intl.dart';
 import 'package:dima_project/pages/movies/film_details_bloc.dart';
 import 'package:dima_project/api/constants.dart';
+import 'package:logger/logger.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -41,6 +42,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   String _selectedCountry = 'US';
   Map<String, List<Map<String, dynamic>>> _allProviders = {};
   List<Movie> _recommendedMovies = [];
+  final Logger logger = Logger();
 
   @override
   void dispose() {
@@ -153,7 +155,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         _recommendedMovies = recommendations;
       });
     } catch (e) {
-      print('Error fetching recommended movies: $e');
+      logger.e('Error fetching recommended movies: $e');
     }
   }
 
@@ -772,7 +774,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
           children: [
             const Text(
               'You may also like',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             SizedBox(

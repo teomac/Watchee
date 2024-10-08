@@ -1,9 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:dima_project/theme/theme_provider.dart';
+import 'package:dima_project/services/fcm_settings_service.dart';
+import 'package:logger/logger.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  final Logger _logger = Logger();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -22,14 +32,7 @@ class SettingsPage extends StatelessWidget {
             const ThemeSelectorWidget(),
           ]),
           _buildSection('Notification Preferences', [
-            SwitchListTile(
-              title: const Text('Push Notifications'),
-              value:
-                  true, // Replace with actual value from your state management
-              onChanged: (value) {
-                // Implement push notification toggle logic
-              },
-            ),
+            _buildPushNotificationToggle(),
           ]),
           _buildSection('About', [
             const ListTile(
@@ -68,6 +71,72 @@ class SettingsPage extends StatelessWidget {
         ...children,
         const Divider(),
       ],
+    );
+  }
+
+  Widget _buildPushNotificationToggle() {
+    return FutureBuilder<bool>(
+      future: FCMSettingsService.isPushNotificationsEnabled(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const ListTile(
+            title: Text('Push Notifications'),
+            trailing: CircularProgressIndicator(),
+          );
+        }
+
+        bool pushNotificationsEnabled = snapshot.data ?? false;
+
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return SwitchListTile(
+              title: const Text('Push Notifications'),
+              value: pushNotificationsEnabled,
+              onChanged: (bool value) async {
+                setState(() {
+                  pushNotificationsEnabled = value;
+                });
+
+                try {
+                  if (value) {
+                    await FCMSettingsService.setPushNotificationsEnabled(true);
+                    String? token = await FirebaseMessaging.instance.getToken();
+                    if (token != null) {
+                      _logger.i('New FCM Token obtained: $token');
+                    }
+                  } else {
+                    await FirebaseMessaging.instance.deleteToken();
+                    await FCMSettingsService.setPushNotificationsEnabled(false);
+                    _logger.i('FCM Token deleted');
+                  }
+
+                  _showSuccessSnackBar(value
+                      ? 'Push notifications enabled'
+                      : 'Push notifications disabled');
+                } catch (e) {
+                  _logger.e('Error toggling push notifications: $e');
+                  setState(() {
+                    pushNotificationsEnabled = !value;
+                  });
+                  _showErrorSnackBar('Failed to update notification settings');
+                }
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 }
