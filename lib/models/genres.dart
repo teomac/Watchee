@@ -25,6 +25,26 @@ class MovieGenres {
   String getGenre(int id) {
     return map[id]!;
   }
+
+  int? getIdFromName(String name) {
+    return map.entries
+        .firstWhere((entry) => entry.value == name,
+            orElse: () => const MapEntry(-1, ''))
+        .key;
+  }
+
+  List<int> getGenreIdsFromNames(List<String> genreNames, MovieGenres genres) {
+    List<int> genreIds = [];
+
+    for (String name in genreNames) {
+      int? genreId = genres.getIdFromName(name);
+      if (genreId != null && genreId != -1) {
+        genreIds.add(genreId);
+      }
+    }
+
+    return genreIds;
+  }
 }
 
 class TvShowsGenres {

@@ -7,7 +7,8 @@ import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/services/user_service.dart';
 
 class ManageAccountPage extends StatefulWidget {
-  const ManageAccountPage({super.key});
+  final VoidCallback? onFavoriteGenresUpdated;
+  const ManageAccountPage({super.key, this.onFavoriteGenresUpdated});
 
   @override
   State<ManageAccountPage> createState() => _ManageAccountPageState();
@@ -124,6 +125,11 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
 
       await UserService()
           .updateUserWithNameLowerCase(uid, _nameController.text);
+
+      if (widget.onFavoriteGenresUpdated != null) {
+        widget.onFavoriteGenresUpdated!();
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile updated successfully')),

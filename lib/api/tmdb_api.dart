@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:dima_project/api/constants.dart';
 import 'package:dima_project/models/movie.dart';
@@ -173,4 +174,29 @@ Future<Map<String, List<Map<String, dynamic>>>> fetchAllProviders(
   } else {
     throw Exception('Failed to load providers');
   }
+}
+
+// function used to retrieve random movies based on genres
+Future<List<Movie>> fetchMoviesByGenres(List<int> genreIds) async {
+  List<Movie> allMovies = [];
+
+  for (int genreId in genreIds) {
+    final response = await http.get(Uri.parse(
+        'https://api.themoviedb.org/3/discover/movie?api_key=${Constants.apiKey}&with_genres=$genreId'));
+
+    if (response.statusCode == 200) {
+      final decodedData = json.decode(response.body)['results'] as List;
+      List<Movie> genreMovies =
+          decodedData.map((movie) => Movie.fromJson(movie)).toList();
+      allMovies += genreMovies;
+    } else {
+      throw Exception('Failed to load movies for genre $genreId');
+    }
+  }
+
+  // Shuffle the list of all movies
+  allMovies.shuffle(Random());
+
+  // Pick 50 randomly shuffled movies, or all movies if less than 50
+  return allMovies.length > 50 ? allMovies.sublist(0, 50) : allMovies;
 }

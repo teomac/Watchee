@@ -1,5 +1,8 @@
+import 'package:dima_project/models/genres.dart';
 import 'package:dima_project/models/movie.dart';
+import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/pages/movies/film_details_page.dart';
+import 'package:dima_project/services/user_service.dart';
 import 'package:flutter/material.dart';
 import 'package:dima_project/api/tmdb_api.dart';
 import 'package:dima_project/widgets/movies_slider.dart';
@@ -22,6 +25,9 @@ class HomeMoviesState extends State<HomeMovies> {
   List<Movie> _searchResults = [];
   bool _isSearchExpanded = false;
   bool _isSearching = false;
+  final UserService _userService = UserService();
+  MyUser? _currentUser;
+  final MovieGenres movieGenres = MovieGenres();
 
   @override
   void initState() {
@@ -30,11 +36,24 @@ class HomeMoviesState extends State<HomeMovies> {
   }
 
   Future<void> _initializeData() async {
+    final currentUser = await _userService.getCurrentUser();
+    if (currentUser != null) {
+      _currentUser = currentUser;
+    }
     try {
       final trending = await fetchTrendingMovies();
       final topRated = await fetchTopRatedMovies();
       final upcoming = await fetchUpcomingMovies();
       final nowPlaying = await fetchNowPlayingMovies();
+
+      List<int> genreIds = _currentUser?.favoriteGenres
+              .map((genreName) => movieGenres.getIdFromName(genreName))
+              .where((genreId) => genreId != null && genreId != -1)
+              .cast<int>()
+              .toList() ??
+          [];
+
+      final recommended = await fetchMoviesByGenres(genreIds);
 
       if (mounted) {
         setState(() {
@@ -43,12 +62,35 @@ class HomeMoviesState extends State<HomeMovies> {
             topRatedMovies: topRated,
             upcomingMovies: upcoming,
             nowPlayingMovies: nowPlaying,
+            recommendedMovies: recommended,
           );
         });
       }
     } catch (e) {
       logger.e('Error initializing data: $e');
       // Handle error (e.g., show a snackbar)
+    }
+  }
+
+  Future<void> refreshRecommendedMovies() async {
+    try {
+      if (_currentUser != null) {
+        List<int> genreIds = _currentUser!.favoriteGenres
+            .map((genreName) => movieGenres.getIdFromName(genreName))
+            .where((genreId) => genreId != null && genreId != -1)
+            .cast<int>()
+            .toList();
+
+        final recommended = await fetchMoviesByGenres(genreIds);
+
+        if (mounted) {
+          setState(() {
+            _data = _data.copyWith(recommendedMovies: recommended);
+          });
+        }
+      }
+    } catch (e) {
+      logger.e('Error refreshing recommended movies: $e');
     }
   }
 
@@ -106,7 +148,9 @@ class HomeMoviesState extends State<HomeMovies> {
           ),
         ),
         const SizedBox(width: 16),
-        const UserInfo(),
+        UserInfo(
+          onFavoriteGenresUpdated: refreshRecommendedMovies,
+        ),
       ],
     );
   }
@@ -186,6 +230,8 @@ class HomeMoviesState extends State<HomeMovies> {
               (movies) => MoviesSlider(movies: movies), Theme.of(context)),
           _buildMovieSection('Now Playing', _data.nowPlayingMovies,
               (movies) => MoviesSlider(movies: movies), Theme.of(context)),
+          _buildMovieSection('Recommended for You', _data.recommendedMovies,
+              (movies) => MoviesSlider(movies: movies), Theme.of(context))
         ],
       ),
     );

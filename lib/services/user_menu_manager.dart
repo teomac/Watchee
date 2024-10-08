@@ -12,7 +12,9 @@ import 'package:provider/provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 class UserInfo extends StatefulWidget {
-  const UserInfo({super.key});
+  final VoidCallback? onFavoriteGenresUpdated;
+
+  const UserInfo({super.key, this.onFavoriteGenresUpdated});
 
   @override
   State<UserInfo> createState() => _UserInfoState();
@@ -83,7 +85,10 @@ class _UserInfoState extends State<UserInfo> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const ManageAccountPage()),
+                      builder: (context) => ManageAccountPage(
+                        onFavoriteGenresUpdated: widget.onFavoriteGenresUpdated,
+                      ),
+                    ),
                   ).then((_) {
                     _initializeData();
                   });
