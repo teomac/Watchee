@@ -17,6 +17,19 @@ Future<List<Movie>> fetchTrendingMovies() async {
   }
 }
 
+//function used to retrieve trending movies
+Future<List<Movie>> fetchNowPlayingMovies() async {
+  final response = await http.get(Uri.parse(Constants.nowPlaying));
+  if (response.statusCode == 200) {
+    // If the call to the server was successful, parse the JSON
+    final decodedData = json.decode(response.body)['results'] as List;
+    return decodedData.map((movie) => Movie.fromJson(movie)).toList();
+  } else {
+    // If that call was not successful, throw an error.
+    throw Exception('Failed to load movies');
+  }
+}
+
 //function used to retrieve top rated movies
 Future<List<Movie>> fetchTopRatedMovies() async {
   final response = await http.get(Uri.parse(Constants.topRated));
