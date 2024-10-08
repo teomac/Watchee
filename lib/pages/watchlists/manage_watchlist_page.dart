@@ -91,12 +91,15 @@ class ManageWatchlistBloc
             sortedMovies = movies.reversed.toList();
             break;
           case 'Name':
-            movies.sort((a, b) => a.title.compareTo(b.title));
+            sortedMovies = List.from(movies)
+              ..sort((a, b) => a.title.compareTo(b.title));
             break;
           case 'Release Date':
-            movies.sort((a, b) => b.releaseDate!.compareTo(a.releaseDate!));
+            sortedMovies = List.from(movies)
+              ..sort((a, b) => b.releaseDate!.compareTo(a.releaseDate!));
             break;
-          default:
+          case 'Default':
+            sortedMovies = movies;
             break;
         }
         emit(ManageWatchlistLoaded(watchlist, movies, sortedMovies));
@@ -325,12 +328,10 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
             icon: Icon(isFollowing ? Icons.favorite : Icons.favorite_border),
             onPressed: _toggleFollowWatchlist,
           ),
-        if (canEdit || isCollaborator)
-          IconButton(
-            alignment: Alignment.centerRight,
-            icon: const Icon(Icons.sort),
-            onPressed: () => _showSortingOptions(context, state),
-          ),
+        IconButton(
+          icon: const Icon(Icons.sort),
+          onPressed: () => _showSortingOptions(context, state),
+        ),
         IconButton(
           icon: const Icon(Icons.more_vert),
           onPressed: () => _showWatchlistOptions(context, state.watchlist),
@@ -434,7 +435,8 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
         sortedMovies = List.from(state.movies)
           ..sort((a, b) => b.releaseDate!.compareTo(a.releaseDate!));
         break;
-      default:
+      case 'Default':
+        sortedMovies = state.movies;
         break;
     }
 
@@ -696,7 +698,8 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
-          if (sortedMovies.isEmpty) {
+          if (sortedMovies.isEmpty ||
+              sortedMovies.length != state.movies.length) {
             sortedMovies = state.sortedMovies;
           }
           final movie = sortedMovies[index];
@@ -712,7 +715,7 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
                 : null,
           );
         },
-        childCount: state.movies.length,
+        childCount: state.sortedMovies.length,
       ),
     );
   }
