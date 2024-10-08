@@ -202,8 +202,16 @@ class _UserProfilePageState extends State<UserProfilePage> {
           radius: 55,
           backgroundImage: widget.user.profilePicture != null
               ? NetworkImage(widget.user.profilePicture!)
-              : const AssetImage('lib/images/default_profile.jpg')
-                  as ImageProvider,
+              : null,
+          child: widget.user.profilePicture == null
+              ? Icon(
+                  Icons.person,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white
+                      : Colors.black,
+                  size: 60,
+                )
+              : null,
         ),
         const SizedBox(height: 16),
         Text(

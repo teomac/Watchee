@@ -7,8 +7,6 @@ import 'package:dima_project/pages/account/manage_account.dart';
 import 'package:dima_project/pages/settings_page.dart';
 import 'package:dima_project/widgets/profile_widget.dart';
 import 'package:logger/logger.dart';
-import 'package:dima_project/theme/theme_provider.dart';
-import 'package:provider/provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 class UserInfo extends StatefulWidget {
@@ -35,9 +33,11 @@ class _UserInfoState extends State<UserInfo> {
 
   Future<void> _initFCM() async {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      setState(() {
-        _unreadCount++;
-      });
+      if (mounted) {
+        setState(() {
+          _unreadCount++;
+        });
+      }
     });
   }
 
@@ -161,8 +161,7 @@ class _UserInfoState extends State<UserInfo> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return FutureBuilder<MyUser?>(
       future: _userService.getCurrentUser(),
@@ -185,8 +184,6 @@ class _UserInfoState extends State<UserInfo> {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor:
-                    isDarkMode ? Colors.grey[800] : Colors.grey[200],
                 child: user?.profilePicture != null
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(40),

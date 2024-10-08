@@ -6,12 +6,14 @@ class SearchBarWidget extends StatefulWidget {
   final ThemeData theme;
   final bool isDarkMode;
   final Function(bool) onExpandChanged;
+  final Function(String) onSearchChanged;
 
   const SearchBarWidget({
     super.key,
     required this.theme,
     required this.isDarkMode,
     required this.onExpandChanged,
+    required this.onSearchChanged,
   });
 
   @override
@@ -52,6 +54,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget>
   }
 
   void _onSearchChanged() {
+    widget.onSearchChanged(_searchController.text);
     if (_searchController.text.isNotEmpty && !_isExpanded) {
       _expandSearchBar();
     } else if (_searchController.text.isEmpty && _isExpanded) {
