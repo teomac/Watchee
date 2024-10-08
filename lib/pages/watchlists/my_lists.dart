@@ -65,6 +65,12 @@ class DeleteWatchlist extends MyListsEvent {
   DeleteWatchlist(this.watchlist);
 }
 
+class RemoveCollab extends MyListsEvent {
+  final WatchList watchlist;
+  final String userId;
+  RemoveCollab(this.watchlist, this.userId);
+}
+
 // BLoC
 class MyListsBloc extends Bloc<MyListsEvent, MyListsState> {
   final WatchlistService _watchlistService;
@@ -76,6 +82,20 @@ class MyListsBloc extends Bloc<MyListsEvent, MyListsState> {
     on<LoadMyLists>(_onLoadMyLists);
     on<CreateWatchlist>(_onCreateWatchlist);
     on<DeleteWatchlist>(_onDeleteWatchlist);
+    on<RemoveCollab>(_onRemoveCollab);
+  }
+
+  Future<void> _onRemoveCollab(
+      RemoveCollab event, Emitter<MyListsState> emit) async {
+    try {
+      await _watchlistService.removeMyselfAsCollaborator(
+          event.watchlist.id, event.watchlist.userID, event.userId);
+      add(LoadMyLists());
+    } catch (e, stackTrace) {
+      _logger.e("Error removing collaborator",
+          error: e, stackTrace: stackTrace);
+      emit(MyListsError("Failed to remove collaborator. Please try again."));
+    }
   }
 
   Future<void> _onLoadMyLists(
@@ -579,6 +599,18 @@ class _MyListsState extends State<MyLists> {
                       _showDeleteConfirmation(context, watchlist, onDelete);
                     },
                   ),
+                if (isOwnWatchlist &&
+                    (watchlist.collaborators.contains(currentUser!.id)))
+                  ListTile(
+                    leading: Icon(Icons.delete, color: theme.colorScheme.error),
+                    title: Text('Remove myself as collaborator',
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(color: theme.colorScheme.error)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _removeAsCollaborator(context, watchlist);
+                    },
+                  ),
               ],
             ),
           ),
@@ -650,6 +682,55 @@ class _MyListsState extends State<MyLists> {
                 foregroundColor: Colors.white,
               ),
               child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _removeAsCollaborator(BuildContext context, WatchList watchlist) {
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            'Remove myself as collaborator',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              color: isDarkMode ? Colors.white : Colors.black,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to remove yourself from "${watchlist.name}"?',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: isDarkMode ? Colors.white70 : Colors.black87,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: theme.colorScheme.secondary),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                myListsBloc.add(RemoveCollab(watchlist, currentUser!.id));
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Remove'),
             ),
           ],
         );

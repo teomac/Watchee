@@ -317,4 +317,25 @@ class WatchlistService {
       logger.e(e);
     }
   }
+
+  Future<void> removeMyselfAsCollaborator(
+      String watchlistId, String watchlistOwner, String userId) async {
+    try {
+      await _firestore.collection('users').doc(userId).update({
+        'collabWatchlists.$watchlistOwner':
+            FieldValue.arrayRemove([watchlistId])
+      });
+
+      await _firestore
+          .collection('users')
+          .doc(watchlistOwner)
+          .collection('my_watchlists')
+          .doc(watchlistId)
+          .update({
+        'collaborators': FieldValue.arrayRemove([userId])
+      });
+    } catch (e) {
+      logger.e(e);
+    }
+  }
 }
