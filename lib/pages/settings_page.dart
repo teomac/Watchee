@@ -30,14 +30,6 @@ class SettingsPage extends StatelessWidget {
                 // Implement push notification toggle logic
               },
             ),
-            SwitchListTile(
-              title: const Text('Email Notifications'),
-              value:
-                  false, // Replace with actual value from your state management
-              onChanged: (value) {
-                // Implement email notification toggle logic
-              },
-            ),
           ]),
           _buildSection('About', [
             const ListTile(

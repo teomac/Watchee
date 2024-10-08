@@ -14,6 +14,7 @@ import 'package:dima_project/pages/watchlists/followers_list_page.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:dima_project/pages/watchlists/invite_collaborators_page.dart';
 import 'package:dima_project/pages/watchlists/collaborators_list_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Events
 abstract class ManageWatchlistEvent {}
@@ -21,7 +22,8 @@ abstract class ManageWatchlistEvent {}
 class LoadWatchlist extends ManageWatchlistEvent {
   final String watchlistId;
   final String userId;
-  LoadWatchlist(this.userId, this.watchlistId);
+  final String sortOption;
+  LoadWatchlist(this.userId, this.watchlistId, this.sortOption);
 }
 
 class AddMovieToWatchlist extends ManageWatchlistEvent {
@@ -52,8 +54,9 @@ class ManageWatchlistLoading extends ManageWatchlistState {}
 class ManageWatchlistLoaded extends ManageWatchlistState {
   final WatchList watchlist;
   final List<Movie> movies;
+  final List<Movie> sortedMovies;
 
-  ManageWatchlistLoaded(this.watchlist, this.movies);
+  ManageWatchlistLoaded(this.watchlist, this.movies, this.sortedMovies);
 }
 
 class ManageWatchlistError extends ManageWatchlistState {
@@ -82,7 +85,21 @@ class ManageWatchlistBloc
           await _watchlistService.getWatchList(event.userId, event.watchlistId);
       if (watchlist != null) {
         final movies = await _fetchMoviesForWatchlist(watchlist);
-        emit(ManageWatchlistLoaded(watchlist, movies));
+        List<Movie> sortedMovies = movies;
+        switch (event.sortOption) {
+          case 'Latest Added':
+            sortedMovies = movies.reversed.toList();
+            break;
+          case 'Name':
+            movies.sort((a, b) => a.title.compareTo(b.title));
+            break;
+          case 'Release Date':
+            movies.sort((a, b) => b.releaseDate!.compareTo(a.releaseDate!));
+            break;
+          default:
+            break;
+        }
+        emit(ManageWatchlistLoaded(watchlist, movies, sortedMovies));
       } else {
         emit(ManageWatchlistError('Watchlist not found'));
       }
@@ -103,7 +120,13 @@ class ManageWatchlistBloc
         await _watchlistService.updateWatchList(updatedWatchlist);
         final updatedMovieList =
             currentState.movies.where((m) => m.id != event.movie.id).toList();
-        emit(ManageWatchlistLoaded(updatedWatchlist, updatedMovieList));
+
+        //update also sortedMovies
+        final updatedSortedMovies = currentState.sortedMovies
+            .where((m) => m.id != event.movie.id)
+            .toList();
+        emit(ManageWatchlistLoaded(
+            updatedWatchlist, updatedMovieList, updatedSortedMovies));
       } catch (e) {
         emit(ManageWatchlistError('Failed to remove movie: ${e.toString()}'));
       }
@@ -129,7 +152,8 @@ class ManageWatchlistBloc
         final updatedWatchlist =
             currentState.watchlist.copyWith(name: event.newName);
         await _watchlistService.updateWatchList(updatedWatchlist);
-        emit(ManageWatchlistLoaded(updatedWatchlist, currentState.movies));
+        emit(ManageWatchlistLoaded(
+            updatedWatchlist, currentState.movies, currentState.sortedMovies));
       } catch (e) {
         emit(ManageWatchlistError(
             'Failed to update watchlist name: ${e.toString()}'));
@@ -146,7 +170,8 @@ class ManageWatchlistBloc
           isPrivate: !currentState.watchlist.isPrivate,
         );
         await _watchlistService.updateWatchList(updatedWatchlist);
-        emit(ManageWatchlistLoaded(updatedWatchlist, currentState.movies));
+        emit(ManageWatchlistLoaded(
+            updatedWatchlist, currentState.movies, currentState.sortedMovies));
       } catch (e) {
         emit(ManageWatchlistError(
             'Failed to toggle watchlist privacy: ${e.toString()}'));
@@ -177,12 +202,19 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
   WatchList? actualWatchlist;
   bool isFollowing = false;
   bool isCollaborator = false;
+  String currentSortOption = 'Default';
+  final prefs = SharedPreferences.getInstance();
+  bool needsRefresh = true;
+  List<Movie> sortedMovies = [];
 
   @override
   void initState() {
     super.initState();
     _manageWatchlistBloc = ManageWatchlistBloc(WatchlistService());
-    _loadBasics();
+    if (needsRefresh) {
+      _loadBasics();
+    }
+    needsRefresh = true;
   }
 
   Future<void> _loadBasics() async {
@@ -192,7 +224,12 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
     user = await _userService.getUser(widget.userId);
     currentUser = await _userService.getCurrentUser();
 
-    _manageWatchlistBloc.add(LoadWatchlist(widget.userId, widget.watchlistId));
+    //load prefs
+    currentSortOption = await prefs
+        .then((value) => value.getString(actualWatchlist!.id) ?? 'Default');
+
+    _manageWatchlistBloc.add(
+        LoadWatchlist(widget.userId, widget.watchlistId, currentSortOption));
     if (currentUser != null &&
         actualWatchlist != null &&
         user != null &&
@@ -255,9 +292,9 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
     } else if (state is ManageWatchlistLoaded) {
       return CustomScrollView(
         slivers: [
-          _buildSliverAppBar(context, state.watchlist),
+          _buildSliverAppBar(context, state),
           SliverToBoxAdapter(
-            child: _buildWatchlistHeaderContent(context, state.watchlist),
+            child: _buildWatchlistHeaderContent(context, state),
           ),
           SliverToBoxAdapter(
             child: _buildAddMovieButton(context, state.watchlist),
@@ -271,7 +308,7 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
     return const Center(child: CircularProgressIndicator());
   }
 
-  Widget _buildSliverAppBar(BuildContext context, WatchList watchlist) {
+  Widget _buildSliverAppBar(BuildContext context, ManageWatchlistLoaded state) {
     return SliverAppBar(
       expandedHeight: 20.0,
       floating: false,
@@ -283,14 +320,20 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
         onPressed: () => Navigator.of(context).pop(),
       ),
       actions: [
-        if (!canEdit && !watchlist.isPrivate)
+        if (!canEdit && !state.watchlist.isPrivate)
           IconButton(
             icon: Icon(isFollowing ? Icons.favorite : Icons.favorite_border),
             onPressed: _toggleFollowWatchlist,
           ),
+        if (canEdit || isCollaborator)
+          IconButton(
+            alignment: Alignment.centerRight,
+            icon: const Icon(Icons.sort),
+            onPressed: () => _showSortingOptions(context, state),
+          ),
         IconButton(
           icon: const Icon(Icons.more_vert),
-          onPressed: () => _showWatchlistOptions(context, watchlist),
+          onPressed: () => _showWatchlistOptions(context, state.watchlist),
         ),
       ],
       flexibleSpace: FlexibleSpaceBar(
@@ -311,7 +354,7 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
   }
 
   Widget _buildWatchlistHeaderContent(
-      BuildContext context, WatchList watchlist) {
+      BuildContext context, ManageWatchlistLoaded state) {
     return Padding(
       padding: const EdgeInsets.all(12.0),
       child: Column(
@@ -321,10 +364,10 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
-                watchlist.name,
+                state.watchlist.name,
                 style: Theme.of(context).textTheme.headlineLarge,
               ),
-              if (watchlist.isPrivate)
+              if (state.watchlist.isPrivate)
                 Padding(
                   padding: const EdgeInsets.only(left: 8.0),
                   child: Icon(
@@ -336,11 +379,72 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
             ],
           ),
           const SizedBox(height: 8),
-          _buildCreatedByText(context, watchlist.userID),
-          _buildFollowersCount(context, watchlist),
+          _buildCreatedByText(context, state.watchlist.userID),
+          _buildFollowersCount(context, state.watchlist),
         ],
       ),
     );
+  }
+
+  void _showSortingOptions(BuildContext context, ManageWatchlistLoaded state) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                title: const Text('Default'),
+                leading: const Icon(Icons.sort),
+                onTap: () => _sortMovies('Default', state),
+              ),
+              ListTile(
+                title: const Text('Latest Added'),
+                leading: const Icon(Icons.add_circle_outline),
+                onTap: () => _sortMovies('Latest Added', state),
+              ),
+              ListTile(
+                title: const Text('Name'),
+                leading: const Icon(Icons.sort_by_alpha),
+                onTap: () => _sortMovies('Name', state),
+              ),
+              ListTile(
+                title: const Text('Release Date'),
+                leading: const Icon(Icons.calendar_today),
+                onTap: () => _sortMovies('Release Date', state),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _sortMovies(String sortOption, ManageWatchlistLoaded state) {
+    switch (sortOption) {
+      case 'Latest Added':
+        sortedMovies = state.movies.reversed.toList();
+        break;
+      case 'Name':
+        sortedMovies = List.from(state.movies)
+          ..sort((a, b) => a.title.compareTo(b.title));
+        break;
+      case 'Release Date':
+        sortedMovies = List.from(state.movies)
+          ..sort((a, b) => b.releaseDate!.compareTo(a.releaseDate!));
+        break;
+      default:
+        break;
+    }
+
+    setState(() {
+      needsRefresh = false;
+      currentSortOption = sortOption;
+      prefs.then((value) => value.setString(state.watchlist.id, sortOption));
+    });
+
+    Navigator.pop(context);
   }
 
   Widget _buildFollowersCount(BuildContext context, WatchList watchlist) {
@@ -592,7 +696,10 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
-          final movie = state.movies[index];
+          if (sortedMovies.isEmpty) {
+            sortedMovies = state.sortedMovies;
+          }
+          final movie = sortedMovies[index];
           return ListTile(
             leading: movie.posterPath != null
                 ? Image.network('${Constants.imagePath}${movie.posterPath}')
