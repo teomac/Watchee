@@ -224,14 +224,14 @@ class HomeMoviesState extends State<HomeMovies> {
               _data.trendingMovies,
               (movies) => TrendingSlider(trendingMovies: movies),
               Theme.of(context)),
+          _buildMovieSection('Recommended for You', _data.recommendedMovies,
+              (movies) => MoviesSlider(movies: movies), Theme.of(context)),
           _buildMovieSection('Top rated movies', _data.topRatedMovies,
               (movies) => MoviesSlider(movies: movies), Theme.of(context)),
           _buildMovieSection('Upcoming Movies', _data.upcomingMovies,
               (movies) => MoviesSlider(movies: movies), Theme.of(context)),
           _buildMovieSection('Now Playing', _data.nowPlayingMovies,
               (movies) => MoviesSlider(movies: movies), Theme.of(context)),
-          _buildMovieSection('Recommended for You', _data.recommendedMovies,
-              (movies) => MoviesSlider(movies: movies), Theme.of(context))
         ],
       ),
     );

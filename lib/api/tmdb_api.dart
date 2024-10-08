@@ -188,7 +188,13 @@ Future<List<Movie>> fetchMoviesByGenres(List<int> genreIds) async {
       final decodedData = json.decode(response.body)['results'] as List;
       List<Movie> genreMovies =
           decodedData.map((movie) => Movie.fromJson(movie)).toList();
-      allMovies += genreMovies;
+
+      //check for duplicates before adding to the list
+      for (var movie in genreMovies) {
+        if (!allMovies.contains(movie)) {
+          allMovies.add(movie);
+        }
+      }
     } else {
       throw Exception('Failed to load movies for genre $genreId');
     }
@@ -197,6 +203,6 @@ Future<List<Movie>> fetchMoviesByGenres(List<int> genreIds) async {
   // Shuffle the list of all movies
   allMovies.shuffle(Random());
 
-  // Pick 50 randomly shuffled movies, or all movies if less than 50
-  return allMovies.length > 50 ? allMovies.sublist(0, 50) : allMovies;
+  // Pick 80 randomly shuffled movies, or all movies if less than 80
+  return allMovies.length > 80 ? allMovies.sublist(0, 80) : allMovies;
 }
