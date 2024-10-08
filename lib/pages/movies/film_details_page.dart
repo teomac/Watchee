@@ -40,6 +40,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   final List<String> _countries = ['US', 'IT', 'UK', 'FR', 'DE', 'CH', 'ES'];
   String _selectedCountry = 'US';
   Map<String, List<Map<String, dynamic>>> _allProviders = {};
+  List<Movie> _recommendedMovies = [];
 
   @override
   void dispose() {
@@ -53,6 +54,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     _initializeData().then((_) {
       _fetchAllProviders();
       _fetchFriendsReviews();
+      _fetchRecommendedMovies();
     });
 
     _reviewController.addListener(_updateSubmitButton);
@@ -141,6 +143,17 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
           SnackBar(content: Text('Failed to load providers: $e')),
         );
       }
+    }
+  }
+
+  Future<void> _fetchRecommendedMovies() async {
+    try {
+      final recommendations = await fetchRecommendedMovies(widget.movie.id);
+      setState(() {
+        _recommendedMovies = recommendations;
+      });
+    } catch (e) {
+      print('Error fetching recommended movies: $e');
     }
   }
 
@@ -239,6 +252,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                   _buildFriendReviews(),
                   const SizedBox(height: 16),
                   _buildAddYourReview(),
+                  const SizedBox(height: 16),
+                  _buildRecommendedMoviesCard(),
                 ],
               ),
             ),
@@ -308,7 +323,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
 
   Widget _buildReleaseDate(Movie movie) {
     if (movie.releaseDate != null && movie.releaseDate!.isNotEmpty) {
-      final releaseDate = DateTime.tryParse(movie.releaseDate!); // Parse safely
+      final releaseDate = DateTime.tryParse(movie.releaseDate!);
       if (releaseDate != null) {
         final formattedDate = DateFormat.yMMMMd().format(releaseDate);
         return Text(
@@ -317,7 +332,6 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         );
       }
     }
-    // Return a fallback in case release date is null or can't be parsed
     return const Text(
       'Release Date: Unknown',
       style: TextStyle(fontSize: 16, color: Colors.grey),
@@ -727,10 +741,10 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                             ),
                             child: Text(
                               provider['provider_name'],
-                              maxLines: 2, // Allow up to 2 lines
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(fontSize: 12),
-                              textAlign: TextAlign.center, // Center text
+                              textAlign: TextAlign.center,
                             ),
                           ),
                         ],
@@ -747,8 +761,85 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     );
   }
 
+  Widget _buildRecommendedMoviesCard() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'You may also like',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 200,
+              child: _recommendedMovies.isNotEmpty
+                  ? ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _recommendedMovies.length,
+                      itemBuilder: (context, index) {
+                        final movie = _recommendedMovies[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      FilmDetailsPage(movie: movie),
+                                ),
+                              );
+                            },
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    '${Constants.imagePath}${movie.posterPath}',
+                                    height: 150,
+                                    width: 100,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        height: 150,
+                                        width: 100,
+                                        color: Colors.grey,
+                                        child: const Icon(Icons.error),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                SizedBox(
+                                  width: 100,
+                                  child: Text(
+                                    movie.title,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                  : const Center(child: CircularProgressIndicator()),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _submitReview() async {
-    // Retrieve the current logged-in user
     final currentUser = await _userService.getCurrentUser();
     if (currentUser == null) {
       if (mounted) {
@@ -785,7 +876,6 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
       }
     }
 
-    // Submit the review using UserService
     try {
       await _userService.addMovieReview(
           currentUser.id, movieId, rating, reviewText, title, name);
@@ -794,7 +884,6 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
           const SnackBar(content: Text('Review submitted successfully')),
         );
       }
-      // Clear the review input after submission
       _reviewController.clear();
       setState(() => _selectedRating = 0);
     } catch (e) {

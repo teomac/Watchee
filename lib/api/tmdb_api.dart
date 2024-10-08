@@ -206,3 +206,16 @@ Future<List<Movie>> fetchMoviesByGenres(List<int> genreIds) async {
   // Pick 80 randomly shuffled movies, or all movies if less than 80
   return allMovies.length > 80 ? allMovies.sublist(0, 80) : allMovies;
 }
+
+// function to retrieve the recommended movies based on a specific movie
+Future<List<Movie>> fetchRecommendedMovies(int movieId) async {
+  final response = await http.get(Uri.parse(
+      '${Constants.movieBaseUrl}/$movieId/recommendations?api_key=${Constants.apiKey}'));
+
+  if (response.statusCode == 200) {
+    final decodedData = json.decode(response.body)['results'] as List;
+    return decodedData.map((movie) => Movie.fromJson(movie)).toList();
+  } else {
+    throw Exception('Failed to load recommended movies');
+  }
+}
