@@ -11,6 +11,7 @@ import 'package:dima_project/services/user_menu_manager.dart';
 import 'package:dima_project/pages/watchlists/liked_seen_movies_page.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:lottie/lottie.dart';
 
 // Events
 abstract class MyListsEvent {}
@@ -251,17 +252,27 @@ class _MyListsState extends State<MyLists> {
       child: BlocBuilder<MyListsBloc, MyListsState>(
         builder: (context, state) {
           return Scaffold(
-            body: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: _buildBody(context, state),
+              body: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: _buildBody(context, state),
+                ),
               ),
-            ),
-            floatingActionButton: FloatingActionButton(
-              onPressed: () => _showCreateWatchlistDialog(context),
-              child: const Icon(Icons.add),
-            ),
-          );
+              floatingActionButton: SizedBox(
+                  height: 68,
+                  width: 68,
+                  child: FittedBox(
+                    child: FloatingActionButton(
+                      elevation: 4,
+
+                      //edit rounded corners
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+
+                      onPressed: () => _showCreateWatchlistDialog(context),
+                      child: const Icon(Icons.add, size: 32),
+                    ),
+                  )));
         },
       ),
     );
@@ -421,16 +432,34 @@ class _MyListsState extends State<MyLists> {
         ),
         if (watchlists.isEmpty)
           Center(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 48.0, bottom: 32),
-              child: Text(
+              child: Padding(
+            padding: const EdgeInsets.only(top: 8, bottom: 24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
                 isOwnWatchlist
-                    ? 'Press the + button to create your first watchlist'
-                    : 'You are currently not following any watchlists',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+                    ? Lottie.asset(
+                        'lib/assets/lottie_box.json',
+                        width: 150,
+                        height: 150,
+                        fit: BoxFit.contain,
+                      )
+                    : Lottie.asset(
+                        'lib/assets/lottie_heart.json',
+                        width: 200,
+                        height: 200,
+                        fit: BoxFit.contain,
+                      ),
+                const SizedBox(height: 20),
+                Text(
+                  isOwnWatchlist
+                      ? 'Press the + button to create your first watchlist'
+                      : 'Followed watchlists will appear here',
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ],
             ),
-          )
+          ))
         else
           ...watchlists.map((watchlist) {
             return FutureBuilder<String>(
