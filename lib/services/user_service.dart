@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dima_project/models/movie_review.dart';
-import 'package:dima_project/services/fcm_service.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:dima_project/models/user_model.dart';
