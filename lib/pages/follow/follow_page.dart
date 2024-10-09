@@ -29,6 +29,8 @@ class RemoveFollower extends FollowEvent {
   RemoveFollower(this.user);
 }
 
+class SearchPerformedWithNoResults extends FollowState {}
+
 // States
 abstract class FollowState {}
 
@@ -94,7 +96,11 @@ class FollowBloc extends Bloc<FollowEvent, FollowState> {
 
     try {
       final users = await _userService.searchUsers(event.query);
-      emit(SearchResultsLoaded(users));
+      if (users.isEmpty) {
+        emit(SearchPerformedWithNoResults());
+      } else {
+        emit(SearchResultsLoaded(users));
+      }
     } catch (e) {
       logger.e("Error searching users: $e");
       emit(FollowError(e.toString()));
@@ -221,11 +227,43 @@ class _FollowViewState extends State<FollowView> {
   Widget _buildSearchResults() {
     return BlocBuilder<FollowBloc, FollowState>(
       builder: (context, state) {
-        if (state is SearchResultsLoaded) {
+        if (state is SearchPerformedWithNoResults) {
+          return _buildEmptySearchState();
+        } else if (state is SearchResultsLoaded) {
           return _buildSearchResultsList(context, state.users);
+        } else if (state is FollowError) {
+          return Center(child: Text('Error: ${state.message}'));
         }
-        return const Center(child: CircularProgressIndicator());
+        return const Center(child: Text(''));
       },
+    );
+  }
+
+  Widget _buildEmptySearchState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Lottie.asset(
+            'lib/assets/lottie_tumbleweed.json',
+            width: 275,
+            height: 275,
+            fit: BoxFit.contain,
+            repeat: true,
+            reverse: false,
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'No users found',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Try a different search term',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ],
+      ),
     );
   }
 
