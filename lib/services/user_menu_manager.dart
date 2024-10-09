@@ -1,5 +1,6 @@
 import 'package:dima_project/pages/account/notifications_page.dart';
 import 'package:dima_project/pages/account/user_profile_page.dart';
+import 'package:dima_project/services/auth.dart';
 import 'package:flutter/material.dart';
 import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/services/user_service.dart';
@@ -22,6 +23,7 @@ class _UserInfoState extends State<UserInfo> {
   MyUser? _currentUser;
   final Logger logger = Logger();
   final UserService _userService = UserService();
+  final Auth _auth = Auth();
   int _unreadCount = 0;
 
   @override
@@ -136,7 +138,7 @@ class _UserInfoState extends State<UserInfo> {
 
   Future<void> _signOut() async {
     try {
-      bool success = await _userService.signOut();
+      bool success = await _auth.signOut();
       if (success) {
         logger.d('Sign out successful');
         //come back to the login page

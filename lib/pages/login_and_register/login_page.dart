@@ -44,11 +44,11 @@ class _LoginPageState extends State<LoginPage> {
       FirebaseMessaging messaging = FirebaseMessaging.instance;
       String? token = await messaging.getToken();
       if (token != null) {
-        await FMCService.storeFCMToken(token);
-        await FMCService.storeFCMTokenToFirestore(token);
+        await FCMService.storeFCMToken(token);
+        await FCMService.storeFCMTokenToFirestore(token);
       }
 
-      FMCService.setupTokenRefreshListener();
+      FCMService.setupTokenRefreshListener();
     } catch (e) {
       setState(() {
         // Set a more specific error message if possible

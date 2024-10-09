@@ -4,7 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:logger/logger.dart';
 
-class FMCService {
+class FCMService {
   static final Logger logger = Logger();
   static const _storageKey = 'fcm_token';
   static const storage = FlutterSecureStorage();

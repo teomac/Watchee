@@ -488,17 +488,4 @@ class UserService {
       throw Exception('Failed to update username in reviews: $e');
     }
   }
-
-  Future<bool> signOut() async {
-    try {
-      logger.d('Starting sign out process');
-      await FMCService.clearFCMToken();
-      await _auth.signOut();
-      logger.d('User signed out and FCM token cleared');
-      return true;
-    } catch (e) {
-      logger.e('Failed to sign out: $e');
-      return false;
-    }
-  }
 }

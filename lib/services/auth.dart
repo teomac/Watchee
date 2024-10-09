@@ -54,13 +54,16 @@ class Auth {
     }
   }
 
-  Future<void> signOut() async {
+  Future<bool> signOut() async {
     try {
-      await FMCService.clearFCMToken();
+      logger.d('Starting sign out process');
+      await FCMService.clearFCMToken();
       await _firebaseAuth.signOut();
+      logger.d('User signed out and FCM token cleared');
+      return true;
     } catch (e) {
-      logger.e('Error signing out', error: e);
-      rethrow;
+      logger.e('Failed to sign out: $e');
+      return false;
     }
   }
 }
