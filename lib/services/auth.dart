@@ -1,7 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:dima_project/services/fcm_service.dart';
+import 'package:logger/logger.dart';
 
 class Auth {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final Logger logger = Logger();
 
   User? get currentUser => _firebaseAuth.currentUser;
 
@@ -17,6 +20,7 @@ class Auth {
         password: password,
       );
     } on FirebaseAuthException catch (e) {
+      logger.e('Firebase Auth Exception: ${e.code}', error: e);
       switch (e.code) {
         case 'user-not-found':
           throw 'No user found for that email.';
@@ -32,6 +36,7 @@ class Auth {
           throw 'An error occurred: ${e.message}';
       }
     } catch (e) {
+      logger.e('Unexpected error during sign in', error: e);
       throw 'An unexpected error occurred: $e';
     }
   }
@@ -40,11 +45,22 @@ class Auth {
     required String email,
     required String password,
   }) async {
-    await _firebaseAuth.createUserWithEmailAndPassword(
-        email: email, password: password);
+    try {
+      await _firebaseAuth.createUserWithEmailAndPassword(
+          email: email, password: password);
+    } catch (e) {
+      logger.e('Error creating user', error: e);
+      rethrow;
+    }
   }
 
   Future<void> signOut() async {
-    await _firebaseAuth.signOut();
+    try {
+      await FMCService.clearFCMToken();
+      await _firebaseAuth.signOut();
+    } catch (e) {
+      logger.e('Error signing out', error: e);
+      rethrow;
+    }
   }
 }

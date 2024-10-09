@@ -1,6 +1,7 @@
-import 'dart:io'; // Add this line to import the 'File' class
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dima_project/models/movie_review.dart';
+import 'package:dima_project/services/fcm_service.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:dima_project/models/user_model.dart';
@@ -490,11 +491,13 @@ class UserService {
 
   Future<bool> signOut() async {
     try {
+      logger.d('Starting sign out process');
+      await FMCService.clearFCMToken();
       await _auth.signOut();
-      logger.d('User signed out');
+      logger.d('User signed out and FCM token cleared');
       return true;
     } catch (e) {
-      logger.d('Failed to sign out: $e');
+      logger.e('Failed to sign out: $e');
       return false;
     }
   }
