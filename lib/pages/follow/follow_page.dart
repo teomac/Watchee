@@ -110,10 +110,19 @@ class FollowBloc extends Bloc<FollowEvent, FollowState> {
   Future<void> _onUnfollowUser(
       UnfollowUser event, Emitter<FollowState> emit) async {
     try {
-      final currentUser = await _userService.getCurrentUser();
-      if (currentUser != null) {
-        await _userService.unfollowUser(currentUser.id, event.user.id);
-        add(LoadFollowData());
+      final currentState = state;
+      if (currentState is FollowDataLoaded) {
+        final currentUser = await _userService.getCurrentUser();
+        if (currentUser != null) {
+          await _userService.unfollowUser(currentUser.id, event.user.id);
+
+          // Update the local list of following users without reloading everything
+          final updatedFollowing = List<MyUser>.from(currentState.following)
+            ..remove(event.user);
+
+          // Emit the new state with updated following list
+          emit(FollowDataLoaded(updatedFollowing, currentState.followers));
+        }
       }
     } catch (e) {
       logger.e("Error unfollowing user: $e");
@@ -342,8 +351,6 @@ class _FollowViewState extends State<FollowView> {
                 );
         } else if (state is FollowError) {
           return Center(child: Text('Error: ${state.message}'));
-        } else if (state is SearchResultsLoaded) {
-          _followBloc.add(LoadFollowData());
         }
         return const SizedBox.shrink();
       },

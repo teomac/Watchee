@@ -89,34 +89,32 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
   Future<void> _toggleFollowStatus() async {
     if (!mounted || _currentUser == null) return;
-    setState(() {
-      isLoading = true;
-    });
     try {
+      setState(() {
+        isFollowing = !isFollowing;
+      });
+
       if (isFollowing) {
-        await _userService.unfollowUser(_currentUser!.id, widget.user.id);
-      } else {
         await _userService.followUser(_currentUser!.id, widget.user.id);
+      } else {
+        await _userService.unfollowUser(_currentUser!.id, widget.user.id);
       }
+
       if (mounted) {
         setState(() {
-          isFollowing = !isFollowing;
           followStatusChanged = true;
         });
       }
     } catch (e) {
       if (mounted) {
+        setState(() {
+          isFollowing = !isFollowing;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
                   'Failed to ${isFollowing ? 'unfollow' : 'follow'} user: $e')),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
       }
     }
   }
