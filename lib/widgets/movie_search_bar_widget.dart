@@ -104,6 +104,8 @@ class _MovieSearchBarWidgetState extends State<MovieSearchBarWidget>
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
@@ -130,11 +132,18 @@ class _MovieSearchBarWidgetState extends State<MovieSearchBarWidget>
                   : null,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(24),
-                borderSide: BorderSide.none,
+                borderSide: BorderSide(color: colorScheme.outline),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(24),
+                borderSide: BorderSide(color: colorScheme.outline),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(24),
+                borderSide: BorderSide(color: colorScheme.primary, width: 2),
               ),
               filled: true,
-              fillColor:
-                  widget.isDarkMode ? Colors.grey[900] : Colors.grey[200],
+              fillColor: colorScheme.surfaceContainerHighest,
             ),
           ),
         );

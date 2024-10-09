@@ -13,6 +13,7 @@ import 'dart:async';
 import 'package:logger/logger.dart';
 import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/services/user_service.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 
 enum ThemeOptions { light, dark, system }
 
@@ -127,24 +128,38 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        return MaterialApp(
-          navigatorKey: navigatorKey,
-          theme: ThemeData.light(useMaterial3: true).copyWith(
-            scaffoldBackgroundColor: Colors.white,
-          ),
-          darkTheme: ThemeData.dark(useMaterial3: true).copyWith(
-            scaffoldBackgroundColor: Colors.black,
-            snackBarTheme: const SnackBarThemeData(
-              actionTextColor: Colors.red,
-              backgroundColor: Colors.black,
-              contentTextStyle: TextStyle(color: Colors.white),
-              elevation: 20,
-            ),
-          ),
-          themeMode: themeProvider.themeMode,
-          home: const WidgetTree(),
+    return DynamicColorBuilder(
+      builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+        return Consumer<ThemeProvider>(
+          builder: (context, themeProvider, child) {
+            final ColorScheme lightColorScheme = lightDynamic ??
+                ColorScheme.fromSeed(seedColor: Colors.deepPurple);
+            final ColorScheme darkColorScheme = darkDynamic ??
+                ColorScheme.fromSeed(
+                    seedColor: Colors.deepPurple, brightness: Brightness.dark);
+
+            return MaterialApp(
+              navigatorKey: navigatorKey,
+              theme: ThemeData(
+                colorScheme: lightColorScheme,
+                useMaterial3: true,
+                scaffoldBackgroundColor: lightColorScheme.surface,
+              ),
+              darkTheme: ThemeData(
+                colorScheme: darkColorScheme,
+                useMaterial3: true,
+                scaffoldBackgroundColor: darkColorScheme.surface,
+                snackBarTheme: SnackBarThemeData(
+                  backgroundColor: darkColorScheme.surfaceContainerHighest,
+                  contentTextStyle: TextStyle(
+                      color: darkColorScheme.onSurfaceVariant, fontSize: 16),
+                  actionTextColor: darkColorScheme.primary,
+                ),
+              ),
+              themeMode: themeProvider.themeMode,
+              home: const WidgetTree(),
+            );
+          },
         );
       },
     );

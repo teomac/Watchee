@@ -669,12 +669,26 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
   }
 
   Widget _buildAddMovieButton(BuildContext context, WatchList watchlist) {
+    final theme = Theme.of(context).colorScheme;
     if (!canEdit) {
       return const SizedBox.shrink();
     }
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(double.infinity, 50),
+          foregroundColor: theme.primary,
+          backgroundColor: theme.surface,
+          side: BorderSide(
+            color: theme.primary,
+            width: 1,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        ),
         onPressed: () {
           Navigator.push(
             context,
@@ -687,9 +701,6 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
         },
         icon: const Icon(Icons.add),
         label: const Text('Add a movie'),
-        style: ElevatedButton.styleFrom(
-          minimumSize: const Size(double.infinity, 50),
-        ),
       ),
     );
   }
@@ -735,16 +746,14 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
   void _showRemoveMovieMenu(
       BuildContext context, Movie movie, String watchlistName) {
     final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
         return Container(
-          decoration: BoxDecoration(
-            color: isDarkMode ? Colors.grey[900] : Colors.white,
-            borderRadius: const BorderRadius.only(
+          decoration: const BoxDecoration(
+            borderRadius: BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),
             ),

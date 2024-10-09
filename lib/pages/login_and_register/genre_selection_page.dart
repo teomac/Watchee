@@ -59,6 +59,7 @@ class _GenreSelectionPageState extends State<GenreSelectionPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Select Your Favorite Genres'),
@@ -106,9 +107,23 @@ class _GenreSelectionPageState extends State<GenreSelectionPage> {
                 onPressed:
                     selectedGenres.length >= 3 ? _saveGenresAndNavigate : null,
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  fixedSize: const Size(240, 44),
+                  foregroundColor: theme.primary,
+                  backgroundColor: theme.surface,
+                  side: BorderSide(
+                    color: theme.primary,
+                    width: 1,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),
-                child: const Text('Continue'),
+                child: Text('Continue',
+                    style: TextStyle(
+                        fontSize: 16,
+                        color: Theme.of(context).colorScheme.onSurface)),
               ),
             ],
           ),

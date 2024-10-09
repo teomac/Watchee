@@ -126,6 +126,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final bool isDarkmode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -146,21 +149,38 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     children: [
                       CircleAvatar(
                         radius: 60,
-                        backgroundColor: Colors.grey[300],
                         backgroundImage:
                             _image != null ? FileImage(_image!) : null,
                         child: _image == null
-                            ? const Icon(Icons.person,
-                                size: 60, color: Colors.grey)
+                            ? Icon(Icons.person,
+                                size: 60,
+                                color: isDarkmode ? Colors.white : Colors.black)
                             : null,
                       ),
-                      const Positioned(
+                      Positioned(
                         bottom: 0,
                         right: 0,
                         child: CircleAvatar(
-                          backgroundColor: Colors.blue,
                           radius: 20,
-                          child: Icon(Icons.add, color: Colors.white),
+                          child: IconButton(
+                            icon: Icon(Icons.camera_alt,
+                                color: isDarkmode ? Colors.white : Colors.black,
+                                size: 20),
+                            style: ButtonStyle(
+                              //insert border color
+                              shape: WidgetStateProperty.all(
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                  side: BorderSide(
+                                    color: isDarkmode
+                                        ? Colors.white
+                                        : Colors.black,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            onPressed: _pickImage,
+                          ),
                         ),
                       ),
                     ],
@@ -194,6 +214,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 ),
                 const SizedBox(height: 35),
                 CustomSubmitButton(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
                   text: 'Next',
                   onPressed: _submitForm,
                 ),

@@ -189,6 +189,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
         resizeToAvoidBottomInset: false,
         body: SafeArea(
@@ -220,6 +221,8 @@ class _RegisterPageState extends State<RegisterPage> {
               _errorMessage(),
               const SizedBox(height: 20),
               CustomSubmitButton(
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
                 text: 'Register',
                 onPressed: createUserWithEmailAndPassword,
               ),
@@ -228,9 +231,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   onPressed: widget.showLoginPage,
                   child: const Text('Already have an account? Login now',
                       style: TextStyle(
-                          color: Colors.deepPurple,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold))),
+                          fontSize: 18, fontWeight: FontWeight.bold))),
             ],
           ),
         )));

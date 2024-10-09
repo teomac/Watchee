@@ -375,6 +375,8 @@ class _FollowViewState extends State<FollowView> {
 
   Widget _buildUserListTile(
       BuildContext context, MyUser user, bool isFollowing) {
+    final theme = Theme.of(context).colorScheme;
+
     return ListTile(
       leading: CircleAvatar(
         backgroundImage: user.profilePicture?.isNotEmpty == true
@@ -391,8 +393,20 @@ class _FollowViewState extends State<FollowView> {
       subtitle: Text(user.name, style: const TextStyle(fontSize: 12)),
       trailing: ElevatedButton(
         onPressed: () => isFollowing
-            ? _followBloc.add(UnfollowUser(user))
-            : _followBloc.add(RemoveFollower(user)),
+            ? context.read<FollowBloc>().add(UnfollowUser(user))
+            : context.read<FollowBloc>().add(RemoveFollower(user)),
+        style: ElevatedButton.styleFrom(
+          foregroundColor: theme.primary,
+          backgroundColor: theme.surface,
+          side: BorderSide(
+            color: theme.primary,
+            width: 1,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        ),
         child: Text(isFollowing ? 'Unfollow' : 'Remove'),
       ),
       onTap: () async {

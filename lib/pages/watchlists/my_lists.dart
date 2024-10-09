@@ -441,7 +441,11 @@ class _MyListsState extends State<MyLists> {
                   leading: CircleAvatar(
                     backgroundColor: Colors.primaries[
                         watchlist.name.length % Colors.primaries.length],
-                    child: Text(watchlist.name[0].toUpperCase()),
+                    child: Text(
+                      watchlist.name[0].toUpperCase(),
+
+                      //color of the first letter of the watchlist name
+                    ),
                   ),
                   title: Text(watchlist.name),
                   subtitle: Text(
@@ -560,16 +564,14 @@ class _MyListsState extends State<MyLists> {
   void _showWatchlistOptions(BuildContext context, WatchList watchlist,
       bool isOwnWatchlist, Function(WatchList) onDelete) {
     final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
         return Container(
-          decoration: BoxDecoration(
-            color: isDarkMode ? Colors.grey[900] : Colors.white,
-            borderRadius: const BorderRadius.only(
+          decoration: const BoxDecoration(
+            borderRadius: BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),
             ),
@@ -648,7 +650,6 @@ class _MyListsState extends State<MyLists> {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -660,9 +661,7 @@ class _MyListsState extends State<MyLists> {
           ),
           content: Text(
             'Are you sure you want to delete "${watchlist.name}"?',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: isDarkMode ? Colors.white70 : Colors.black87,
-            ),
+            style: const TextStyle(fontSize: 14),
           ),
           actions: [
             TextButton(
@@ -697,7 +696,6 @@ class _MyListsState extends State<MyLists> {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -709,9 +707,7 @@ class _MyListsState extends State<MyLists> {
           ),
           content: Text(
             'Are you sure you want to remove yourself from "${watchlist.name}"?',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: isDarkMode ? Colors.white70 : Colors.black87,
-            ),
+            style: const TextStyle(fontSize: 14),
           ),
           actions: [
             TextButton(
@@ -767,7 +763,6 @@ class _CreateWatchlistDialogState extends State<CreateWatchlistDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Dialog(
       shape: RoundedRectangleBorder(
@@ -800,8 +795,6 @@ class _CreateWatchlistDialogState extends State<CreateWatchlistDialog> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       filled: true,
-                      fillColor:
-                          isDarkMode ? Colors.grey[800] : Colors.grey[200],
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {

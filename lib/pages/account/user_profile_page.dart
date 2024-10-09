@@ -196,6 +196,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
   }
 
   Widget _buildProfileHeader() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       children: [
         CircleAvatar(
@@ -204,11 +205,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
               ? NetworkImage(widget.user.profilePicture!)
               : null,
           child: widget.user.profilePicture == null
-              ? Icon(
+              ? const Icon(
                   Icons.person,
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.white
-                      : Colors.black,
                   size: 60,
                 )
               : null,
@@ -223,23 +221,41 @@ class _UserProfilePageState extends State<UserProfilePage> {
           style: Theme.of(context)
               .textTheme
               .titleMedium
-              ?.copyWith(color: Colors.grey),
+              ?.copyWith(color: colorScheme.secondary),
         ),
       ],
     );
   }
 
   Widget _buildFollowButton() {
+    final theme = Theme.of(context).colorScheme;
+
     if (_currentUser == null || _currentUser!.id == widget.user.id) {
       return const SizedBox.shrink();
     }
     return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        fixedSize: const Size(110, 44),
+        foregroundColor: theme.primary,
+        backgroundColor: theme.surface,
+        side: BorderSide(
+          color: theme.primary,
+          width: 1,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      ),
       onPressed: _toggleFollowStatus,
-      child: Text(isFollowing ? 'Unfollow' : 'Follow'),
+      child: Text(isFollowing ? 'Unfollow' : 'Follow',
+          style: const TextStyle(fontSize: 16)),
     );
   }
 
   Widget _buildFollowedByText() {
+    final colorScheme = Theme.of(context).colorScheme;
+
     String followedByText = 'Followed by ${_followedByUsers.first.name}';
     if (_followedByUsers.length > 1) {
       followedByText += ' and ${_followedByUsers.length - 1} others';
@@ -251,7 +267,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
         style: Theme.of(context)
             .textTheme
             .bodyMedium
-            ?.copyWith(color: Colors.grey),
+            ?.copyWith(color: colorScheme.secondary),
       ),
     );
   }
@@ -379,7 +395,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
                 _showAllReviews = !_showAllReviews;
               });
             },
-            child: Text(_showAllReviews ? 'Show less' : 'Show more'),
+            child: Text(_showAllReviews ? 'Show less' : 'Show more',
+                style: const TextStyle(fontSize: 16)),
           ),
       ],
     );

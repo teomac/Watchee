@@ -126,6 +126,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
         resizeToAvoidBottomInset: false,
         body: SafeArea(
@@ -177,7 +178,10 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 20),
 
                   CustomSubmitButton(
-                      text: 'Sign In', onPressed: signInWithEmailAndPassword),
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary,
+                      text: 'Sign In',
+                      onPressed: signInWithEmailAndPassword),
 
                   const SizedBox(height: 35),
 
@@ -186,19 +190,16 @@ class _LoginPageState extends State<LoginPage> {
                     padding: const EdgeInsets.symmetric(horizontal: 25.0),
                     child: Row(
                       children: [
-                        Expanded(
+                        const Expanded(
                           child: Divider(
                             thickness: 0.5,
-                            color: Colors.grey[400],
                           ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10.0),
                           child: Text(
                             'Or continue with',
                             style: TextStyle(
-                              color:
-                                  Theme.of(context).textTheme.bodyMedium?.color,
                               fontSize: 18,
                             ),
                           ),
@@ -251,7 +252,6 @@ class _LoginPageState extends State<LoginPage> {
                           child: const Text(
                             'Not a member? Register now',
                             style: TextStyle(
-                              color: Colors.deepPurple,
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
                             ),

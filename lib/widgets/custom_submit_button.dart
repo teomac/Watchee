@@ -13,7 +13,7 @@ class CustomSubmitButton extends StatelessWidget {
     super.key,
     required this.text,
     required this.onPressed,
-    this.backgroundColor = Colors.deepPurple,
+    this.backgroundColor = Colors.transparent,
     this.foregroundColor = Colors.white,
     this.width = 280,
     this.height = 60,
@@ -25,6 +25,13 @@ class CustomSubmitButton extends StatelessWidget {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+        side: BorderSide(
+          color: Theme.of(context).colorScheme.primary,
+          width: 1,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
         fixedSize: Size(width!, height!),
         foregroundColor: foregroundColor,
         backgroundColor: backgroundColor,

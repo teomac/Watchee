@@ -356,6 +356,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     rating = rating.isNotEmpty ? '$rating/10' : 'N/A';
 
     return Card(
+      elevation: 4,
+      color: Theme.of(context).colorScheme.surface,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
@@ -383,6 +385,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
 
   Widget _buildOverview(Movie movie) {
     return Card(
+      elevation: 4,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -408,6 +411,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   Widget _buildCast(List<Map<String, dynamic>>? cast) {
     if (cast == null || cast.isEmpty) {
       return const Card(
+        elevation: 4,
         child: Padding(
           padding: EdgeInsets.all(16.0),
           child: Text('No cast information available.'),
@@ -416,6 +420,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     }
 
     return Card(
+      elevation: 4,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -488,6 +493,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     );
 
     return Card(
+      elevation: 4,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -521,6 +527,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   Widget _buildFriendReviews() {
     if (_friendsReviews.isEmpty) {
       return const Card(
+        elevation: 4,
         child: Padding(
           padding: EdgeInsets.all(16.0),
           child: Text('No reviews from followed users available.'),
@@ -532,6 +539,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         _showAllReviews ? _friendsReviews : _friendsReviews.take(2).toList();
 
     return Card(
+      elevation: 4,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -586,6 +594,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
 
     if (isBeforeReleaseDate) {
       return Card(
+        elevation: 4,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -609,6 +618,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     }
 
     return Card(
+      elevation: 4,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

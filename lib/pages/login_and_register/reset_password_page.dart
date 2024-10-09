@@ -50,6 +50,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
         appBar: AppBar(
           title: const Text('Reset Password'),
@@ -74,6 +75,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                 ),
                 const SizedBox(height: 20),
                 CustomSubmitButton(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
                   text: 'Reset Password',
                   onPressed: resetPassword,
                 ),

@@ -151,6 +151,9 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDarkmode = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Manage Account'),
@@ -191,11 +194,23 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
                       right: 0,
                       bottom: 0,
                       child: CircleAvatar(
-                        backgroundColor: Colors.blue,
                         radius: 20,
                         child: IconButton(
-                          icon: const Icon(Icons.camera_alt,
-                              color: Colors.white, size: 20),
+                          icon: Icon(Icons.camera_alt,
+                              color: isDarkmode ? Colors.white : Colors.black,
+                              size: 20),
+                          style: ButtonStyle(
+                            //insert border color
+                            shape: WidgetStateProperty.all(
+                              RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                side: BorderSide(
+                                  color:
+                                      isDarkmode ? Colors.white : Colors.black,
+                                ),
+                              ),
+                            ),
+                          ),
                           onPressed: _pickImage,
                         ),
                       ),
@@ -241,8 +256,23 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
                 ElevatedButton(
                   onPressed: _saveChanges,
                   style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 50)),
-                  child: const Text('Save Changes'),
+                    fixedSize: const Size(240, 44),
+                    foregroundColor: theme.primary,
+                    backgroundColor: theme.surface,
+                    side: BorderSide(
+                      color: theme.primary,
+                      width: 1,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  ),
+                  child: const Text(
+                    'Save Changes',
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
               ],
             ),
