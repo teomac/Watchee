@@ -492,7 +492,7 @@ class UserService {
   Future<bool> signOut() async {
     try {
       logger.d('Starting sign out process');
-      await FMCService.clearFCMToken();
+      await FCMService.clearFCMToken();
       await _auth.signOut();
       logger.d('User signed out and FCM token cleared');
       return true;

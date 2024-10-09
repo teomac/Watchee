@@ -31,12 +31,12 @@ Future<void> main() async {
     // Retrieve FCM Token
     String? token = await messaging.getToken();
     if (token != null) {
-      await FMCService.storeFCMToken(token);
-      await FMCService.storeFCMTokenToFirestore(token);
+      await FCMService.storeFCMToken(token);
+      await FCMService.storeFCMTokenToFirestore(token);
     }
   }
 
-  FMCService.setupTokenRefreshListener();
+  FCMService.setupTokenRefreshListener();
 
   final appLinks = AppLinks();
   final initialUri = await appLinks.getInitialLink();

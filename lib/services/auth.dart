@@ -56,7 +56,7 @@ class Auth {
 
   Future<void> signOut() async {
     try {
-      await FMCService.clearFCMToken();
+      await FCMService.clearFCMToken();
       await _firebaseAuth.signOut();
     } catch (e) {
       logger.e('Error signing out', error: e);
