@@ -6,6 +6,8 @@ import 'package:dima_project/widgets/custom_submit_button.dart';
 import 'package:dima_project/pages/login_and_register/welcome_page.dart';
 import 'package:dima_project/models/user_model.dart';
 import 'package:logger/logger.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:dima_project/services/fcm_service.dart';
 
 class RegisterPage extends StatefulWidget {
   final VoidCallback showLoginPage;
@@ -106,6 +108,19 @@ class _RegisterPageState extends State<RegisterPage> {
             .doc(userCredential.user!.uid)
             .set(newUser.toMap());
         logger.d("User data saved to Firestore");
+
+        FirebaseMessaging messaging = FirebaseMessaging.instance;
+        String? token = await messaging.getToken();
+        if (token != null) {
+          await FCMService.storeFCMToken(token);
+          await FCMService.storeFCMTokenToFirestore(token);
+          logger.d("FCM token saved successfully");
+        } else {
+          logger.w("FCM token is null");
+        }
+
+        FCMService.setupTokenRefreshListener();
+        logger.d("FCM token refresh listener set up");
 
         logger.d("Dismissing loading dialog");
         if (mounted) {
