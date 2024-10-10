@@ -9,10 +9,10 @@ class FCMSettingsService {
   static Future<bool> isPushNotificationsEnabled() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      return prefs.getBool(_pushNotificationsKey) ?? false;
+      return prefs.getBool(_pushNotificationsKey) ?? true;
     } catch (e) {
       _logger.e('Error checking push notification status: $e');
-      return false;
+      return true;
     }
   }
 
