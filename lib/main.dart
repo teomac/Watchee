@@ -1,4 +1,5 @@
 import 'package:dima_project/pages/account/notifications_page.dart';
+import 'package:dima_project/pages/no_internet_page.dart';
 import 'package:dima_project/services/fcm_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -14,11 +15,22 @@ import 'package:logger/logger.dart';
 import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 enum ThemeOptions { light, dark, system }
 
 Future<void> main() async {
+  await initializeApp();
+}
+
+Future<void> initializeApp() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  var connectivityResult = await Connectivity().checkConnectivity();
+  if (connectivityResult == ConnectivityResult.none) {
+    runApp(const NoInternetApp());
+    return;
+  }
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -28,7 +40,6 @@ Future<void> main() async {
   NotificationSettings settings = await messaging.requestPermission();
 
   if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-    // Retrieve FCM Token
     String? token = await messaging.getToken();
     if (token != null) {
       await FCMService.storeFCMToken(token);
@@ -48,7 +59,6 @@ Future<void> main() async {
     ),
   );
 
-  // Handle notification clicks
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
     if (message.data['screen'] == 'notifications') {
       MyUser? currentUser = await UserService().getCurrentUser();
@@ -76,12 +86,44 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   StreamSubscription? _linkSubscription;
   final Logger logger = Logger();
+  late StreamSubscription<ConnectivityResult> _connectivitySubscription;
 
   @override
   void initState() {
     super.initState();
     _handleIncomingLinks();
     _handleInitialUri();
+
+    _connectivitySubscription =
+        Connectivity().onConnectivityChanged.listen(_updateConnectionStatus);
+  }
+
+  void _updateConnectionStatus(ConnectivityResult result) {
+    if (result == ConnectivityResult.none) {
+      _showNoInternetDialog();
+    }
+  }
+
+  void _showNoInternetDialog() {
+    showDialog(
+      context: navigatorKey.currentState!.overlay!.context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('No Internet Connection'),
+          content: const Text(
+              'Please check your internet connection and try again.'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _handleIncomingLinks() {
@@ -103,7 +145,6 @@ class _MyAppState extends State<MyApp> {
   void _handleLink(Uri? uri) {
     if (uri == null) return;
 
-    // Extract parameters from the URI
     final watchlistId = uri.queryParameters['watchlistId'];
     final userId = uri.queryParameters['userId'];
     final invitedBy = uri.queryParameters['invitedBy'];
@@ -123,6 +164,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void dispose() {
     _linkSubscription?.cancel();
+    _connectivitySubscription.cancel();
     super.dispose();
   }
 
@@ -149,12 +191,6 @@ class _MyAppState extends State<MyApp> {
                 colorScheme: darkColorScheme,
                 useMaterial3: true,
                 scaffoldBackgroundColor: darkColorScheme.surface,
-                snackBarTheme: SnackBarThemeData(
-                  backgroundColor: darkColorScheme.surfaceContainerHighest,
-                  contentTextStyle: TextStyle(
-                      color: darkColorScheme.onSurfaceVariant, fontSize: 16),
-                  actionTextColor: darkColorScheme.primary,
-                ),
               ),
               themeMode: themeProvider.themeMode,
               home: const WidgetTree(),
