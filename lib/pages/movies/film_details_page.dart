@@ -478,17 +478,30 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                                 : null,
                           ),
                           const SizedBox(height: 8),
-                          Text(
-                            actor['name'],
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          Container(
+                            constraints: const BoxConstraints(
+                              maxWidth: 120,
+                            ),
+                            child: Text(
+                              actor['name'],
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                            ),
                           ),
-                          Text(
-                            actor['character'],
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontSize: 12, color: Colors.grey),
+                          const SizedBox(height: 4),
+                          Container(
+                            constraints: const BoxConstraints(
+                              maxWidth: 120,
+                            ),
+                            child: Text(
+                              actor['character'] ?? '',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  fontSize: 12, color: Colors.grey),
+                              textAlign: TextAlign.center,
+                            ),
                           ),
                         ],
                       ),
