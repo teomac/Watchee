@@ -17,9 +17,11 @@ class DispatcherState extends State<Dispatcher> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       body: screens[index],
       bottomNavigationBar: NavigationBar(
+        backgroundColor: colorScheme.surface,
         selectedIndex: index,
         onDestinationSelected: (index) => setState(() => this.index = index),
         destinations: const <Widget>[

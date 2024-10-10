@@ -318,8 +318,18 @@ class _FollowViewState extends State<FollowView> {
         children: [
           const TabBar(
             tabs: [
-              Tab(text: 'Following'),
-              Tab(text: 'Followers'),
+              Tab(
+                child: Text(
+                  'Following',
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
+              Tab(
+                child: Text(
+                  'Followers',
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
             ],
           ),
           Expanded(
@@ -396,8 +406,8 @@ class _FollowViewState extends State<FollowView> {
                     : Colors.black)
             : null,
       ),
-      title: Text(user.username, style: const TextStyle(fontSize: 15)),
-      subtitle: Text(user.name, style: const TextStyle(fontSize: 12)),
+      title: Text(user.username, style: const TextStyle(fontSize: 16)),
+      subtitle: Text(user.name, style: const TextStyle(fontSize: 14)),
       trailing: ElevatedButton(
         onPressed: () => isFollowing
             ? context.read<FollowBloc>().add(UnfollowUser(user))

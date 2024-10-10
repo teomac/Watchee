@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:math';
-
 import 'package:dima_project/api/constants.dart';
 import 'package:dima_project/models/movie.dart';
 import 'package:http/http.dart' as http;
+import 'package:dima_project/models/person.dart';
 
 //function used to retrieve trending movies
 Future<List<Movie>> fetchTrendingMovies() async {
@@ -115,7 +115,7 @@ Future<List<Movie>> searchMovie(String query) async {
   List<Movie> movies = [];
   List<Movie> tempMovies = [];
 
-  for (int i = 1; i < 4; i++) {
+  for (int i = 1; i < 3; i++) {
     final response = await http.get(Uri.parse(
         'https://api.themoviedb.org/3/search/movie?api_key=${Constants.apiKey}&query=$query&page=$i'));
 
@@ -217,5 +217,80 @@ Future<List<Movie>> fetchRecommendedMovies(int movieId) async {
     return decodedData.map((movie) => Movie.fromJson(movie)).toList();
   } else {
     throw Exception('Failed to load recommended movies');
+  }
+}
+
+Future<List<Person>> searchPeople(String query) async {
+  List<Person> people = [];
+  List<Person> tempPeople = [];
+
+  for (int i = 1; i < 3; i++) {
+    final response = await http.get(Uri.parse(
+        'https://api.themoviedb.org/3/search/person?api_key=${Constants.apiKey}&query=$query&page=$i'));
+
+    if (response.statusCode == 200) {
+      final decodedData = json.decode(response.body)['results'] as List;
+      tempPeople = decodedData.map((personJson) {
+        // Filter out TV shows from known_for
+        var knownForJson = personJson['known_for'] as List<dynamic>;
+        var movieKnownFor = knownForJson
+            .where((item) => item['media_type'] == 'movie')
+            .toList();
+        personJson['known_for'] = movieKnownFor;
+
+        return Person.fromJson(personJson);
+      }).toList();
+      people += tempPeople;
+    } else {
+      throw Exception('Failed to search people');
+    }
+  }
+  return people;
+}
+
+Future<Person> fetchPersonDetails(int personId) async {
+  final response = await http.get(Uri.parse(
+      'https://api.themoviedb.org/3/person/$personId?api_key=${Constants.apiKey}&append_to_response=movie_credits'));
+
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+
+    // Extract all movies from movie_credits
+    List<Map<String, dynamic>> allMovies = [];
+    if (data['movie_credits'] != null &&
+        data['movie_credits']['cast'] != null) {
+      allMovies =
+          List<Map<String, dynamic>>.from(data['movie_credits']['cast']);
+
+      // Sort movies by release date
+      allMovies.sort((a, b) {
+        final aDate = a['release_date'] ?? '';
+        final bDate = b['release_date'] ?? '';
+        return bDate.compareTo(aDate); // Descending order (newest first)
+      });
+    }
+
+    // Add all movies to the person data
+    data['known_for'] = allMovies;
+
+    return Person.fromJson(data);
+  } else {
+    throw Exception('Failed to load person details');
+  }
+}
+
+Future<List<Movie>> fetchPersonMovies(int personId) async {
+  final response = await http.get(Uri.parse(
+      'https://api.themoviedb.org/3/person/$personId/movie_credits?api_key=${Constants.apiKey}'));
+
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    final List<dynamic> castMovies = data['cast'];
+    return castMovies
+        .where((movie) => movie['poster_path'] != null)
+        .map((movie) => Movie.fromJson(movie))
+        .toList();
+  } else {
+    throw Exception('Failed to load person movies');
   }
 }

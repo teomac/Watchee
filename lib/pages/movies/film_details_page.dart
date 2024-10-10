@@ -13,6 +13,8 @@ import 'package:dima_project/api/constants.dart';
 import 'package:logger/logger.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:dima_project/pages/movies/person_details_page.dart';
+import 'package:dima_project/models/person.dart';
 
 class FilmDetailsPage extends StatefulWidget {
   final Movie movie;
@@ -269,6 +271,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   }
 
   Widget _buildAppBar(Movie movie) {
+    final colorScheme = Theme.of(context).colorScheme;
     return SliverAppBar(
       expandedHeight: 200.0,
       pinned: true,
@@ -281,11 +284,11 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                   return Container(color: Colors.grey);
                 },
               )
-            : Container(color: Colors.grey),
+            : Container(color: colorScheme.surface),
       ),
       leading: Container(
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.5),
+          color: colorScheme.surface.withOpacity(0.2),
           borderRadius: BorderRadius.circular(8),
         ),
         margin: const EdgeInsets.all(8.0),
@@ -365,7 +368,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
           children: [
             const Text(
               'TMDb Rating',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             Row(
               children: [
@@ -440,32 +443,55 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                   final actor = cast[index];
                   return Padding(
                     padding: const EdgeInsets.only(right: 16.0),
-                    child: Column(
-                      children: [
-                        CircleAvatar(
-                          radius: 40,
-                          backgroundImage: actor['profile_path'] != null
-                              ? NetworkImage(
-                                  'https://image.tmdb.org/t/p/w185${actor['profile_path']}')
-                              : null,
-                          child: actor['profile_path'] == null
-                              ? Text(actor['name'][0])
-                              : null,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          actor['name'],
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          actor['character'],
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              const TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                      ],
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PersonDetailsPage(
+                              person: Person(
+                                adult: false,
+                                alsoKnownAs: [],
+                                gender: 0,
+                                id: actor['id'],
+                                knownForDepartment:
+                                    actor['known_for_department'] ?? '',
+                                name: actor['name'] ?? '',
+                                popularity: actor['popularity'] ?? 0.0,
+                                profilePath: actor['profile_path'],
+                                knownFor: [],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      child: Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 40,
+                            backgroundImage: actor['profile_path'] != null
+                                ? NetworkImage(
+                                    'https://image.tmdb.org/t/p/w185${actor['profile_path']}')
+                                : null,
+                            child: actor['profile_path'] == null
+                                ? Text(actor['name'][0])
+                                : null,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            actor['name'],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            actor['character'],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                fontSize: 12, color: Colors.grey),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -602,7 +628,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
             children: [
               const Text(
                 'Add your review',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(
                 height: 8,

@@ -10,8 +10,10 @@ import 'package:dima_project/widgets/trending_slider.dart';
 import 'package:dima_project/models/home_movies_data.dart';
 import 'package:dima_project/services/user_menu_manager.dart';
 import 'package:logger/logger.dart';
-import 'package:dima_project/widgets/movie_search_bar_widget.dart';
+import 'package:dima_project/widgets/universal_search_bar_widget.dart';
 import 'package:dima_project/api/constants.dart';
+import 'package:dima_project/models/person.dart';
+import 'package:dima_project/pages/movies/person_details_page.dart';
 
 class HomeMovies extends StatefulWidget {
   const HomeMovies({super.key});
@@ -19,20 +21,24 @@ class HomeMovies extends StatefulWidget {
   State<HomeMovies> createState() => HomeMoviesState();
 }
 
-class HomeMoviesState extends State<HomeMovies> {
+class HomeMoviesState extends State<HomeMovies>
+    with SingleTickerProviderStateMixin {
   HomeMoviesData _data = HomeMoviesData();
   final Logger logger = Logger();
-  List<Movie> _searchResults = [];
+  List<Movie> _movieResults = [];
+  List<Person> _peopleResults = [];
   bool _isSearchExpanded = false;
   bool _isSearching = false;
   final UserService _userService = UserService();
   MyUser? _currentUser;
   final MovieGenres movieGenres = MovieGenres();
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
     _initializeData();
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   Future<void> _initializeData() async {
@@ -94,10 +100,11 @@ class HomeMoviesState extends State<HomeMovies> {
     }
   }
 
-  void _onSearchResults(List<Movie> results) {
+  void _onSearchResults(List<Movie> results, List<Person> peopleResults) {
     setState(() {
-      _searchResults = results;
-      _isSearching = results.isNotEmpty;
+      _movieResults = results;
+      _peopleResults = peopleResults;
+      _isSearching = results.isNotEmpty || peopleResults.isNotEmpty;
     });
   }
 
@@ -106,7 +113,8 @@ class HomeMoviesState extends State<HomeMovies> {
       _isSearchExpanded = expanded;
       if (!_isSearchExpanded) {
         _isSearching = false;
-        _searchResults.clear();
+        _movieResults.clear();
+        _peopleResults.clear();
       }
     });
   }
@@ -140,7 +148,7 @@ class HomeMoviesState extends State<HomeMovies> {
     return Row(
       children: [
         Expanded(
-          child: MovieSearchBarWidget(
+          child: UniversalSearchBarWidget(
             theme: theme,
             isDarkMode: isDarkMode,
             onExpandChanged: _onSearchExpandChanged,
@@ -156,26 +164,66 @@ class HomeMoviesState extends State<HomeMovies> {
   }
 
   Widget _buildSearchResults() {
-    return ListView.builder(
-      itemCount: _searchResults.length,
-      itemBuilder: (context, index) {
-        final movie = _searchResults[index];
-        return ListTile(
-          leading: _buildMoviePoster(movie),
-          title: Text(movie.title),
-          subtitle: Text(movie.releaseDate ?? 'Release date unknown'),
-          onTap: () {
-            _retrieveAllMovieInfo(movie);
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => FilmDetailsPage(movie: movie),
-              ),
+    return Column(children: [
+      TabBar(
+        controller: _tabController,
+        tabs: const [Tab(text: 'Movies'), Tab(text: 'People')],
+      ),
+      Expanded(
+          child: TabBarView(controller: _tabController, children: [
+        ListView.builder(
+          itemCount: _movieResults.length,
+          itemBuilder: (context, index) {
+            final movie = _movieResults[index];
+            return ListTile(
+              leading: _buildMoviePoster(movie),
+              title: Text(movie.title),
+              subtitle: Text(movie.releaseDate ?? 'Release date unknown'),
+              onTap: () {
+                _retrieveAllMovieInfo(movie);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => FilmDetailsPage(movie: movie),
+                  ),
+                );
+              },
             );
           },
-        );
-      },
-    );
+        ),
+        ListView.builder(
+          itemCount: _peopleResults.length,
+          itemBuilder: (context, index) {
+            final person = _peopleResults[index];
+            return ListTile(
+              leading: person.profilePath != null
+                  ? Image.network(
+                      '${Constants.imagePath}${person.profilePath}',
+                      width: 50,
+                      height: 75,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        logger.w('Failed to load image: ${person.profilePath}',
+                            error: error, stackTrace: stackTrace);
+                        return _buildPlaceholderImage();
+                      },
+                    )
+                  : _buildPlaceholderImage(),
+              title: Text(person.name),
+              subtitle: Text(person.knownForDepartment),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PersonDetailsPage(person: person),
+                  ),
+                );
+              },
+            );
+          },
+        )
+      ]))
+    ]);
   }
 
   Widget _buildMoviePoster(Movie movie) {

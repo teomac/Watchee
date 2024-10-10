@@ -302,7 +302,6 @@ class _MyListsState extends State<MyLists> {
           SliverToBoxAdapter(
             child: Column(
               children: [
-                const SizedBox(height: 4),
                 _buildLikedSection(context, currentUser!.id), // New section
                 _buildSeenSection(context, currentUser!.id),
                 const SizedBox(
