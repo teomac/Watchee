@@ -11,34 +11,75 @@ class Dispatcher extends StatefulWidget {
 }
 
 class DispatcherState extends State<Dispatcher> {
-  int index = 0;
+  int currentPageIndex = 0;
 
-  final screens = [const HomeMovies(), const MyLists(), const FollowView()];
+  final List<Widget> screens = [
+    const HomeMovies(),
+    const MyLists(),
+    const FollowView(),
+  ];
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Scaffold(
-      body: screens[index],
-      bottomNavigationBar: NavigationBar(
-        backgroundColor: colorScheme.surface,
-        selectedIndex: index,
-        onDestinationSelected: (index) => setState(() => this.index = index),
-        destinations: const <Widget>[
-          NavigationDestination(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.subscriptions),
-            label: 'My lists',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.people),
-            label: 'People',
-          ),
-        ],
-      ),
+    final brighterColor = Color.alphaBlend(
+      colorScheme.surfaceTint.withOpacity(0.04),
+      colorScheme.surface,
     );
+    return Scaffold(
+        body: screens[currentPageIndex],
+        bottomNavigationBar: Container(
+          padding:
+              const EdgeInsets.only(bottom: 4), // Add padding at the bottom
+          child: NavigationBar(
+            elevation: 3,
+            height: 76, // Adjusted height
+            backgroundColor: brighterColor,
+            selectedIndex: currentPageIndex,
+            onDestinationSelected: (int index) {
+              setState(() {
+                currentPageIndex = index;
+              });
+            },
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+            destinations: const <Widget>[
+              _CustomNavigationDestination(
+                icon: Icons.home_outlined,
+                selectedIcon: Icons.home,
+                label: 'Home',
+              ),
+              _CustomNavigationDestination(
+                icon: Icons.subscriptions_outlined,
+                selectedIcon: Icons.subscriptions,
+                label: 'My lists',
+              ),
+              _CustomNavigationDestination(
+                icon: Icons.people_outlined,
+                selectedIcon: Icons.people,
+                label: 'People',
+              ),
+            ],
+          ),
+        ));
+  }
+}
+
+class _CustomNavigationDestination extends StatelessWidget {
+  final IconData icon;
+  final IconData selectedIcon;
+  final String label;
+
+  const _CustomNavigationDestination({
+    required this.icon,
+    required this.selectedIcon,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return NavigationDestination(
+        icon: Icon(icon, size: 24), // Increase icon size
+        selectedIcon: Icon(selectedIcon, size: 24), // Increase icon size
+        label: label);
   }
 }

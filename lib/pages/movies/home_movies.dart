@@ -125,10 +125,10 @@ class HomeMoviesState extends State<HomeMovies>
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(12.0),
+          padding: const EdgeInsets.only(top: 12.0, left: 12, right: 12),
           child: Column(
             children: [
               _buildHeader(theme, isDarkMode),
@@ -302,7 +302,7 @@ class HomeMoviesState extends State<HomeMovies>
               : //show a loading indicator while movies are being fetched
               const Center(child: CircularProgressIndicator()),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
       ],
     );
   }

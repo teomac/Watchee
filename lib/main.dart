@@ -186,11 +186,27 @@ class _MyAppState extends State<MyApp> {
                 colorScheme: lightColorScheme,
                 useMaterial3: true,
                 scaffoldBackgroundColor: lightColorScheme.surface,
+                navigationBarTheme: NavigationBarThemeData(
+                    labelTextStyle: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.bold);
+                  }
+                  return const TextStyle(fontSize: 14);
+                })),
               ),
               darkTheme: ThemeData(
                 colorScheme: darkColorScheme,
                 useMaterial3: true,
                 scaffoldBackgroundColor: darkColorScheme.surface,
+                navigationBarTheme: NavigationBarThemeData(
+                    labelTextStyle: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.bold);
+                  }
+                  return const TextStyle(fontSize: 14);
+                })),
               ),
               themeMode: themeProvider.themeMode,
               home: const WidgetTree(),
