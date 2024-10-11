@@ -436,6 +436,13 @@ class _MyListsState extends State<MyLists> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                const SizedBox(height: 20),
+                Text(
+                  isOwnWatchlist
+                      ? 'Press the + button to create your first watchlist'
+                      : 'Followed watchlists will appear here',
+                  style: const TextStyle(fontSize: 16),
+                ),
                 isOwnWatchlist
                     ? Lottie.asset(
                         'lib/assets/lottie_box.json',
@@ -449,13 +456,6 @@ class _MyListsState extends State<MyLists> {
                         height: 200,
                         fit: BoxFit.contain,
                       ),
-                const SizedBox(height: 20),
-                Text(
-                  isOwnWatchlist
-                      ? 'Press the + button to create your first watchlist'
-                      : 'Followed watchlists will appear here',
-                  style: const TextStyle(fontSize: 16),
-                ),
               ],
             ),
           ))
