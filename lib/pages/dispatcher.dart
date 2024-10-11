@@ -27,7 +27,23 @@ class DispatcherState extends State<Dispatcher> {
       colorScheme.surface,
     );
     return Scaffold(
-        body: screens[currentPageIndex],
+        backgroundColor: colorScheme.surface,
+        extendBody:
+            true, // This allows the body to extend behind the navigation bar
+        body: Stack(
+          children: [
+            screens[currentPageIndex],
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                height: MediaQuery.of(context).padding.bottom,
+                color: brighterColor,
+              ),
+            ),
+          ],
+        ),
         bottomNavigationBar: Container(
           padding:
               const EdgeInsets.only(bottom: 4), // Add padding at the bottom

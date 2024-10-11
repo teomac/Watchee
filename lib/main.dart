@@ -16,6 +16,7 @@ import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/services.dart';
 
 enum ThemeOptions { light, dark, system }
 
@@ -25,6 +26,13 @@ Future<void> main() async {
 
 Future<void> initializeApp() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    systemNavigationBarColor: Colors.transparent,
+  ));
+
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   var connectivityResult = await Connectivity().checkConnectivity();
   if (connectivityResult == ConnectivityResult.none) {

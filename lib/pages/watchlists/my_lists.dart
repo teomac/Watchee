@@ -251,29 +251,30 @@ class _MyListsState extends State<MyLists> {
       value: myListsBloc,
       child: BlocBuilder<MyListsBloc, MyListsState>(
         builder: (context, state) {
-          return Scaffold(
-              body: SafeArea(
-                child: Padding(
-                  padding:
-                      const EdgeInsets.only(top: 12.0, left: 12.0, right: 12.0),
-                  child: _buildBody(context, state),
-                ),
-              ),
-              floatingActionButton: SizedBox(
-                  height: 68,
-                  width: 68,
-                  child: FittedBox(
-                    child: FloatingActionButton(
-                      elevation: 4,
+          return SafeArea(
+              child: Scaffold(
+                  body: Padding(
+                    padding: const EdgeInsets.only(
+                        top: 12.0, left: 12.0, right: 12.0),
+                    child: _buildBody(context, state),
+                  ),
+                  floatingActionButtonLocation:
+                      FloatingActionButtonLocation.endFloat,
+                  floatingActionButton: SizedBox(
+                      height: 68,
+                      width: 68,
+                      child: FittedBox(
+                        child: FloatingActionButton(
+                          elevation: 4,
 
-                      //edit rounded corners
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
+                          //edit rounded corners
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16)),
 
-                      onPressed: () => _showCreateWatchlistDialog(context),
-                      child: const Icon(Icons.add, size: 32),
-                    ),
-                  )));
+                          onPressed: () => _showCreateWatchlistDialog(context),
+                          child: const Icon(Icons.add, size: 34),
+                        ),
+                      ))));
         },
       ),
     );

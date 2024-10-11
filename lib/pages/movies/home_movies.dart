@@ -132,7 +132,7 @@ class HomeMoviesState extends State<HomeMovies>
           child: Column(
             children: [
               _buildHeader(theme, isDarkMode),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Expanded(
                 child:
                     _isSearching ? _buildSearchResults() : _buildMovieContent(),

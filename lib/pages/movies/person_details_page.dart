@@ -58,9 +58,9 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-        child: Scaffold(
-      body: _isLoading
+    return Scaffold(
+        body: SafeArea(
+      child: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : CustomScrollView(
               slivers: [

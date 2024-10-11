@@ -30,10 +30,12 @@ class NoInternetPage extends StatelessWidget {
     if (connectivityResult != ConnectivityResult.none) {
       await initializeApp();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('No internet connection. Please try again.')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('No internet connection. Please try again.')),
+        );
+      }
     }
   }
 
