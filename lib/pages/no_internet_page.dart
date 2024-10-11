@@ -3,6 +3,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dima_project/main.dart';
 import 'package:dima_project/theme/theme_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 
 class NoInternetApp extends StatelessWidget {
   const NoInternetApp({super.key});
@@ -11,12 +12,32 @@ class NoInternetApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => ThemeProvider()..loadThemeMode(),
-      child: MaterialApp(
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          useMaterial3: true,
-        ),
-        home: const NoInternetPage(),
+      child: DynamicColorBuilder(
+        builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+          return Consumer<ThemeProvider>(
+            builder: (context, themeProvider, child) {
+              final ColorScheme lightColorScheme = lightDynamic ??
+                  ColorScheme.fromSeed(seedColor: Colors.deepPurple);
+              final ColorScheme darkColorScheme = darkDynamic ??
+                  ColorScheme.fromSeed(
+                      seedColor: Colors.deepPurple,
+                      brightness: Brightness.dark);
+
+              return MaterialApp(
+                theme: ThemeData(
+                  colorScheme: lightColorScheme,
+                  useMaterial3: true,
+                ),
+                darkTheme: ThemeData(
+                  colorScheme: darkColorScheme,
+                  useMaterial3: true,
+                ),
+                themeMode: themeProvider.themeMode,
+                home: const NoInternetPage(),
+              );
+            },
+          );
+        },
       ),
     );
   }
