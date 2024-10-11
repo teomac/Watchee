@@ -264,24 +264,27 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
                   child: Column(
                     children: [
                       Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: Image.network(
-                            '${Constants.imagePath}${movie.posterPath}',
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                color: Colors.grey[900],
-                                child: const Icon(Icons.movie),
-                              );
-                            },
+                        child: AspectRatio(
+                          aspectRatio:
+                              2 / 3, // Standard movie poster aspect ratio
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: movie.posterPath != null
+                                ? Image.network(
+                                    '${Constants.imagePath}${movie.posterPath}',
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return _buildPlaceholderPoster();
+                                    },
+                                  )
+                                : _buildPlaceholderPoster(),
                           ),
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         movie.title,
-                        maxLines: 2,
+                        maxLines: 1,
                         textAlign: TextAlign.center,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontSize: 12),
@@ -293,6 +296,26 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
               },
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholderPoster() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: isDarkMode ? Colors.white : Colors.black,
+          width: 1,
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.movie,
+          size: 40,
+          color: isDarkMode ? Colors.white : Colors.black,
         ),
       ),
     );
