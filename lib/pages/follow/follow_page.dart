@@ -250,28 +250,32 @@ class _FollowViewState extends State<FollowView> {
 
   Widget _buildEmptySearchState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Lottie.asset(
-            'lib/assets/lottie_tumbleweed.json',
-            width: 275,
-            height: 275,
-            fit: BoxFit.contain,
-            repeat: true,
-            reverse: false,
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'No users found',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Try a different search term',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-        ],
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 275,
+              height: 275,
+              child: Lottie.asset(
+                'lib/assets/lottie_tumbleweed.json',
+                fit: BoxFit.contain,
+                repeat: true,
+                reverse: false,
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'No users found',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Try a different search term',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ],
+        ),
       ),
     );
   }
