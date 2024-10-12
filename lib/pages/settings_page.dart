@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:dima_project/theme/theme_provider.dart';
 import 'package:dima_project/services/fcm_settings_service.dart';
 import 'package:logger/logger.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -98,18 +97,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 });
 
                 try {
-                  if (value) {
-                    await FCMSettingsService.setPushNotificationsEnabled(true);
-                    String? token = await FirebaseMessaging.instance.getToken();
-                    if (token != null) {
-                      _logger.i('New FCM Token obtained: $token');
-                    }
-                  } else {
-                    await FirebaseMessaging.instance.deleteToken();
-                    await FCMSettingsService.setPushNotificationsEnabled(false);
-                    _logger.i('FCM Token deleted');
-                  }
-
+                  await FCMSettingsService.setPushNotificationsEnabled(value);
                   _showSuccessSnackBar(value
                       ? 'Push notifications enabled'
                       : 'Push notifications disabled');

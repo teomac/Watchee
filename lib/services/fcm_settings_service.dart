@@ -1,10 +1,14 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:logger/logger.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class FCMSettingsService {
   static const String _pushNotificationsKey = 'push_notifications_enabled';
   static final Logger _logger = Logger();
+  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  static final FirebaseAuth _auth = FirebaseAuth.instance;
 
   static Future<bool> isPushNotificationsEnabled() async {
     try {
@@ -18,6 +22,11 @@ class FCMSettingsService {
 
   static Future<void> setPushNotificationsEnabled(bool enabled) async {
     try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
+
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_pushNotificationsKey, enabled);
 
@@ -28,26 +37,17 @@ class FCMSettingsService {
         String? token = await FirebaseMessaging.instance.getToken();
         if (token != null) {
           _logger.i('New FCM Token obtained: $token');
+          await _firestore.collection('users').doc(user.uid).update({
+            'fcmToken': token,
+          });
         }
-
-        await FirebaseMessaging.instance
-            .setForegroundNotificationPresentationOptions(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
-        _logger.i('Foreground notification options set');
       } else {
         await FirebaseMessaging.instance.deleteToken();
         _logger.i('FCM Token deleted');
 
-        await FirebaseMessaging.instance
-            .setForegroundNotificationPresentationOptions(
-          alert: false,
-          badge: false,
-          sound: false,
-        );
-        _logger.i('Foreground notification options disabled');
+        await _firestore.collection('users').doc(user.uid).update({
+          'fcmToken': FieldValue.delete(),
+        });
       }
     } catch (e) {
       _logger.e('Error setting push notification status: $e');
