@@ -546,6 +546,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
             YoutubePlayerScaffold(
               controller: _youtubePlayerController!,
               aspectRatio: 16 / 9,
+              enableFullScreenOnVerticalDrag: false,
               builder: (context, player) => player,
             ),
             const SizedBox(height: 8),
