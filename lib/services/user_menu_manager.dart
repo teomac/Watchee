@@ -1,6 +1,7 @@
 import 'package:dima_project/pages/account/notifications_page.dart';
 import 'package:dima_project/pages/account/user_profile_page.dart';
 import 'package:dima_project/services/auth.dart';
+import 'package:dima_project/services/notifications_service.dart';
 import 'package:flutter/material.dart';
 import 'package:dima_project/models/user_model.dart';
 import 'package:dima_project/services/user_service.dart';
@@ -24,7 +25,7 @@ class _UserInfoState extends State<UserInfo> {
   final Logger logger = Logger();
   final UserService _userService = UserService();
   final Auth _auth = Auth();
-  int _unreadCount = 0;
+  final NotificationsService _notificationsService = NotificationsService();
 
   @override
   void initState() {
@@ -37,7 +38,7 @@ class _UserInfoState extends State<UserInfo> {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (mounted) {
         setState(() {
-          _unreadCount++;
+          _notificationsService.incrementUnreadCount();
         });
       }
     });
@@ -123,11 +124,11 @@ class _UserInfoState extends State<UserInfo> {
                                 user: _currentUser!,
                               ))).then((_) {
                     setState(() {
-                      _unreadCount = 0;
+                      _notificationsService.resetUnreadCount();
                     });
                   });
                 },
-                unreadCount: _unreadCount,
+                unreadCount: _notificationsService.unreadCount,
               ),
             );
           },
@@ -210,7 +211,7 @@ class _UserInfoState extends State<UserInfo> {
                         color: isDarkMode ? Colors.white : Colors.black,
                       ),
               ),
-              if (_unreadCount > 0)
+              if (_notificationsService.unreadCount > 0)
                 Positioned(
                   right: 0,
                   top: 0,
@@ -226,7 +227,7 @@ class _UserInfoState extends State<UserInfo> {
                     ),
                     child: Center(
                       child: Text(
-                        '$_unreadCount',
+                        '${_notificationsService.unreadCount}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,
