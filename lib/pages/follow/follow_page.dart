@@ -29,8 +29,6 @@ class RemoveFollower extends FollowEvent {
   RemoveFollower(this.user);
 }
 
-class SearchPerformedWithNoResults extends FollowState {}
-
 // States
 abstract class FollowState {}
 
@@ -53,6 +51,8 @@ class SearchResultsLoaded extends FollowState {
   final List<MyUser> users;
   SearchResultsLoaded(this.users);
 }
+
+class SearchPerformedWithNoResults extends FollowState {}
 
 // BLoC
 class FollowBloc extends Bloc<FollowEvent, FollowState> {
@@ -164,13 +164,20 @@ class _FollowViewState extends State<FollowView> {
     if (isLoadingNecessary) {
       _followBloc.add(LoadFollowData());
     }
-    isLoadingNecessary = true;
   }
 
   @override
   void dispose() {
     _followBloc.close();
     super.dispose();
+  }
+
+  void _reloadFollowData() {
+    setState(() {
+      isSearchExpanded = false;
+      isLoadingNecessary = true;
+    });
+    _followBloc.add(LoadFollowData());
   }
 
   @override
@@ -214,13 +221,14 @@ class _FollowViewState extends State<FollowView> {
                 }
               },
               onExpandChanged: (expanded) {
-                isLoadingNecessary = false;
-                if (_followBloc.state is SearchResultsLoaded) {
-                  isLoadingNecessary = true;
+                if (!expanded) {
+                  _reloadFollowData();
+                } else {
+                  setState(() {
+                    isSearchExpanded = expanded;
+                    isLoadingNecessary = false;
+                  });
                 }
-                setState(() {
-                  isSearchExpanded = expanded;
-                });
               },
             ),
           ),
@@ -242,6 +250,8 @@ class _FollowViewState extends State<FollowView> {
           return _buildSearchResultsList(context, state.users);
         } else if (state is FollowError) {
           return Center(child: Text('Error: ${state.message}'));
+        } else if (state is FollowLoading) {
+          return const Center(child: CircularProgressIndicator());
         }
         return const Center(child: Text(''));
       },
@@ -313,27 +323,14 @@ class _FollowViewState extends State<FollowView> {
   }
 
   Widget _buildFollowTabs() {
-    if (_followBloc.state is SearchResultsLoaded) {
-      _followBloc.add(LoadFollowData());
-    }
     return DefaultTabController(
       length: 2,
       child: Column(
         children: [
           const TabBar(
             tabs: [
-              Tab(
-                child: Text(
-                  'Following',
-                  style: TextStyle(fontSize: 16),
-                ),
-              ),
-              Tab(
-                child: Text(
-                  'Followers',
-                  style: TextStyle(fontSize: 16),
-                ),
-              ),
+              Tab(child: Text('Following', style: TextStyle(fontSize: 16))),
+              Tab(child: Text('Followers', style: TextStyle(fontSize: 16))),
             ],
           ),
           Expanded(
@@ -435,10 +432,8 @@ class _FollowViewState extends State<FollowView> {
           context,
           MaterialPageRoute(builder: (context) => UserProfilePage(user: user)),
         );
-        if (result == true || result == null) {
-          setState(() {
-            isLoadingNecessary = true;
-          });
+        if (result == true) {
+          _reloadFollowData();
         }
       },
     );
