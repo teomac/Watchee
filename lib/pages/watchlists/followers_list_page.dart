@@ -1,7 +1,7 @@
 import 'package:dima_project/models/watchlist.dart';
 import 'package:flutter/material.dart';
 import 'package:dima_project/services/user_service.dart';
-import 'package:dima_project/models/user_model.dart';
+import 'package:dima_project/models/user.dart';
 
 class FollowersListPage extends StatefulWidget {
   final WatchList watchlist;

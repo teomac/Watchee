@@ -1,6 +1,6 @@
 import 'package:dima_project/models/genres.dart';
 import 'package:dima_project/models/movie.dart';
-import 'package:dima_project/models/user_model.dart';
+import 'package:dima_project/models/user.dart';
 import 'package:dima_project/pages/movies/film_details_page.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:flutter/material.dart';

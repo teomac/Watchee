@@ -4,7 +4,7 @@ import 'package:dima_project/models/watchlist.dart';
 import 'package:dima_project/services/watchlist_service.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:logger/logger.dart';
-import 'package:dima_project/models/user_model.dart'; // Add this line to import MyUser class
+import 'package:dima_project/models/user.dart'; // Add this line to import MyUser class
 import 'package:dima_project/pages/watchlists/manage_watchlist_page.dart';
 import 'dart:async';
 import 'package:dima_project/services/user_menu_manager.dart';

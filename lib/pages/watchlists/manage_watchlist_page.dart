@@ -9,7 +9,7 @@ import 'package:dima_project/api/tmdb_api.dart';
 import 'package:dima_project/pages/movies/film_details_page.dart';
 import 'package:dima_project/pages/watchlists/search_page.dart';
 import 'package:dima_project/pages/account/user_profile_page.dart';
-import 'package:dima_project/models/user_model.dart';
+import 'package:dima_project/models/user.dart';
 import 'package:dima_project/pages/watchlists/followers_list_page.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:dima_project/pages/watchlists/invite_collaborators_page.dart';

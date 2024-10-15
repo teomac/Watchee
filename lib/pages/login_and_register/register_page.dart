@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dima_project/widgets/my_textfield.dart';
 import 'package:dima_project/widgets/custom_submit_button.dart';
 import 'package:dima_project/pages/login_and_register/welcome_page.dart';
-import 'package:dima_project/models/user_model.dart';
+import 'package:dima_project/models/user.dart';
 import 'package:logger/logger.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:dima_project/services/fcm_service.dart';

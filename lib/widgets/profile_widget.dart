@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:dima_project/models/user_model.dart';
+import 'package:dima_project/models/user.dart';
 
 class ProfileMenu extends StatelessWidget {
   final MyUser user;

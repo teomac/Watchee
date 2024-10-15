@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:dima_project/models/user_model.dart';
+import 'package:dima_project/models/user.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:dima_project/services/user_menu_manager.dart';
 import 'package:rxdart/rxdart.dart';

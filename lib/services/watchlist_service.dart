@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:dima_project/models/user_model.dart';
+import 'package:dima_project/models/user.dart';
 import 'package:dima_project/models/watchlist.dart';
 import 'package:logger/logger.dart';
 import 'package:dima_project/services/user_service.dart';

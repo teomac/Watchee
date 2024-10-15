@@ -1,4 +1,4 @@
-import 'package:dima_project/models/user_model.dart';
+import 'package:dima_project/models/user.dart';
 import 'package:dima_project/pages/account/user_profile_page.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:dima_project/services/watchlist_service.dart';

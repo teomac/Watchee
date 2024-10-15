@@ -1,7 +1,7 @@
 import 'package:dima_project/models/movie_review.dart';
 import 'package:dima_project/pages/account/edit_reviews_page.dart';
 import 'package:flutter/material.dart';
-import 'package:dima_project/models/user_model.dart';
+import 'package:dima_project/models/user.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:dima_project/services/watchlist_service.dart';
 import 'package:dima_project/models/watchlist.dart';

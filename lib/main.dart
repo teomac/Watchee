@@ -12,7 +12,7 @@ import 'package:app_links/app_links.dart';
 import 'package:dima_project/pages/watchlists/manage_watchlist_page.dart';
 import 'dart:async';
 import 'package:logger/logger.dart';
-import 'package:dima_project/models/user_model.dart';
+import 'package:dima_project/models/user.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
