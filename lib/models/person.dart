@@ -1,4 +1,5 @@
 import 'package:dima_project/models/movie.dart';
+import 'package:flutter/foundation.dart';
 
 class Person {
   final bool adult;
@@ -91,36 +92,36 @@ class Person {
 
     return other is Person &&
         other.adult == adult &&
-        other.gender == gender &&
-        other.id == id &&
-        other.knownForDepartment == knownForDepartment &&
-        other.name == name &&
-        other.alsoKnownAs == alsoKnownAs &&
+        listEquals(other.alsoKnownAs, alsoKnownAs) &&
         other.biography == biography &&
         other.birthday == birthday &&
         other.deathday == deathday &&
+        other.gender == gender &&
         other.homepage == homepage &&
+        other.id == id &&
+        other.knownForDepartment == knownForDepartment &&
+        other.name == name &&
         other.placeOfBirth == placeOfBirth &&
-        other.profilePath == profilePath &&
         other.popularity == popularity &&
-        other.knownFor == knownFor;
+        other.profilePath == profilePath &&
+        listEquals(other.knownFor, knownFor);
   }
 
   @override
   int get hashCode {
     return adult.hashCode ^
-        gender.hashCode ^
-        id.hashCode ^
-        knownForDepartment.hashCode ^
-        name.hashCode ^
         alsoKnownAs.hashCode ^
         biography.hashCode ^
         birthday.hashCode ^
         deathday.hashCode ^
+        gender.hashCode ^
         homepage.hashCode ^
+        id.hashCode ^
+        knownForDepartment.hashCode ^
+        name.hashCode ^
         placeOfBirth.hashCode ^
-        profilePath.hashCode ^
         popularity.hashCode ^
+        profilePath.hashCode ^
         knownFor.hashCode;
   }
 }

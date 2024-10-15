@@ -6,7 +6,8 @@ import 'package:http/http.dart' as http;
 import 'package:dima_project/models/person.dart';
 
 //function used to retrieve trending movies
-Future<List<Movie>> fetchTrendingMovies() async {
+Future<List<Movie>> fetchTrendingMovies([http.Client? client]) async {
+  client ??= http.Client();
   final response = await http.get(Uri.parse(Constants.trendingMovie));
   if (response.statusCode == 200) {
     // If the call to the server was successful, parse the JSON
@@ -14,7 +15,7 @@ Future<List<Movie>> fetchTrendingMovies() async {
     return decodedData.map((movie) => Movie.fromJson(movie)).toList();
   } else {
     // If that call was not successful, throw an error.
-    throw Exception('Failed to load movies');
+    throw Exception('Failed to load trending movies');
   }
 }
 
@@ -27,7 +28,7 @@ Future<List<Movie>> fetchNowPlayingMovies() async {
     return decodedData.map((movie) => Movie.fromJson(movie)).toList();
   } else {
     // If that call was not successful, throw an error.
-    throw Exception('Failed to load movies');
+    throw Exception('Failed to load now playing movies');
   }
 }
 
@@ -40,7 +41,7 @@ Future<List<Movie>> fetchTopRatedMovies() async {
     return decodedData.map((movie) => Movie.fromJson(movie)).toList();
   } else {
     // If that call was not successful, throw an error.
-    throw Exception('Failed to load movies');
+    throw Exception('Failed to load top rated movies');
   }
 }
 
@@ -53,7 +54,7 @@ Future<List<Movie>> fetchUpcomingMovies() async {
     return decodedData.map((movie) => Movie.fromJson(movie)).toList();
   } else {
     // If that call was not successful, throw an error.
-    throw Exception('Failed to load movies');
+    throw Exception('Failed to load upcoming movies');
   }
 }
 

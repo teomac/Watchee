@@ -51,6 +51,8 @@ dependencies:
   intl: ^0.19.0
   image_picker: ^1.1.2
 
+  carousel_slider: ^5.0.0
+
   #share
   share_plus: ^10.0.2
   app_links: ^6.3.2
@@ -80,7 +82,8 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  carousel_slider: ^5.0.0
+  mockito: ^5.4.0
+  build_runner: ^2.4.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
