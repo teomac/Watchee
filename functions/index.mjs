@@ -5,8 +5,6 @@ import { initializeApp } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
 import axios from 'axios';
-import fs from 'fs';
-import path from 'path';
 
 initializeApp();
 
@@ -208,11 +206,9 @@ export const getSharedWatchlist = onRequest(async (request, response) => {
   }
 });
 
-const keyFilePath = path.join(__dirname, 'key.json');
-const apiKeyData = JSON.parse(fs.readFileSync(keyFilePath, 'utf-8'));
-const apiKey = apiKeyData.apiKey;
-
 async function fetchMoviesReleasingTomorrow() {
+  const apiKey = functions.config().themoviedb.api_key;
+
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const releaseDate = tomorrow.toISOString().split('T')[0];
