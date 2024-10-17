@@ -17,7 +17,7 @@ class MoviesSlider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 175,
+      height: 185,
       width: double.infinity,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
@@ -40,8 +40,8 @@ class MoviesSlider extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: SizedBox(
-                  height: 175,
-                  width: 110,
+                  height: 185,
+                  width: 115,
                   child: _buildMoviePoster(movie),
                 ),
               ),

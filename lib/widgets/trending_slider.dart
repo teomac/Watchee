@@ -21,7 +21,7 @@ class TrendingSlider extends StatelessWidget {
       child: CarouselSlider.builder(
         itemCount: trendingMovies.length,
         options: CarouselOptions(
-          height: 175,
+          height: 185,
           autoPlay: true,
           viewportFraction: 0.33,
           enlargeCenterPage: true,
@@ -43,12 +43,20 @@ class TrendingSlider extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(6),
               child: SizedBox(
-                height: 175,
-                width: 110,
+                height: 185,
+                width: 115,
                 child: Image.network(
                   filterQuality: FilterQuality.high,
                   fit: BoxFit.cover,
                   '${Constants.imagePath}${movie.posterPath}',
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Center(
+                      child: Icon(
+                        Icons.error,
+                        color: Colors.red,
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
