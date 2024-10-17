@@ -311,12 +311,11 @@ class _UserProfilePageState extends State<UserProfilePage> {
       crossAxisAlignment:
           isTablet ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: [
-        Center(
-            child: Text(
+        Text(
           'Public Watchlists',
           style: Theme.of(context).textTheme.titleLarge,
           textAlign: isTablet ? TextAlign.center : TextAlign.start,
-        )),
+        ),
         const SizedBox(height: 8),
         _isLoadingWatchlists
             ? const Center(child: CircularProgressIndicator())
@@ -363,13 +362,33 @@ class _UserProfilePageState extends State<UserProfilePage> {
           isTablet ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: [
         Center(
-          child: Text(
-            'Reviews',
-            style: Theme.of(context).textTheme.titleLarge,
-            textAlign: isTablet ? TextAlign.center : TextAlign.start,
-          ),
-        ),
-        if (_currentUser != null &&
+            child: !isTablet
+                ? Row(
+                    children: [
+                      Text(
+                        'Reviews',
+                        style: Theme.of(context).textTheme.titleLarge,
+                        textAlign: TextAlign.start,
+                      ),
+                      if (_currentUser != null &&
+                          _currentUser!.id == widget.user.id &&
+                          _userReviews.isNotEmpty)
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          onPressed: _openEditReviewsPage,
+                          child: const Icon(Icons.edit, size: 22),
+                        ),
+                    ],
+                  )
+                : Text(
+                    'Reviews',
+                    style: Theme.of(context).textTheme.titleLarge,
+                    textAlign: TextAlign.center,
+                  )),
+        if (isTablet &&
+            _currentUser != null &&
             _currentUser!.id == widget.user.id &&
             _userReviews.isNotEmpty)
           TextButton(
