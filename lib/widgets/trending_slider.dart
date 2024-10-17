@@ -19,11 +19,11 @@ class TrendingSlider extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: CarouselSlider.builder(
-        itemCount: trendingMovies.length > 10 ? 10 : trendingMovies.length,
+        itemCount: trendingMovies.length,
         options: CarouselOptions(
           height: 175,
           autoPlay: true,
-          viewportFraction: 0.35,
+          viewportFraction: 0.33,
           enlargeCenterPage: true,
           pageSnapping: true,
           autoPlayCurve: Curves.fastOutSlowIn,
@@ -41,7 +41,7 @@ class TrendingSlider extends StatelessWidget {
               );
             },
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(6),
               child: SizedBox(
                 height: 175,
                 width: 110,

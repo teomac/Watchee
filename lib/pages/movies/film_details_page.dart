@@ -5,6 +5,7 @@ import 'package:dima_project/models/watchlist.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:dima_project/services/watchlist_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dima_project/models/movie.dart';
 import 'package:intl/intl.dart';
@@ -528,6 +529,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         mute: false,
         showControls: true,
         showFullscreenButton: false,
+        //pointerEvents: PointerEvents.none,
       ),
     );
 
@@ -547,6 +549,19 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
               controller: _youtubePlayerController!,
               aspectRatio: 16 / 9,
               enableFullScreenOnVerticalDrag: false,
+              autoFullScreen: false,
+              //gestureRecognizers: const {},
+              fullscreenOrientations: const [
+                DeviceOrientation.portraitDown,
+                DeviceOrientation.portraitUp
+              ],
+              defaultOrientations:
+                  MediaQuery.of(context).size.shortestSide < 500
+                      ? const [
+                          DeviceOrientation.portraitDown,
+                          DeviceOrientation.portraitUp
+                        ]
+                      : DeviceOrientation.values,
               builder: (context, player) => player,
             ),
             const SizedBox(height: 8),

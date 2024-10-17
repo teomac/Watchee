@@ -72,7 +72,7 @@ class DispatcherState extends State<Dispatcher> {
               _CustomNavigationDestination(
                 icon: Icons.people_outlined,
                 selectedIcon: Icons.people,
-                label: 'People',
+                label: 'Users',
               ),
             ],
           ),

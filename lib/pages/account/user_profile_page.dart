@@ -155,6 +155,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    bool isTablet = MediaQuery.of(context).size.shortestSide >= 500;
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (bool didPop, Object? result) {
@@ -174,21 +176,55 @@ class _UserProfilePageState extends State<UserProfilePage> {
             : SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      _buildProfileHeader(),
-                      const SizedBox(height: 14),
-                      _buildFollowButton(),
-                      if (_followedByUsers.isNotEmpty) _buildFollowedByText(),
-                      const SizedBox(height: 32),
-                      _buildPublicWatchlists(),
-                      const SizedBox(height: 32),
-                      _buildLatestReviews(),
-                    ],
-                  ),
+                  child: !isTablet
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            _buildProfileHeader(),
+                            const SizedBox(height: 14),
+                            _buildFollowButton(),
+                            if (_followedByUsers.isNotEmpty)
+                              _buildFollowedByText(),
+                            const SizedBox(height: 32),
+                            _buildPublicWatchlists(),
+                            const SizedBox(height: 32),
+                            _buildLatestReviews(),
+                          ],
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            _buildProfileHeader(),
+                            const SizedBox(height: 14),
+                            _buildFollowButton(),
+                            if (_followedByUsers.isNotEmpty)
+                              _buildFollowedByText(),
+                            const SizedBox(height: 32),
+                            _buildTabletLayout(),
+                          ],
+                        ),
                 ),
               ),
+      ),
+    );
+  }
+
+  Widget _buildTabletLayout() {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _buildPublicWatchlists(isTablet: true),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildLatestReviews(isTablet: true),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -270,19 +306,25 @@ class _UserProfilePageState extends State<UserProfilePage> {
     );
   }
 
-  Widget _buildPublicWatchlists() {
+  Widget _buildPublicWatchlists({bool isTablet = false}) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment:
+          isTablet ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: [
-        Text(
+        Center(
+            child: Text(
           'Public Watchlists',
           style: Theme.of(context).textTheme.titleLarge,
-        ),
+          textAlign: isTablet ? TextAlign.center : TextAlign.start,
+        )),
         const SizedBox(height: 8),
         _isLoadingWatchlists
             ? const Center(child: CircularProgressIndicator())
             : _publicWatchlists.isEmpty
-                ? const Center(child: Text('No public watchlists available.'))
+                ? const Center(
+                    child: Padding(
+                        padding: EdgeInsets.only(top: 16.0),
+                        child: Text('No public watchlists available.')))
                 : ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -315,26 +357,28 @@ class _UserProfilePageState extends State<UserProfilePage> {
     );
   }
 
-  Widget _buildLatestReviews() {
+  Widget _buildLatestReviews({bool isTablet = false}) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment:
+          isTablet ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Reviews',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            if (_currentUser != null &&
-                _currentUser!.id == widget.user.id &&
-                _userReviews.isNotEmpty)
-              TextButton(
-                onPressed: _openEditReviewsPage,
-                child: const Icon(Icons.edit),
-              ),
-          ],
+        Center(
+          child: Text(
+            'Reviews',
+            style: Theme.of(context).textTheme.titleLarge,
+            textAlign: isTablet ? TextAlign.center : TextAlign.start,
+          ),
         ),
+        if (_currentUser != null &&
+            _currentUser!.id == widget.user.id &&
+            _userReviews.isNotEmpty)
+          TextButton(
+            style: TextButton.styleFrom(
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            onPressed: _openEditReviewsPage,
+            child: const Icon(Icons.edit, size: 22),
+          ),
         const SizedBox(height: 8),
         if (_userReviews.isEmpty)
           const Center(
@@ -349,7 +393,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
             physics: const NeverScrollableScrollPhysics(),
             itemCount: _showAllReviews
                 ? _userReviews.length
-                : (_userReviews.length <= 2 ? _userReviews.length : 2),
+                : (_userReviews.length <= 3 ? _userReviews.length : 3),
             itemBuilder: (context, index) {
               final review = _userReviews[index];
               return Card(
@@ -359,11 +403,11 @@ class _UserProfilePageState extends State<UserProfilePage> {
                   title: Text(
                     review.title,
                     style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
+                        fontSize: 17, fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(
                     review.text,
-                    style: const TextStyle(fontSize: 16),
+                    style: const TextStyle(fontSize: 15),
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -387,15 +431,18 @@ class _UserProfilePageState extends State<UserProfilePage> {
             },
           ),
         if (_userReviews.length > 2)
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _showAllReviews = !_showAllReviews;
-              });
-            },
-            child: Text(_showAllReviews ? 'Show less' : 'Show more',
-                style: const TextStyle(fontSize: 16)),
-          ),
+          Align(
+            alignment: isTablet ? Alignment.center : Alignment.centerLeft,
+            child: TextButton(
+              onPressed: () {
+                setState(() {
+                  _showAllReviews = !_showAllReviews;
+                });
+              },
+              child: Text(_showAllReviews ? 'Show less' : 'Show more',
+                  style: const TextStyle(fontSize: 16)),
+            ),
+          )
       ],
     );
   }
