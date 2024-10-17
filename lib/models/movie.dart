@@ -58,4 +58,27 @@ class Movie {
       'trailer': trailer,
     };
   }
+
+  @override
+  //override equals operator
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is Movie && other.id == id;
+  }
+
+  @override
+  //override hashcode
+  int get hashCode {
+    return id.hashCode ^
+        title.hashCode ^
+        overview.hashCode ^
+        posterPath.hashCode ^
+        backdropPath.hashCode ^
+        voteAverage.hashCode ^
+        releaseDate.hashCode ^
+        genres.hashCode ^
+        cast.hashCode ^
+        trailer.hashCode;
+  }
 }
