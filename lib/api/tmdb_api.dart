@@ -4,6 +4,7 @@ import 'package:dima_project/api/constants.dart';
 import 'package:dima_project/models/movie.dart';
 import 'package:http/http.dart' as http;
 import 'package:dima_project/models/person.dart';
+import 'key.dart';
 
 //function used to retrieve trending movies
 Future<List<Movie>> fetchTrendingMovies([http.Client? client]) async {
@@ -60,8 +61,8 @@ Future<List<Movie>> fetchUpcomingMovies() async {
 
 // function used to retrieve the movie details
 Future<Movie> retrieveFilmInfo(int movieId) async {
-  final response = await http.get(Uri.parse(
-      '${Constants.movieBaseUrl}/$movieId?api_key=${Constants.apiKey}'));
+  final response = await http.get(
+      Uri.parse('${Constants.movieBaseUrl}/$movieId?api_key=${Key.apiKey}'));
 
   if (response.statusCode == 200) {
     return Movie.fromJson(json.decode(response.body));
@@ -73,7 +74,7 @@ Future<Movie> retrieveFilmInfo(int movieId) async {
 // function used to retrieve the cast of a movie
 Future<List<Map<String, dynamic>>> retrieveCast(int movieId) async {
   final response = await http.get(Uri.parse(
-      '${Constants.movieBaseUrl}/$movieId/credits?api_key=${Constants.apiKey}'));
+      '${Constants.movieBaseUrl}/$movieId/credits?api_key=${Key.apiKey}'));
 
   if (response.statusCode == 200) {
     final decodedData = json.decode(response.body)['cast'] as List;
@@ -93,7 +94,7 @@ Future<List<Map<String, dynamic>>> retrieveCast(int movieId) async {
 // function used to retrieve the trailer of a movie
 Future<String> retrieveTrailer(int movieId) async {
   final response = await http.get(Uri.parse(
-      '${Constants.movieBaseUrl}/$movieId/videos?api_key=${Constants.apiKey}'));
+      '${Constants.movieBaseUrl}/$movieId/videos?api_key=${Key.apiKey}'));
 
   if (response.statusCode == 200) {
     final decodedData = json.decode(response.body)['results'] as List;
@@ -118,7 +119,7 @@ Future<List<Movie>> searchMovie(String query) async {
 
   for (int i = 1; i < 3; i++) {
     final response = await http.get(Uri.parse(
-        'https://api.themoviedb.org/3/search/movie?api_key=${Constants.apiKey}&query=$query&page=$i'));
+        'https://api.themoviedb.org/3/search/movie?api_key=${Key.apiKey}&query=$query&page=$i'));
 
     if (response.statusCode == 200) {
       final decodedData = json.decode(response.body)['results'] as List;
@@ -135,7 +136,7 @@ Future<List<Movie>> searchMovie(String query) async {
 // Function used to retrieve movies by release date
 Future<List<Movie>> fetchMoviesByReleaseDate(String releaseDate) async {
   final response = await http.get(Uri.parse(
-      'https://api.themoviedb.org/3/discover/movie?api_key=${Constants.apiKey}&primary_release_date.gte=$releaseDate&primary_release_date.lte=$releaseDate'));
+      'https://api.themoviedb.org/3/discover/movie?api_key=${Key.apiKey}&primary_release_date.gte=$releaseDate&primary_release_date.lte=$releaseDate'));
 
   if (response.statusCode == 200) {
     final decodedData = json.decode(response.body)['results'] as List;
@@ -149,7 +150,7 @@ Future<List<Movie>> fetchMoviesByReleaseDate(String releaseDate) async {
 Future<Map<String, List<Map<String, dynamic>>>> fetchAllProviders(
     int movieId) async {
   final response = await http.get(Uri.parse(
-      '${Constants.movieBaseUrl}/$movieId/watch/providers?api_key=${Constants.apiKey}'));
+      '${Constants.movieBaseUrl}/$movieId/watch/providers?api_key=${Key.apiKey}'));
 
   if (response.statusCode == 200) {
     final decodedData =
@@ -183,7 +184,7 @@ Future<List<Movie>> fetchMoviesByGenres(List<int> genreIds) async {
 
   for (int genreId in genreIds) {
     final response = await http.get(Uri.parse(
-        'https://api.themoviedb.org/3/discover/movie?api_key=${Constants.apiKey}&with_genres=$genreId'));
+        'https://api.themoviedb.org/3/discover/movie?api_key=${Key.apiKey}&with_genres=$genreId'));
 
     if (response.statusCode == 200) {
       final decodedData = json.decode(response.body)['results'] as List;
@@ -211,7 +212,7 @@ Future<List<Movie>> fetchMoviesByGenres(List<int> genreIds) async {
 // function to retrieve the recommended movies based on a specific movie
 Future<List<Movie>> fetchRecommendedMovies(int movieId) async {
   final response = await http.get(Uri.parse(
-      '${Constants.movieBaseUrl}/$movieId/recommendations?api_key=${Constants.apiKey}'));
+      '${Constants.movieBaseUrl}/$movieId/recommendations?api_key=${Key.apiKey}'));
 
   if (response.statusCode == 200) {
     final decodedData = json.decode(response.body)['results'] as List;
@@ -227,7 +228,7 @@ Future<List<Person>> searchPeople(String query) async {
 
   for (int i = 1; i < 3; i++) {
     final response = await http.get(Uri.parse(
-        'https://api.themoviedb.org/3/search/person?api_key=${Constants.apiKey}&query=$query&page=$i'));
+        'https://api.themoviedb.org/3/search/person?api_key=${Key.apiKey}&query=$query&page=$i'));
 
     if (response.statusCode == 200) {
       final decodedData = json.decode(response.body)['results'] as List;
@@ -251,7 +252,7 @@ Future<List<Person>> searchPeople(String query) async {
 
 Future<Person> fetchPersonDetails(int personId) async {
   final response = await http.get(Uri.parse(
-      'https://api.themoviedb.org/3/person/$personId?api_key=${Constants.apiKey}&append_to_response=movie_credits'));
+      'https://api.themoviedb.org/3/person/$personId?api_key=${Key.apiKey}&append_to_response=movie_credits'));
 
   if (response.statusCode == 200) {
     final data = json.decode(response.body);
@@ -282,7 +283,7 @@ Future<Person> fetchPersonDetails(int personId) async {
 
 Future<List<Movie>> fetchPersonMovies(int personId) async {
   final response = await http.get(Uri.parse(
-      'https://api.themoviedb.org/3/person/$personId/movie_credits?api_key=${Constants.apiKey}'));
+      'https://api.themoviedb.org/3/person/$personId/movie_credits?api_key=${Key.apiKey}'));
 
   if (response.statusCode == 200) {
     final data = json.decode(response.body);
