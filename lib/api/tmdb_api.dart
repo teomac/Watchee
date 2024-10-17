@@ -4,59 +4,119 @@ import 'package:dima_project/api/constants.dart';
 import 'package:dima_project/models/movie.dart';
 import 'package:http/http.dart' as http;
 import 'package:dima_project/models/person.dart';
+import 'package:intl/intl.dart';
 import 'key.dart';
 
 //function used to retrieve trending movies
 Future<List<Movie>> fetchTrendingMovies([http.Client? client]) async {
   client ??= http.Client();
-  final response = await http.get(Uri.parse(Constants.trendingMovie));
-  if (response.statusCode == 200) {
-    // If the call to the server was successful, parse the JSON
-    final decodedData = json.decode(response.body)['results'] as List;
-    return decodedData.map((movie) => Movie.fromJson(movie)).toList();
-  } else {
-    // If that call was not successful, throw an error.
-    throw Exception('Failed to load trending movies');
+  List<Movie> movies = [];
+  List<Movie> trendingMovies = [];
+
+  for (int i = 1; i < 3; i++) {
+    final response =
+        await http.get(Uri.parse('${Constants.trendingMovie}&page=$i'));
+
+    if (response.statusCode == 200) {
+      // If the call to the server was successful, parse the JSON
+      final decodedData = json.decode(response.body)['results'] as List;
+      movies = decodedData.map((movie) => Movie.fromJson(movie)).toList();
+    } else {
+      // If that call was not successful, throw an error.
+      throw Exception('Failed to load trending movies');
+    }
+
+    for (var movie in movies) {
+      if (!trendingMovies.contains(movie)) {
+        trendingMovies.add(movie);
+      }
+    }
   }
+
+  return trendingMovies;
 }
 
 //function used to retrieve trending movies
 Future<List<Movie>> fetchNowPlayingMovies() async {
-  final response = await http.get(Uri.parse(Constants.nowPlaying));
-  if (response.statusCode == 200) {
-    // If the call to the server was successful, parse the JSON
-    final decodedData = json.decode(response.body)['results'] as List;
-    return decodedData.map((movie) => Movie.fromJson(movie)).toList();
-  } else {
-    // If that call was not successful, throw an error.
-    throw Exception('Failed to load now playing movies');
+  List<Movie> movies = [];
+  List<Movie> nowPlayingMovies = [];
+
+  for (int i = 1; i < 3; i++) {
+    final response =
+        await http.get(Uri.parse('${Constants.nowPlaying}&page=$i'));
+    if (response.statusCode == 200) {
+      // If the call to the server was successful, parse the JSON
+      final decodedData = json.decode(response.body)['results'] as List;
+      movies = decodedData.map((movie) => Movie.fromJson(movie)).toList();
+    } else {
+      // If that call was not successful, throw an error.
+      throw Exception('Failed to load now playing movies');
+    }
+
+    for (var movie in movies) {
+      if (!nowPlayingMovies.contains(movie)) {
+        nowPlayingMovies.add(movie);
+      }
+    }
   }
+  return nowPlayingMovies;
 }
 
 //function used to retrieve top rated movies
 Future<List<Movie>> fetchTopRatedMovies() async {
-  final response = await http.get(Uri.parse(Constants.topRated));
-  if (response.statusCode == 200) {
-    // If the call to the server was successful, parse the JSON
-    final decodedData = json.decode(response.body)['results'] as List;
-    return decodedData.map((movie) => Movie.fromJson(movie)).toList();
-  } else {
-    // If that call was not successful, throw an error.
-    throw Exception('Failed to load top rated movies');
+  List<Movie> movies = [];
+  List<Movie> topRatedMovies = [];
+
+  for (int i = 1; i < 3; i++) {
+    final response = await http.get(Uri.parse('${Constants.topRated}&page=$i'));
+    if (response.statusCode == 200) {
+      // If the call to the server was successful, parse the JSON
+      final decodedData = json.decode(response.body)['results'] as List;
+      movies = decodedData.map((movie) => Movie.fromJson(movie)).toList();
+    } else {
+      // If that call was not successful, throw an error.
+      throw Exception('Failed to load top rated movies');
+    }
+
+    for (var movie in movies) {
+      if (!topRatedMovies.contains(movie)) {
+        topRatedMovies.add(movie);
+      }
+    }
   }
+
+  return topRatedMovies;
 }
 
 //function used to retrieve upcoming movies
 Future<List<Movie>> fetchUpcomingMovies() async {
-  final response = await http.get(Uri.parse(Constants.upcoming));
-  if (response.statusCode == 200) {
-    // If the call to the server was successful, parse the JSON
-    final decodedData = json.decode(response.body)['results'] as List;
-    return decodedData.map((movie) => Movie.fromJson(movie)).toList();
-  } else {
-    // If that call was not successful, throw an error.
-    throw Exception('Failed to load upcoming movies');
+  List<Movie> movies = [];
+  List<Movie> upcomingMovies = [];
+
+  for (int i = 1; i < 8; i++) {
+    final response = await http.get(Uri.parse('${Constants.upcoming}&page=$i'));
+    if (response.statusCode == 200) {
+      // If the call to the server was successful, parse the JSON
+      final decodedData = json.decode(response.body)['results'] as List;
+      movies = decodedData.map((movie) => Movie.fromJson(movie)).toList();
+    } else {
+      // If that call was not successful, throw an error.
+      throw Exception('Failed to load upcoming movies');
+    }
+
+    for (var movie in movies) {
+      DateFormat formatter = DateFormat('yyyy-MM-dd');
+      //check for duplicates before adding to the list and check if the release date is in the future
+      if (!upcomingMovies.contains(movie) &&
+          formatter
+              .parse(movie.releaseDate.toString())
+              .isAfter(DateTime.now())) {
+        upcomingMovies.add(movie);
+      }
+    }
   }
+
+  return upcomingMovies;
 }
 
 // function used to retrieve the movie details
@@ -183,22 +243,24 @@ Future<List<Movie>> fetchMoviesByGenres(List<int> genreIds) async {
   List<Movie> allMovies = [];
 
   for (int genreId in genreIds) {
-    final response = await http.get(Uri.parse(
-        'https://api.themoviedb.org/3/discover/movie?api_key=${Key.apiKey}&with_genres=$genreId'));
+    for (int i = 1; i < 3; i++) {
+      final response = await http.get(Uri.parse(
+          'https://api.themoviedb.org/3/discover/movie?api_key=${Key.apiKey}&with_genres=$genreId&page=$i'));
 
-    if (response.statusCode == 200) {
-      final decodedData = json.decode(response.body)['results'] as List;
-      List<Movie> genreMovies =
-          decodedData.map((movie) => Movie.fromJson(movie)).toList();
+      if (response.statusCode == 200) {
+        final decodedData = json.decode(response.body)['results'] as List;
+        List<Movie> genreMovies =
+            decodedData.map((movie) => Movie.fromJson(movie)).toList();
 
-      //check for duplicates before adding to the list
-      for (var movie in genreMovies) {
-        if (!allMovies.contains(movie)) {
-          allMovies.add(movie);
+        //check for duplicates before adding to the list
+        for (var movie in genreMovies) {
+          if (!allMovies.contains(movie)) {
+            allMovies.add(movie);
+          }
         }
+      } else {
+        throw Exception('Failed to load movies for genre $genreId');
       }
-    } else {
-      throw Exception('Failed to load movies for genre $genreId');
     }
   }
 
