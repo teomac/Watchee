@@ -33,6 +33,8 @@ Future<List<Movie>> fetchTrendingMovies([http.Client? client]) async {
     }
   }
 
+  trendingMovies.shuffle(Random());
+
   return trendingMovies;
 }
 
