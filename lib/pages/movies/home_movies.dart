@@ -14,6 +14,8 @@ import 'package:dima_project/widgets/universal_search_bar_widget.dart';
 import 'package:dima_project/api/constants.dart';
 import 'package:dima_project/models/person.dart';
 import 'package:dima_project/pages/movies/person_details_page.dart';
+import 'package:dima_project/widgets/home_carousel.dart';
+import 'package:dima_project/widgets/double_row_slider.dart';
 
 class HomeMovies extends StatefulWidget {
   const HomeMovies({super.key});
@@ -104,7 +106,7 @@ class HomeMoviesState extends State<HomeMovies>
     setState(() {
       _movieResults = results;
       _peopleResults = peopleResults;
-      _isSearching = results.isNotEmpty || peopleResults.isNotEmpty;
+      _isSearching = true;
     });
   }
 
@@ -171,57 +173,64 @@ class HomeMoviesState extends State<HomeMovies>
       ),
       Expanded(
           child: TabBarView(controller: _tabController, children: [
-        ListView.builder(
-          itemCount: _movieResults.length,
-          itemBuilder: (context, index) {
-            final movie = _movieResults[index];
-            return ListTile(
-              leading: _buildMoviePoster(movie),
-              title: Text(movie.title),
-              subtitle: Text(movie.releaseDate ?? 'Release date unknown'),
-              onTap: () {
-                _retrieveAllMovieInfo(movie);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => FilmDetailsPage(movie: movie),
-                  ),
-                );
-              },
-            );
-          },
-        ),
-        ListView.builder(
-          itemCount: _peopleResults.length,
-          itemBuilder: (context, index) {
-            final person = _peopleResults[index];
-            return ListTile(
-              leading: person.profilePath != null
-                  ? Image.network(
-                      '${Constants.imagePath}${person.profilePath}',
-                      width: 50,
-                      height: 75,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        logger.w('Failed to load image: ${person.profilePath}',
-                            error: error, stackTrace: stackTrace);
-                        return _buildPlaceholderImage();
-                      },
-                    )
-                  : _buildPlaceholderImage(),
-              title: Text(person.name),
-              subtitle: Text(person.knownForDepartment),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => PersonDetailsPage(person: person),
-                  ),
-                );
-              },
-            );
-          },
-        )
+        _movieResults.isEmpty
+            ? const Center(child: Text('No movies found'))
+            : ListView.builder(
+                itemCount: _movieResults.length,
+                itemBuilder: (context, index) {
+                  final movie = _movieResults[index];
+                  return ListTile(
+                    leading: _buildMoviePoster(movie),
+                    title: Text(movie.title),
+                    subtitle: Text(movie.releaseDate ?? 'Release date unknown'),
+                    onTap: () {
+                      _retrieveAllMovieInfo(movie);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => FilmDetailsPage(movie: movie),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+        _peopleResults.isEmpty
+            ? const Center(child: Text('No people found'))
+            : ListView.builder(
+                itemCount: _peopleResults.length,
+                itemBuilder: (context, index) {
+                  final person = _peopleResults[index];
+                  return ListTile(
+                    leading: person.profilePath != null
+                        ? Image.network(
+                            '${Constants.imagePath}${person.profilePath}',
+                            width: 50,
+                            height: 75,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              logger.w(
+                                  'Failed to load image: ${person.profilePath}',
+                                  error: error,
+                                  stackTrace: stackTrace);
+                              return _buildPlaceholderImage();
+                            },
+                          )
+                        : _buildPlaceholderImage(),
+                    title: Text(person.name),
+                    subtitle: Text(person.knownForDepartment),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              PersonDetailsPage(person: person),
+                        ),
+                      );
+                    },
+                  );
+                },
+              )
       ]))
     ]);
   }
@@ -263,25 +272,110 @@ class HomeMoviesState extends State<HomeMovies>
   }
 
   Widget _buildMovieContent() {
+    //check if the screen orientation is vertical or horizontal
+    final bool isVertical =
+        MediaQuery.of(context).orientation == Orientation.portrait;
+
+    bool isTablet = MediaQuery.of(context).size.shortestSide >= 500;
     return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildMovieSection(
+      child: isVertical
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHomeCarousel(_data.trendingMovies, isTablet),
+                const SizedBox(height: 12),
+                if (!isTablet)
+                  _buildMovieSection(
+                      'Trending movies',
+                      _data.trendingMovies,
+                      (movies) => TrendingSlider(trendingMovies: movies),
+                      Theme.of(context)),
+                if (isTablet)
+                  _buildMovieSection(
+                      'Trending movies',
+                      _data.trendingMovies,
+                      (movies) => MoviesSlider(movies: movies, shuffle: true),
+                      Theme.of(context)),
+                _buildMovieSection(
+                    'Recommended for You',
+                    _data.recommendedMovies,
+                    (movies) => MoviesSlider(movies: movies),
+                    Theme.of(context)),
+                _buildMovieSection(
+                    'Top rated movies',
+                    _data.topRatedMovies,
+                    (movies) => MoviesSlider(movies: movies),
+                    Theme.of(context)),
+                _buildMovieSection(
+                    'Upcoming Movies',
+                    _data.upcomingMovies,
+                    (movies) => MoviesSlider(movies: movies),
+                    Theme.of(context)),
+                _buildMovieSection(
+                    'Now Playing',
+                    _data.nowPlayingMovies,
+                    (movies) => MoviesSlider(movies: movies),
+                    Theme.of(context)),
+              ],
+            )
+          : //landscape tablet mode
+          Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHorizontalTabletLayout(),
+                _buildMovieSection(
+                    'Recommended for You',
+                    _data.recommendedMovies,
+                    (movies) => MoviesSlider(movies: movies),
+                    Theme.of(context)),
+                _buildMovieSection(
+                    'Top rated movies',
+                    _data.topRatedMovies,
+                    (movies) => MoviesSlider(movies: movies),
+                    Theme.of(context)),
+                _buildMovieSection(
+                    'Upcoming Movies',
+                    _data.upcomingMovies,
+                    (movies) => MoviesSlider(movies: movies),
+                    Theme.of(context)),
+                _buildMovieSection(
+                    'Now Playing',
+                    _data.nowPlayingMovies,
+                    (movies) => MoviesSlider(movies: movies),
+                    Theme.of(context)),
+              ],
+            ),
+    );
+  }
+
+  _buildHorizontalTabletLayout() {
+    return Row(
+      children: [
+        Expanded(
+            child: Column(
+          children: [_buildHomeCarousel(_data.trendingMovies, true)],
+        )),
+        const SizedBox(width: 12),
+        Expanded(
+            child: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: _buildMovieSection(
               'Trending movies',
               _data.trendingMovies,
-              (movies) => TrendingSlider(trendingMovies: movies),
+              (movies) => DoubleRowSlider(movies: movies, shuffle: true),
               Theme.of(context)),
-          _buildMovieSection('Recommended for You', _data.recommendedMovies,
-              (movies) => MoviesSlider(movies: movies), Theme.of(context)),
-          _buildMovieSection('Top rated movies', _data.topRatedMovies,
-              (movies) => MoviesSlider(movies: movies), Theme.of(context)),
-          _buildMovieSection('Upcoming Movies', _data.upcomingMovies,
-              (movies) => MoviesSlider(movies: movies), Theme.of(context)),
-          _buildMovieSection('Now Playing', _data.nowPlayingMovies,
-              (movies) => MoviesSlider(movies: movies), Theme.of(context)),
-        ],
-      ),
+        ))
+      ],
+    );
+  }
+
+  _buildHomeCarousel(List<Movie>? trendingMovies, bool isTablet) {
+    if (trendingMovies == null || trendingMovies.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return HomeCarousel(
+      movies: trendingMovies.sublist(0, 5),
+      isTablet: isTablet,
     );
   }
 
