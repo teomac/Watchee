@@ -55,19 +55,30 @@ class MyUser {
   }
 
   // Create User object from Firestore document
-  factory MyUser.fromFirestore(DocumentSnapshot doc) {
-    Map data = doc.data() as Map<String, dynamic>;
+  factory MyUser.fromFirestore(dynamic doc) {
+    Map<String, dynamic> data;
+    String id;
+
+    if (doc is DocumentSnapshot) {
+      data = doc.data() as Map<String, dynamic>;
+      id = doc.id;
+    } else if (doc is Map<String, dynamic>) {
+      data = doc;
+      id = data['id'] ?? '';
+    } else {
+      throw ArgumentError('Invalid argument type for MyUser.fromFirestore');
+    }
+
     return MyUser(
-      id: doc.id,
+      id: id,
       username: data['username'] ?? '',
       name: data['name'] ?? '',
       email: data['email'] ?? '',
       nameLowerCase: List<String>.from(data['nameLowerCase'] ?? []),
       profilePicture: data['profilePicture'],
       favoriteGenres: List<String>.from(data['favoriteGenres'] ?? []),
-      following:
-          List<String>.from(data['following'] ?? []), // Changed from friendList
-      followers: List<String>.from(data['followers'] ?? []), // New field
+      following: List<String>.from(data['following'] ?? []),
+      followers: List<String>.from(data['followers'] ?? []),
       likedMovies: List<int>.from(data['likedMovies'] ?? []),
       seenMovies: List<int>.from(data['seenMovies'] ?? []),
       followedWatchlists:

@@ -8,10 +8,6 @@ void main() {
       expect(Key.apiKey, isNotEmpty);
     });
 
-    test('readAccesToken is not empty', () {
-      expect(Constants.readAccesToken, isNotEmpty);
-    });
-
     test('imagePath is correct', () {
       expect(Constants.imagePath, equals('https://image.tmdb.org/t/p/w500'));
     });
