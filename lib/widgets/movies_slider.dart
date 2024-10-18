@@ -4,18 +4,25 @@ import 'package:flutter/material.dart';
 import 'package:dima_project/models/movie.dart';
 import 'package:dima_project/pages/movies/film_details_page.dart';
 import 'package:logger/logger.dart';
+import 'dart:math';
 
 class MoviesSlider extends StatelessWidget {
   final List<Movie> movies;
+  final bool? shuffle;
   final Logger logger = Logger();
 
   MoviesSlider({
     super.key,
     required this.movies,
+    this.shuffle,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (shuffle == true) {
+      movies.shuffle(Random());
+    }
+
     return SizedBox(
       height: 185,
       width: double.infinity,
