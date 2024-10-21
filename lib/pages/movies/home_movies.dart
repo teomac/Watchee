@@ -113,6 +113,7 @@ class HomeMoviesState extends State<HomeMovies>
   void _onSearchExpandChanged(bool expanded) {
     setState(() {
       _isSearchExpanded = expanded;
+      _isSearching = true;
       if (!_isSearchExpanded) {
         _isSearching = false;
         _movieResults.clear();
