@@ -46,7 +46,7 @@ class _CustomSliderState extends State<CustomSlider> {
               options: CarouselOptions(
                 viewportFraction: 1,
                 height: !widget.isTablet
-                    ? size.height * 0.48
+                    ? size.height * 0.44
                     : isVertical
                         ? size.height * 0.38
                         : 398,
@@ -149,11 +149,7 @@ class SliderCard extends StatelessWidget {
                 children: [
                   Text(
                     movie.title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: Theme.of(context).textTheme.titleLarge,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),

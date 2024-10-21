@@ -7,10 +7,10 @@ class Movie {
   final String? backdropPath;
   final double voteAverage;
   final String? releaseDate;
-  final List<String>? genres; // Lista di generi (opzionale)
-
+  final List<String>? genres;
   List<Map<String, dynamic>>? cast;
   String? trailer;
+  final int? runtime;
 
   Movie(
       {required this.id,
@@ -22,7 +22,8 @@ class Movie {
       this.releaseDate,
       required this.genres,
       this.cast,
-      this.trailer});
+      this.trailer,
+      this.runtime});
 
   factory Movie.fromJson(Map<String, dynamic> json) {
     List<String> genreNames = [];
@@ -41,6 +42,7 @@ class Movie {
       voteAverage: json['vote_average'].toDouble(),
       releaseDate: json['release_date'].toString(),
       genres: genreNames,
+      runtime: json['runtime'],
     );
   }
 
@@ -56,6 +58,7 @@ class Movie {
       'genres': genres,
       'cast': cast,
       'trailer': trailer,
+      'runtime': runtime,
     };
   }
 
@@ -79,6 +82,7 @@ class Movie {
         releaseDate.hashCode ^
         genres.hashCode ^
         cast.hashCode ^
-        trailer.hashCode;
+        trailer.hashCode ^
+        runtime.hashCode;
   }
 }

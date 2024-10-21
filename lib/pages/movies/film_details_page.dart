@@ -237,10 +237,6 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTitleAndButtons(state.movie),
-                  const SizedBox(height: 8),
-                  _buildReleaseDate(state.movie),
-                  const SizedBox(height: 8),
                   _buildGenres(state.movie),
                   const SizedBox(height: 16),
                   _buildRating(state.movie),
@@ -274,74 +270,118 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   Widget _buildAppBar(Movie movie) {
     final colorScheme = Theme.of(context).colorScheme;
     return SliverAppBar(
-      expandedHeight: 200.0,
+      expandedHeight: 350.0, // Increased height to accommodate more content
       pinned: true,
       flexibleSpace: FlexibleSpaceBar(
-        background: movie.backdropPath != null
-            ? Image.network(
-                '${Constants.imagePath}${movie.backdropPath}',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(color: Colors.grey);
-                },
-              )
-            : Container(color: colorScheme.surface),
-      ),
-      leading: Container(
-        decoration: BoxDecoration(
-          color: colorScheme.surface.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(8),
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Backdrop image
+            movie.backdropPath != null
+                ? Image.network(
+                    '${Constants.imagePath}${movie.backdropPath}',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(color: Colors.grey);
+                    },
+                  )
+                : Container(color: colorScheme.surface),
+            // Gradient overlay for fade effect
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.7),
+                  ],
+                ),
+              ),
+            ),
+            // Content overlay
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(movie.title,
+                      style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text(
+                        _formatReleaseDate(movie.releaseDate),
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      const SizedBox(width: 8),
+                      Text('•', style: Theme.of(context).textTheme.titleSmall),
+                      const SizedBox(width: 8),
+                      Text(
+                        _formatRuntime(movie
+                            .runtime), // You'll need to add this property to your Movie model
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            _buildAddButton(movie),
+          ],
         ),
-        margin: const EdgeInsets.all(8.0),
-        child: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+      ),
+      leading: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          decoration: BoxDecoration(
+            color: colorScheme.surface.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildTitleAndButtons(Movie movie) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Text(
-            movie.title,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-        ),
-        IconButton(
+  String _formatReleaseDate(String? releaseDate) {
+    if (releaseDate == null || releaseDate.isEmpty) {
+      return 'Release date unknown';
+    }
+    final date = DateTime.tryParse(releaseDate);
+    if (date == null) return releaseDate;
+    return DateFormat.yMMMMd().format(date);
+  }
+
+  String _formatRuntime(int? runtime) {
+    if (runtime == null) return 'Runtime unknown';
+    final hours = runtime ~/ 60;
+    final minutes = runtime % 60;
+    return '${hours}h ${minutes}m';
+  }
+
+  Widget _buildAddButton(Movie movie) {
+    return Positioned(
+        right: 16,
+        bottom: 16,
+        child: IconButton(
           icon: const Icon(Icons.add),
-          iconSize: 25,
+          iconSize: 35,
           onPressed: () async {
             await _fetchUserWatchlists();
             await _fetchLikedMovies();
             await _fetchSeenMovies();
             _showWatchlistModal();
           },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildReleaseDate(Movie movie) {
-    if (movie.releaseDate != null && movie.releaseDate!.isNotEmpty) {
-      final releaseDate = DateTime.tryParse(movie.releaseDate!);
-      if (releaseDate != null) {
-        final formattedDate = DateFormat.yMMMMd().format(releaseDate);
-        return Text(
-          'Release Date: $formattedDate',
-          style: const TextStyle(fontSize: 14, color: Colors.grey),
-        );
-      }
-    }
-    return const Text(
-      'Release Date: Unknown',
-      style: TextStyle(fontSize: 16, color: Colors.grey),
-    );
+        ));
   }
 
   Widget _buildGenres(Movie movie) {
