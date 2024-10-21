@@ -279,9 +279,12 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   }
 
   Widget _buildAppBar(Movie movie) {
+    final bool isTablet = MediaQuery.of(context).size.shortestSide >= 500;
     final colorScheme = Theme.of(context).colorScheme;
     return SliverAppBar(
-      expandedHeight: 350.0, // Increased height to accommodate more content
+      expandedHeight: isTablet
+          ? 450
+          : 350.0, // Increased height to accommodate more content
       pinned: true,
       //stretch: true,
       title: AnimatedOpacity(
@@ -299,7 +302,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
             // Backdrop image
             movie.backdropPath != null
                 ? Image.network(
-                    '${Constants.imagePath}${movie.backdropPath}',
+                    '${Constants.imageOriginalPath}${movie.backdropPath}',
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(color: Colors.grey);
@@ -432,9 +435,11 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'TMDb Rating',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             Row(
               children: [
@@ -460,9 +465,11 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Overview',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -495,9 +502,11 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Cast',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 8),
             SizedBox(
@@ -605,9 +614,11 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Trailer',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 8),
             YoutubePlayerScaffold(
@@ -650,7 +661,10 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         elevation: 4,
         child: Padding(
           padding: EdgeInsets.all(16.0),
-          child: Text('No reviews from followed users available.'),
+          child: Text(
+            'No reviews from followed users available.',
+            style: TextStyle(fontSize: 16),
+          ),
         ),
       );
     }
@@ -720,9 +734,11 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Add your review',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
               const SizedBox(
                 height: 8,
@@ -744,9 +760,11 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Add your review',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 8),
             Row(
@@ -791,7 +809,10 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                       }
                     }
                   : null,
-              child: const Text('Submit your review'),
+              child: const Text(
+                'Submit your review',
+                style: TextStyle(fontSize: 16),
+              ),
             ),
           ],
         ),
@@ -816,9 +837,11 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Available On',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 SizedBox(
                   width: 100,
@@ -886,7 +909,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                 ),
               )
             else
-              const Text('No providers available for this country'),
+              const Text('No providers available for this country',
+                  style: TextStyle(fontSize: 16)),
           ],
         ),
       ),
@@ -902,9 +926,11 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'You may also like',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 16),
             SizedBox(

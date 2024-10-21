@@ -73,6 +73,8 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
+    bool isTablet = MediaQuery.of(context).size.shortestSide >= 500;
+
     return Scaffold(
         body: SafeArea(
       child: _isLoading
@@ -91,7 +93,7 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
                         const SizedBox(height: 8),
                         _buildBiographyCard(),
                         const SizedBox(height: 8),
-                        _buildKnownForSection(),
+                        _buildKnownForSection(isTablet),
                       ],
                     ),
                   ),
@@ -103,8 +105,9 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
 
   Widget _buildSilverAppBar() {
     final colorScheme = Theme.of(context).colorScheme;
+    final bool isTablet = MediaQuery.of(context).size.shortestSide >= 500;
     return SliverAppBar(
-      expandedHeight: 325.0,
+      expandedHeight: isTablet ? 425 : 325.0,
       pinned: true,
       stretch: true,
       title: AnimatedOpacity(
@@ -123,7 +126,7 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
             // Profile image
             _person.profilePath != null
                 ? Image.network(
-                    '${Constants.imagePath}${_person.profilePath}',
+                    '${Constants.imageOriginalPath}${_person.profilePath}',
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(color: Colors.grey);
@@ -202,7 +205,9 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
           children: [
             Text(
               'Personal Information',
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 8),
             _buildInfoRow('Born', _formatDate(_person.birthday ?? '    -')),
@@ -251,10 +256,13 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
           children: [
             Text(
               'Biography',
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 8),
             Text(
+              style: const TextStyle(fontSize: 16),
               _showFullBiography
                   ? biography
                   : biography.substring(
@@ -279,7 +287,9 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
     );
   }
 
-  Widget _buildKnownForSection() {
+  Widget _buildKnownForSection(bool isTablet) {
+    bool isHorizontal =
+        MediaQuery.of(context).orientation == Orientation.landscape;
     return Card(
       elevation: 4,
       child: Padding(
@@ -289,14 +299,20 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
           children: [
             Text(
               'Known For',
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 16),
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: isTablet
+                    ? isHorizontal
+                        ? 9
+                        : 6
+                    : 3,
                 childAspectRatio: 0.7,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
