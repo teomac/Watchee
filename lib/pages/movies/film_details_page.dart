@@ -309,7 +309,10 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(movie.title,
-                      style: Theme.of(context).textTheme.titleLarge),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          )),
                   const SizedBox(height: 8),
                   Row(
                     children: [

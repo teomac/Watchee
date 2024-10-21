@@ -149,7 +149,8 @@ class SliderCard extends StatelessWidget {
                 children: [
                   Text(
                     movie.title,
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: Colors.white, fontWeight: FontWeight.bold),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),

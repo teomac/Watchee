@@ -71,8 +71,6 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildNameAndDepartment(),
-                        const SizedBox(height: 8),
                         _buildPersonalInfoCard(),
                         const SizedBox(height: 8),
                         _buildBiographyCard(),
@@ -90,30 +88,77 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
   Widget _buildSilverAppBar() {
     final colorScheme = Theme.of(context).colorScheme;
     return SliverAppBar(
-      expandedHeight: 200.0,
+      expandedHeight: 325.0,
       pinned: true,
       flexibleSpace: FlexibleSpaceBar(
-        background: _person.profilePath != null
-            ? Image.network(
-                '${Constants.imagePath}${_person.profilePath}',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(color: Colors.grey);
-                },
-              )
-            : Container(color: colorScheme.surface),
-      ),
-      leading: Container(
-        decoration: BoxDecoration(
-          color: colorScheme.surface.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(8),
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Profile image
+            _person.profilePath != null
+                ? Image.network(
+                    '${Constants.imagePath}${_person.profilePath}',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(color: Colors.grey);
+                    },
+                  )
+                : Container(color: colorScheme.surface),
+            // Gradient overlay for fade effect
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.7),
+                  ],
+                ),
+              ),
+            ),
+            // Content overlay
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _person.name,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _person.knownForDepartment,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Colors.white70,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        margin: const EdgeInsets.all(8.0),
-        child: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+      ),
+      leading: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          decoration: BoxDecoration(
+            color: colorScheme.surface.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
         ),
       ),
     );
@@ -140,27 +185,6 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildNameAndDepartment() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          _person.name,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          _person.knownForDepartment,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Colors.grey[600],
-              ),
-        ),
-      ],
     );
   }
 
