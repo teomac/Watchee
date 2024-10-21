@@ -46,16 +46,26 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   Map<String, List<Map<String, dynamic>>> _allProviders = {};
   List<Movie> _recommendedMovies = [];
   final Logger logger = Logger();
+  late ScrollController _scrollController;
+  bool _showTitle = false;
 
   @override
   void dispose() {
     _reviewController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController()
+      ..addListener(() {
+        setState(() {
+          _showTitle = _scrollController.hasClients &&
+              _scrollController.offset > (300 - kToolbarHeight);
+        });
+      });
     _initializeData().then((_) {
       _fetchAllProviders();
       _fetchFriendsReviews();
@@ -229,6 +239,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     } else if (state is FilmDetailsLoaded) {
       return SafeArea(
           child: CustomScrollView(
+        controller: _scrollController,
         slivers: [
           _buildAppBar(state.movie),
           SliverToBoxAdapter(
@@ -272,6 +283,15 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     return SliverAppBar(
       expandedHeight: 350.0, // Increased height to accommodate more content
       pinned: true,
+      //stretch: true,
+      title: AnimatedOpacity(
+        opacity: _showTitle ? 1.0 : 0.0,
+        duration: const Duration(milliseconds: 300),
+        child: Text(widget.movie.title,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                )),
+      ),
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           fit: StackFit.expand,
@@ -336,6 +356,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
             _buildAddButton(movie),
           ],
         ),
+        stretchModes: const [StretchMode.zoomBackground],
+        collapseMode: CollapseMode.pin,
       ),
       leading: Padding(
         padding: const EdgeInsets.all(8.0),

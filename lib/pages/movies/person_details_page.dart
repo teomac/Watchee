@@ -32,12 +32,27 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
       knownFor: []);
   bool _isLoading = true;
   bool _showFullBiography = false;
+  late ScrollController _scrollController;
+  bool _showName = false;
 
   final Logger logger = Logger();
 
   @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController()
+      ..addListener(() {
+        setState(() {
+          _showName = _scrollController.hasClients &&
+              _scrollController.offset > (300 - kToolbarHeight);
+        });
+      });
     _loadPersonDetails();
   }
 
@@ -63,6 +78,7 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
       child: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : CustomScrollView(
+              controller: _scrollController,
               slivers: [
                 _buildSilverAppBar(),
                 SliverToBoxAdapter(
@@ -90,6 +106,16 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
     return SliverAppBar(
       expandedHeight: 325.0,
       pinned: true,
+      stretch: true,
+      title: AnimatedOpacity(
+        duration: const Duration(milliseconds: 300),
+        opacity: _showName ? 1.0 : 0.0,
+        child: Text(_person.name,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                )),
+      ),
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           fit: StackFit.expand,
@@ -145,6 +171,8 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
             ),
           ],
         ),
+        stretchModes: const [StretchMode.zoomBackground],
+        collapseMode: CollapseMode.pin,
       ),
       leading: Padding(
         padding: const EdgeInsets.all(8.0),
