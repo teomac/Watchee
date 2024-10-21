@@ -26,10 +26,27 @@ class DispatcherState extends State<Dispatcher> {
       colorScheme.surfaceTint.withOpacity(0.04),
       colorScheme.surface,
     );
-    return Scaffold(
+
+    // Check if the device is a tablet and in landscape mode
+    final bool isTablet = MediaQuery.of(context).size.shortestSide >= 600;
+    final bool isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+
+    if (isTablet && isLandscape) {
+      return Scaffold(
+        body: Row(
+          children: [
+            _buildVerticalNavBar(brighterColor),
+            Expanded(
+              child: screens[currentPageIndex],
+            ),
+          ],
+        ),
+      );
+    } else {
+      return Scaffold(
         backgroundColor: colorScheme.surface,
-        extendBody:
-            true, // This allows the body to extend behind the navigation bar
+        extendBody: true,
         body: Stack(
           children: [
             screens[currentPageIndex],
@@ -44,58 +61,83 @@ class DispatcherState extends State<Dispatcher> {
             ),
           ],
         ),
-        bottomNavigationBar: Container(
-          padding:
-              const EdgeInsets.only(bottom: 4), // Add padding at the bottom
-          child: NavigationBar(
-            elevation: 3,
-            height: 76, // Adjusted height
-            backgroundColor: brighterColor,
-            selectedIndex: currentPageIndex,
-            onDestinationSelected: (int index) {
-              setState(() {
-                currentPageIndex = index;
-              });
-            },
-            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-            destinations: const <Widget>[
-              _CustomNavigationDestination(
-                icon: Icons.home_outlined,
-                selectedIcon: Icons.home,
-                label: 'Home',
-              ),
-              _CustomNavigationDestination(
-                icon: Icons.subscriptions_outlined,
-                selectedIcon: Icons.subscriptions,
-                label: 'My lists',
-              ),
-              _CustomNavigationDestination(
-                icon: Icons.people_outlined,
-                selectedIcon: Icons.people,
-                label: 'Users',
-              ),
-            ],
-          ),
-        ));
+        bottomNavigationBar: _buildBottomNavBar(brighterColor),
+      );
+    }
   }
-}
 
-class _CustomNavigationDestination extends StatelessWidget {
-  final IconData icon;
-  final IconData selectedIcon;
-  final String label;
+  Widget _buildVerticalNavBar(Color brighterColor) {
+    return Container(
+      color: brighterColor,
+      child: Column(
+        children: [
+          Expanded(
+            child: NavigationRail(
+              groupAlignment: 0,
+              selectedIndex: currentPageIndex,
+              onDestinationSelected: (int index) {
+                setState(() {
+                  currentPageIndex = index;
+                });
+              },
+              labelType: NavigationRailLabelType.all,
+              useIndicator: true,
+              destinations: const <NavigationRailDestination>[
+                NavigationRailDestination(
+                  icon: Icon(Icons.home_outlined, size: 24),
+                  selectedIcon: Icon(Icons.home, size: 24),
+                  label: Text('Home'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.subscriptions_outlined, size: 24),
+                  selectedIcon: Icon(Icons.subscriptions, size: 24),
+                  label: Text('My lists'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.people_outlined, size: 24),
+                  selectedIcon: Icon(Icons.people, size: 24),
+                  label: Text('People'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-  const _CustomNavigationDestination({
-    required this.icon,
-    required this.selectedIcon,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return NavigationDestination(
-        icon: Icon(icon, size: 24), // Increase icon size
-        selectedIcon: Icon(selectedIcon, size: 24), // Increase icon size
-        label: label);
+  Widget _buildBottomNavBar(Color brighterColor) {
+    return Container(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: NavigationBar(
+        elevation: 3,
+        height: 76,
+        backgroundColor: brighterColor,
+        selectedIndex: currentPageIndex,
+        onDestinationSelected: (int index) {
+          setState(() {
+            currentPageIndex = index;
+          });
+        },
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        destinations: const <Widget>[
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined, size: 24),
+            selectedIcon: Icon(Icons.home, size: 24),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.subscriptions_outlined, size: 24),
+            selectedIcon: Icon(Icons.subscriptions, size: 24),
+            label: 'My lists',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.people_outlined, size: 24),
+            selectedIcon: Icon(Icons.people, size: 24),
+            label: 'People',
+          ),
+        ],
+      ),
+    );
   }
 }
