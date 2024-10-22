@@ -331,58 +331,117 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(movie.title,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          )),
+                  isTablet
+                      ? Text(movie.title,
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 26,
+                                  ))
+                      : Text(movie.title,
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  )),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Text(
-                        _formatReleaseDate(movie.releaseDate),
-                        style: Theme.of(context).textTheme.bodyMedium,
+                      Icon(
+                        Icons.calendar_today,
+                        color: Colors.white70,
+                        size: isTablet ? 20 : 16,
                       ),
+                      const SizedBox(width: 4),
+                      isTablet
+                          ? Text(
+                              _formatReleaseDate(movie.releaseDate),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(fontSize: 16),
+                            )
+                          : Text(
+                              _formatReleaseDate(movie.releaseDate),
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
                       const SizedBox(width: 8),
-                      Text('•', style: Theme.of(context).textTheme.bodyMedium),
+                      isTablet
+                          ? Text('•',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(fontSize: 16))
+                          : Text('•',
+                              style: Theme.of(context).textTheme.bodyMedium),
                       const SizedBox(width: 8),
                       if (movie.runtime != null) ...[
-                        const Icon(
+                        Icon(
                           Icons.access_time,
                           color: Colors.white70,
-                          size: 16,
+                          size: isTablet ? 20 : 16,
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          _formatRuntime(movie
-                              .runtime), // You'll need to add this property to your Movie model
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
+                        isTablet
+                            ? Text(
+                                _formatRuntime(movie
+                                    .runtime), // You'll need to add this property to your Movie model
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(fontSize: 16),
+                              )
+                            : Text(
+                                _formatRuntime(movie
+                                    .runtime), // You'll need to add this property to your Movie model
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
                       ],
                       const SizedBox(width: 8),
-                      Text('•', style: Theme.of(context).textTheme.bodyMedium),
+                      isTablet
+                          ? Text('•',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(fontSize: 16))
+                          : Text('•',
+                              style: Theme.of(context).textTheme.bodyMedium),
                       const SizedBox(width: 8),
                       if (movie.voteAverage > 0) ...[
-                        const Icon(
+                        Icon(
                           Icons.star,
                           color: Colors.amber,
-                          size: 16,
+                          size: isTablet ? 20 : 16,
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          widget.movie.voteAverage.toStringAsFixed(1),
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white,
-                                  ),
-                        ),
+                        isTablet
+                            ? Text(
+                                '${(movie.voteAverage * 10).toStringAsFixed(0)}%',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                    ),
+                              )
+                            : Text(
+                                '${(movie.voteAverage * 10).toStringAsFixed(0)}%',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: Colors.white,
+                                    ),
+                              ),
                       ],
                     ],
                   ),
                 ],
               ),
             ),
-            _buildAddButton(movie),
+            _buildAddButton(movie, isTablet),
           ],
         ),
         stretchModes: const [StretchMode.zoomBackground],
@@ -424,13 +483,13 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     return '${hours}h ${minutes}m';
   }
 
-  Widget _buildAddButton(Movie movie) {
+  Widget _buildAddButton(Movie movie, bool isTablet) {
     return Positioned(
         right: 16,
         bottom: 16,
         child: IconButton(
           icon: const Icon(Icons.add),
-          iconSize: 35,
+          iconSize: isTablet ? 45 : 35,
           onPressed: () async {
             await _fetchUserWatchlists();
             await _fetchLikedMovies();
