@@ -250,7 +250,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                 children: [
                   _buildGenres(state.movie),
                   const SizedBox(height: 16),
-                  _buildRating(state.movie),
+                  _buildQuoteCard(state.movie),
                   const SizedBox(height: 16),
                   _buildOverview(state.movie),
                   const SizedBox(height: 16),
@@ -341,16 +341,42 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                     children: [
                       Text(
                         _formatReleaseDate(movie.releaseDate),
-                        style: Theme.of(context).textTheme.titleSmall,
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(width: 8),
-                      Text('•', style: Theme.of(context).textTheme.titleSmall),
+                      Text('•', style: Theme.of(context).textTheme.bodyMedium),
                       const SizedBox(width: 8),
-                      Text(
-                        _formatRuntime(movie
-                            .runtime), // You'll need to add this property to your Movie model
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
+                      if (movie.runtime != null) ...[
+                        const Icon(
+                          Icons.access_time,
+                          color: Colors.white70,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatRuntime(movie
+                              .runtime), // You'll need to add this property to your Movie model
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                      const SizedBox(width: 8),
+                      Text('•', style: Theme.of(context).textTheme.bodyMedium),
+                      const SizedBox(width: 8),
+                      if (movie.voteAverage > 0) ...[
+                        const Icon(
+                          Icons.star,
+                          color: Colors.amber,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          widget.movie.voteAverage.toStringAsFixed(1),
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Colors.white,
+                                  ),
+                        ),
+                      ],
                     ],
                   ),
                 ],
@@ -366,7 +392,9 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         padding: const EdgeInsets.all(8.0),
         child: Container(
           decoration: BoxDecoration(
-            color: colorScheme.surface.withOpacity(0.5),
+            color: _showTitle
+                ? Colors.transparent
+                : colorScheme.surface.withOpacity(0.5),
             borderRadius: BorderRadius.circular(12),
           ),
           child: IconButton(
@@ -412,6 +440,33 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         ));
   }
 
+  // New method to build the quote card
+  Widget _buildQuoteCard(Movie movie) {
+    if (movie.tagline == null || movie.tagline!.isEmpty) {
+      return const SizedBox.shrink(); // Don't show card if no tagline
+    }
+
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Wrap(
+          children: [
+            const Icon(Icons.format_quote),
+            const SizedBox(width: 12),
+            Text(
+              movie.tagline!,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyLarge
+                  ?.copyWith(fontStyle: FontStyle.italic, fontSize: 18),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildGenres(Movie movie) {
     return movie.genres!.isNotEmpty
         ? Wrap(
@@ -421,40 +476,6 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
           )
         : const Text('Genres: Unknown',
             style: TextStyle(fontSize: 16, color: Colors.grey));
-  }
-
-  Widget _buildRating(Movie movie) {
-    String rating = movie.voteAverage.toStringAsFixed(1);
-    rating = rating.isNotEmpty ? '$rating/10' : 'N/A';
-
-    return Card(
-      elevation: 4,
-      color: Theme.of(context).colorScheme.surface,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'TMDb Rating',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            Row(
-              children: [
-                const Icon(Icons.star, color: Colors.amber),
-                const SizedBox(width: 4),
-                Text(
-                  rating,
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _buildOverview(Movie movie) {

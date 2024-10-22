@@ -1,4 +1,3 @@
-//movie class to parse from json
 class Movie {
   final int id;
   final String title;
@@ -11,6 +10,7 @@ class Movie {
   List<Map<String, dynamic>>? cast;
   String? trailer;
   final int? runtime;
+  final String? tagline;
 
   Movie(
       {required this.id,
@@ -23,7 +23,8 @@ class Movie {
       required this.genres,
       this.cast,
       this.trailer,
-      this.runtime});
+      this.runtime,
+      this.tagline});
 
   factory Movie.fromJson(Map<String, dynamic> json) {
     List<String> genreNames = [];
@@ -43,6 +44,7 @@ class Movie {
       releaseDate: json['release_date'].toString(),
       genres: genreNames,
       runtime: json['runtime'],
+      tagline: json['tagline'],
     );
   }
 
@@ -59,6 +61,7 @@ class Movie {
       'cast': cast,
       'trailer': trailer,
       'runtime': runtime,
+      'tagline': tagline,
     };
   }
 
@@ -83,6 +86,7 @@ class Movie {
         genres.hashCode ^
         cast.hashCode ^
         trailer.hashCode ^
-        runtime.hashCode;
+        runtime.hashCode ^
+        tagline.hashCode;
   }
 }
