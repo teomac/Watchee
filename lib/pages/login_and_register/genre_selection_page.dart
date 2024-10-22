@@ -82,11 +82,14 @@ class _GenreSelectionPageState extends State<GenreSelectionPage> {
                     spacing: 8.0,
                     runSpacing: 8.0,
                     children: genres.map((genre) {
-                      final isSelected = selectedGenres.contains(genre);
+                      final trimmedGenre = genre.trim(); // Trim whitespace
+                      final isSelected = selectedGenres.contains(trimmedGenre);
                       return FilterChip(
-                        label: Text(genre),
+                        label:
+                            Text(trimmedGenre), // Use trimmed genre for display
                         selected: isSelected,
-                        onSelected: (_) => _toggleGenre(genre),
+                        onSelected: (_) => _toggleGenre(
+                            trimmedGenre), // Toggle using trimmed genre
                         backgroundColor: Theme.of(context).colorScheme.surface,
                         selectedColor:
                             Theme.of(context).colorScheme.primaryContainer,
