@@ -10,10 +10,6 @@ class MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 class MockFirebaseFirestore extends Mock implements FirebaseFirestore {}
 
-class MockDocumentReference extends Mock implements DocumentReference {}
-
-class MockCollectionReference extends Mock implements CollectionReference {}
-
 // Mock User class
 class MockUser extends Mock implements User {
   @override
@@ -25,11 +21,9 @@ class MockUser extends Mock implements User {
 void main() {
   group('GenreSelectionPage Widget Tests', () {
     late MockFirebaseAuth mockAuth;
-    late MockFirebaseFirestore mockFirestore;
 
     setUp(() {
       mockAuth = MockFirebaseAuth();
-      mockFirestore = MockFirebaseFirestore();
       // Set up basic mocks
       when(mockAuth.currentUser).thenReturn(MockUser(uid: 'test-uid'));
     });

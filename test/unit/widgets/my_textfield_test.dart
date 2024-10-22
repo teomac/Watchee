@@ -67,7 +67,7 @@ void main() {
             controller: controller,
             title: 'Test Field',
             obscureText: false,
-            suffixIcon: Icon(Icons.visibility),
+            suffixIcon: const Icon(Icons.visibility),
           ),
         ),
       ));
