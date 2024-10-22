@@ -5,6 +5,7 @@ import 'package:dima_project/pages/movies/film_details_page.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:dima_project/api/tmdb_api.dart';
+import 'package:dima_project/widgets/squared_header.dart';
 
 class PersonDetailsPage extends StatefulWidget {
   final Person person;
@@ -75,32 +76,109 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
   Widget build(BuildContext context) {
     bool isTablet = MediaQuery.of(context).size.shortestSide >= 500;
 
-    return Scaffold(
-        body: SafeArea(
-      child: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : CustomScrollView(
-              controller: _scrollController,
-              slivers: [
-                _buildSilverAppBar(),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildPersonalInfoCard(),
-                        const SizedBox(height: 8),
-                        _buildBiographyCard(),
-                        const SizedBox(height: 8),
-                        _buildKnownForSection(isTablet),
-                      ],
+    if (!isTablet) {
+      return Scaffold(
+          body: SafeArea(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : CustomScrollView(
+                controller: _scrollController,
+                slivers: [
+                  _buildSilverAppBar(),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildPersonalInfoCard(),
+                          const SizedBox(height: 8),
+                          _buildBiographyCard(),
+                          const SizedBox(height: 8),
+                          _buildKnownForSection(false),
+                        ],
+                      ),
                     ),
                   ),
+                ],
+              ),
+      ));
+    } else {
+      return _buildTabletView();
+    }
+  }
+
+  Widget _buildTabletView() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+    final horizontalPadding = screenWidth * 0.02; // 3% padding on each side
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_person.name),
+        centerTitle: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: SafeArea(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Left Column - Profile Info
+            Expanded(
+              flex: isLandscape ? 45 : 50,
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                  vertical: 16,
                 ),
-              ],
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Profile Header
+                    ProfileHeaderWidget(
+                      imagePath: _person.profilePath != null
+                          ? '${Constants.imageOriginalPath}${_person.profilePath}'
+                          : null,
+                      title: _person.name,
+                      subtitle: _person.knownForDepartment,
+                      size:
+                          isLandscape ? screenWidth * 0.4 : screenWidth * 0.55,
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Personal Information Card
+                    _buildPersonalInfoCard(),
+                    const SizedBox(height: 12),
+
+                    // Reused Biography Card with tablet-specific styling
+                    _buildBiographyCard(),
+                  ],
+                ),
+              ),
             ),
-    ));
+            // Vertical Divider
+            if (isLandscape) const VerticalDivider(width: 1),
+
+            // Right Column - Known For Section
+            Expanded(
+              flex: isLandscape ? 55 : 50,
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                ),
+                child: _buildKnownForSection(
+                  true,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildSilverAppBar() {
@@ -181,7 +259,9 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
         padding: const EdgeInsets.all(8.0),
         child: Container(
           decoration: BoxDecoration(
-            color: colorScheme.surface.withOpacity(0.5),
+            color: _showName
+                ? Colors.transparent
+                : colorScheme.surface.withOpacity(0.5),
             borderRadius: BorderRadius.circular(12),
           ),
           child: IconButton(
@@ -310,8 +390,8 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: isTablet
                     ? isHorizontal
-                        ? 9
-                        : 6
+                        ? 4
+                        : 2
                     : 3,
                 childAspectRatio: 0.7,
                 crossAxisSpacing: 10,
