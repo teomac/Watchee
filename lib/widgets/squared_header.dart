@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class ProfileHeaderWidget extends StatelessWidget {
   final String? imagePath;
-  final String title;
+  final String? title;
   final String? subtitle;
   final List<Widget>? additionalInfo;
   final double size;
@@ -13,7 +13,7 @@ class ProfileHeaderWidget extends StatelessWidget {
   const ProfileHeaderWidget({
     super.key,
     required this.imagePath,
-    required this.title,
+    this.title,
     this.subtitle,
     this.additionalInfo,
     this.size = 400,
@@ -30,12 +30,12 @@ class ProfileHeaderWidget extends StatelessWidget {
       elevation: 4,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          width: size,
+          width: useBackdropImage ? size * 1.26 : size,
           height: size,
           decoration: BoxDecoration(
             color: theme.surface,
@@ -88,16 +88,17 @@ class ProfileHeaderWidget extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style:
-                          Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    if (title != null)
+                      Text(
+                        title!,
+                        style:
+                            Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     if (subtitle != null) ...[
                       const SizedBox(height: 4),
                       Text(
@@ -119,8 +120,8 @@ class ProfileHeaderWidget extends StatelessWidget {
               // Action button
               if (actionButton != null)
                 Positioned(
-                  top: 8,
-                  right: 8,
+                  bottom: 16,
+                  right: 16,
                   child: actionButton!,
                 ),
             ],

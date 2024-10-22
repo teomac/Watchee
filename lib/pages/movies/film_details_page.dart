@@ -16,6 +16,7 @@ import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:dima_project/pages/movies/person_details_page.dart';
 import 'package:dima_project/models/person.dart';
+import 'package:dima_project/widgets/squared_header.dart';
 
 class FilmDetailsPage extends StatefulWidget {
   final Movie movie;
@@ -194,6 +195,10 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
+    bool isTablet = MediaQuery.of(context).size.shortestSide >= 500;
+    bool isHorizontal =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+
     return BlocProvider(
       create: (context) =>
           FilmDetailsBloc()..add(LoadFilmDetails(widget.movie.id)),
@@ -213,9 +218,11 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
             },
             child: Stack(
               children: [
-                Scaffold(
-                  body: _buildBody(context, state),
-                ),
+                (isTablet && isHorizontal)
+                    ? Scaffold(body: _buildBodyTablet(context, state))
+                    : Scaffold(
+                        body: _buildBody(context, state),
+                      ),
                 if (_isDisposing)
                   Container(
                     color: Colors.black,
@@ -231,6 +238,172 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         },
       ),
     );
+  }
+
+  Widget _buildBodyTablet(BuildContext context, FilmDetailsState state) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+    final horizontalPadding = screenWidth * 0.02; // 3% padding on each side
+
+    if (state is FilmDetailsLoading) {
+      return const Center(child: CircularProgressIndicator());
+    } else if (state is FilmDetailsLoaded) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(state.movie.title),
+          centerTitle: false,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        body: SafeArea(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Left Column - Profile Info
+              Expanded(
+                flex: isLandscape ? 55 : 50,
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: horizontalPadding,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Profile Header
+                      ProfileHeaderWidget(
+                        imagePath: state.movie.backdropPath != null
+                            ? '${Constants.imageOriginalPath}${state.movie.backdropPath}'
+                            : null,
+                        useBackdropImage: true,
+                        actionButton: _buildAddButton(state.movie, true),
+                        additionalInfo: [
+                          Text(state.movie.title,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 26,
+                                  )),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.calendar_today,
+                                color: Colors.white70,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                _formatReleaseDate(state.movie.releaseDate),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(fontSize: 16),
+                              ),
+                              const SizedBox(width: 8),
+                              Text('•',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(fontSize: 16)),
+                              const SizedBox(width: 8),
+                              if (state.movie.runtime != null) ...[
+                                const Icon(
+                                  Icons.access_time,
+                                  color: Colors.white70,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _formatRuntime(state.movie
+                                      .runtime), // You'll need to add this property to your Movie model
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(fontSize: 16),
+                                ),
+                              ],
+                              const SizedBox(width: 8),
+                              Text('•',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(fontSize: 16)),
+                              const SizedBox(width: 8),
+                              if (state.movie.voteAverage > 0) ...[
+                                const Icon(
+                                  Icons.star,
+                                  color: Colors.amber,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${(state.movie.voteAverage * 10).toStringAsFixed(0)}%',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                      ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                        size: isLandscape
+                            ? screenWidth * 0.4
+                            : screenWidth * 0.55,
+                      ),
+
+                      const SizedBox(height: 12),
+                      _buildGenres(state.movie),
+                      const SizedBox(height: 12),
+                      _buildQuoteCard(state.movie),
+
+                      const SizedBox(height: 12),
+                      _buildOverview(state.movie),
+                      const SizedBox(height: 12),
+                      _buildCast(state.cast),
+                      const SizedBox(height: 12),
+                      _buildRecommendedMoviesCard(),
+                    ],
+                  ),
+                ),
+              ),
+              // Vertical Divider
+              if (isLandscape) const VerticalDivider(width: 1),
+
+              // Right Column - Known For Section
+              Expanded(
+                flex: isLandscape ? 45 : 50,
+                child: SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                    ),
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildTrailer(context, state.trailerKey),
+                          const SizedBox(height: 12),
+                          _buildProvidersSection(),
+                          const SizedBox(height: 12),
+                          _buildFriendReviews(),
+                          const SizedBox(height: 12),
+                          _buildAddYourReview(),
+                        ])),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
   }
 
   Widget _buildBody(BuildContext context, FilmDetailsState state) {
@@ -672,6 +845,9 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   }
 
   Widget _buildTrailer(BuildContext context, String? trailerKey) {
+    bool isTablet = MediaQuery.of(context).size.shortestSide >= 500;
+    bool isHorizontal =
+        MediaQuery.of(context).orientation == Orientation.landscape;
     if (trailerKey == null || trailerKey.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -690,7 +866,9 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     return Card(
       elevation: 4,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: (isTablet && isHorizontal)
+            ? const EdgeInsets.only(bottom: 16, right: 16, left: 16)
+            : const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
