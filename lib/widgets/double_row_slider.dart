@@ -6,12 +6,12 @@ import 'package:dima_project/pages/movies/film_details_page.dart';
 import 'package:logger/logger.dart';
 import 'dart:math';
 
-class MoviesSlider extends StatelessWidget {
+class DoubleRowSlider extends StatelessWidget {
   final List<Movie> movies;
   final bool? shuffle;
   final Logger logger = Logger();
 
-  MoviesSlider({
+  DoubleRowSlider({
     super.key,
     required this.movies,
     this.shuffle,
@@ -19,21 +19,29 @@ class MoviesSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
     if (shuffle == true) {
       movies.shuffle(Random());
     }
 
     return SizedBox(
-      height: 185,
+      height: 390, //optimal is 390
       width: double.infinity,
-      child: ListView.builder(
+      child: GridView.builder(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio:
+                115 / 185, // Adjusted for poster aspect ratio (185/115)
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 0,
+            mainAxisExtent: size.height * 0.23 - 40),
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         itemCount: movies.length,
         itemBuilder: (context, index) {
           final movie = movies[index];
           return Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(8),
             child: GestureDetector(
               onTap: () {
                 _retrieveAllMovieInfo(movie);

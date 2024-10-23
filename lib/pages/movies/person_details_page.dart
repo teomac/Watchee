@@ -5,6 +5,7 @@ import 'package:dima_project/pages/movies/film_details_page.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:dima_project/api/tmdb_api.dart';
+import 'package:dima_project/widgets/squared_header.dart';
 
 class PersonDetailsPage extends StatefulWidget {
   final Person person;
@@ -32,12 +33,27 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
       knownFor: []);
   bool _isLoading = true;
   bool _showFullBiography = false;
+  late ScrollController _scrollController;
+  bool _showName = false;
 
   final Logger logger = Logger();
 
   @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController()
+      ..addListener(() {
+        setState(() {
+          _showName = _scrollController.hasClients &&
+              _scrollController.offset > (300 - kToolbarHeight);
+        });
+      });
     _loadPersonDetails();
   }
 
@@ -58,62 +74,202 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        body: SafeArea(
-      child: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : CustomScrollView(
-              slivers: [
-                _buildSilverAppBar(),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildNameAndDepartment(),
-                        const SizedBox(height: 8),
-                        _buildPersonalInfoCard(),
-                        const SizedBox(height: 8),
-                        _buildBiographyCard(),
-                        const SizedBox(height: 8),
-                        _buildKnownForSection(),
-                      ],
+    bool isTablet = MediaQuery.of(context).size.shortestSide >= 500;
+
+    if (!isTablet) {
+      return Scaffold(
+          body: SafeArea(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : CustomScrollView(
+                controller: _scrollController,
+                slivers: [
+                  _buildSilverAppBar(),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildPersonalInfoCard(),
+                          const SizedBox(height: 8),
+                          _buildBiographyCard(),
+                          const SizedBox(height: 8),
+                          _buildKnownForSection(false),
+                        ],
+                      ),
                     ),
                   ),
+                ],
+              ),
+      ));
+    } else {
+      return _buildTabletView();
+    }
+  }
+
+  Widget _buildTabletView() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+    final horizontalPadding = screenWidth * 0.02; // 3% padding on each side
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_person.name),
+        centerTitle: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: SafeArea(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Left Column - Profile Info
+            Expanded(
+              flex: isLandscape ? 45 : 50,
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                  vertical: 16,
                 ),
-              ],
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Profile Header
+                    ProfileHeaderWidget(
+                      imagePath: _person.profilePath != null
+                          ? '${Constants.imageOriginalPath}${_person.profilePath}'
+                          : null,
+                      title: _person.name,
+                      subtitle: _person.knownForDepartment,
+                      size:
+                          isLandscape ? screenWidth * 0.4 : screenWidth * 0.55,
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Personal Information Card
+                    _buildPersonalInfoCard(),
+                    const SizedBox(height: 12),
+
+                    // Reused Biography Card with tablet-specific styling
+                    _buildBiographyCard(),
+                  ],
+                ),
+              ),
             ),
-    ));
+            // Vertical Divider
+            if (isLandscape) const VerticalDivider(width: 1),
+
+            // Right Column - Known For Section
+            Expanded(
+              flex: isLandscape ? 55 : 50,
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                ),
+                child: _buildKnownForSection(
+                  true,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildSilverAppBar() {
     final colorScheme = Theme.of(context).colorScheme;
+    final bool isTablet = MediaQuery.of(context).size.shortestSide >= 500;
     return SliverAppBar(
-      expandedHeight: 200.0,
+      expandedHeight: isTablet ? 425 : 325.0,
       pinned: true,
-      flexibleSpace: FlexibleSpaceBar(
-        background: _person.profilePath != null
-            ? Image.network(
-                '${Constants.imagePath}${_person.profilePath}',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(color: Colors.grey);
-                },
-              )
-            : Container(color: colorScheme.surface),
+      stretch: true,
+      title: AnimatedOpacity(
+        duration: const Duration(milliseconds: 300),
+        opacity: _showName ? 1.0 : 0.0,
+        child: Text(_person.name,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                )),
       ),
-      leading: Container(
-        decoration: BoxDecoration(
-          color: colorScheme.surface.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(8),
+      flexibleSpace: FlexibleSpaceBar(
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Profile image
+            _person.profilePath != null
+                ? Image.network(
+                    '${Constants.imageOriginalPath}${_person.profilePath}',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(color: Colors.grey);
+                    },
+                  )
+                : Container(color: colorScheme.surface),
+            // Gradient overlay for fade effect
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.7),
+                  ],
+                ),
+              ),
+            ),
+            // Content overlay
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _person.name,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _person.knownForDepartment,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Colors.white70,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        margin: const EdgeInsets.all(8.0),
-        child: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+        stretchModes: const [StretchMode.zoomBackground],
+        collapseMode: CollapseMode.pin,
+      ),
+      leading: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          decoration: BoxDecoration(
+            color: _showName
+                ? Colors.transparent
+                : colorScheme.surface.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
         ),
       ),
     );
@@ -129,7 +285,9 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
           children: [
             Text(
               'Personal Information',
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 8),
             _buildInfoRow('Born', _formatDate(_person.birthday ?? '    -')),
@@ -140,27 +298,6 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildNameAndDepartment() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          _person.name,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          _person.knownForDepartment,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Colors.grey[600],
-              ),
-        ),
-      ],
     );
   }
 
@@ -199,10 +336,13 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
           children: [
             Text(
               'Biography',
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 8),
             Text(
+              style: const TextStyle(fontSize: 16),
               _showFullBiography
                   ? biography
                   : biography.substring(
@@ -227,7 +367,9 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
     );
   }
 
-  Widget _buildKnownForSection() {
+  Widget _buildKnownForSection(bool isTablet) {
+    bool isHorizontal =
+        MediaQuery.of(context).orientation == Orientation.landscape;
     return Card(
       elevation: 4,
       child: Padding(
@@ -237,14 +379,20 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
           children: [
             Text(
               'Known For',
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 16),
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: isTablet
+                    ? isHorizontal
+                        ? 4
+                        : 2
+                    : 3,
                 childAspectRatio: 0.7,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,

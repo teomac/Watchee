@@ -7,22 +7,24 @@ class Movie {
   final double voteAverage;
   final String? releaseDate;
   final List<String>? genres;
-
   List<Map<String, dynamic>>? cast;
   String? trailer;
+  final int? runtime;
+  final String? tagline;
 
-  Movie({
-    required this.id,
-    required this.title,
-    required this.overview,
-    this.posterPath,
-    this.backdropPath,
-    required this.voteAverage,
-    this.releaseDate,
-    required this.genres,
-    this.cast,
-    this.trailer,
-  });
+  Movie(
+      {required this.id,
+      required this.title,
+      required this.overview,
+      this.posterPath,
+      this.backdropPath,
+      required this.voteAverage,
+      this.releaseDate,
+      required this.genres,
+      this.cast,
+      this.trailer,
+      this.runtime,
+      this.tagline});
 
   factory Movie.fromJson(Map<String, dynamic> json) {
     List<String> genreNames = [];
@@ -47,6 +49,8 @@ class Movie {
           ? List<Map<String, dynamic>>.from(json['cast'])
           : null,
       trailer: json['trailer'],
+      runtime: json['runtime'],
+      tagline: json['tagline'],
     );
   }
 
@@ -62,6 +66,33 @@ class Movie {
       'genres': genres ?? [],
       'cast': cast,
       'trailer': trailer,
+      'runtime': runtime,
+      'tagline': tagline,
     };
+  }
+
+  @override
+  //override equals operator
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is Movie && other.id == id;
+  }
+
+  @override
+  //override hashcode
+  int get hashCode {
+    return id.hashCode ^
+        title.hashCode ^
+        overview.hashCode ^
+        posterPath.hashCode ^
+        backdropPath.hashCode ^
+        voteAverage.hashCode ^
+        releaseDate.hashCode ^
+        genres.hashCode ^
+        cast.hashCode ^
+        trailer.hashCode ^
+        runtime.hashCode ^
+        tagline.hashCode;
   }
 }

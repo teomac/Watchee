@@ -5,6 +5,7 @@ import 'package:dima_project/models/watchlist.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:dima_project/services/watchlist_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dima_project/models/movie.dart';
 import 'package:intl/intl.dart';
@@ -15,6 +16,7 @@ import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:dima_project/pages/movies/person_details_page.dart';
 import 'package:dima_project/models/person.dart';
+import 'package:dima_project/widgets/squared_header.dart';
 
 class FilmDetailsPage extends StatefulWidget {
   final Movie movie;
@@ -45,16 +47,26 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   Map<String, List<Map<String, dynamic>>> _allProviders = {};
   List<Movie> _recommendedMovies = [];
   final Logger logger = Logger();
+  late ScrollController _scrollController;
+  bool _showTitle = false;
 
   @override
   void dispose() {
     _reviewController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController()
+      ..addListener(() {
+        setState(() {
+          _showTitle = _scrollController.hasClients &&
+              _scrollController.offset > (300 - kToolbarHeight);
+        });
+      });
     _initializeData().then((_) {
       _fetchAllProviders();
       _fetchFriendsReviews();
@@ -183,6 +195,10 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
+    bool isTablet = MediaQuery.of(context).size.shortestSide >= 500;
+    bool isHorizontal =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+
     return BlocProvider(
       create: (context) =>
           FilmDetailsBloc()..add(LoadFilmDetails(widget.movie.id)),
@@ -202,9 +218,11 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
             },
             child: Stack(
               children: [
-                Scaffold(
-                  body: _buildBody(context, state),
-                ),
+                (isTablet && isHorizontal)
+                    ? Scaffold(body: _buildBodyTablet(context, state))
+                    : Scaffold(
+                        body: _buildBody(context, state),
+                      ),
                 if (_isDisposing)
                   Container(
                     color: Colors.black,
@@ -222,12 +240,179 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     );
   }
 
+  Widget _buildBodyTablet(BuildContext context, FilmDetailsState state) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+    final horizontalPadding = screenWidth * 0.02; // 3% padding on each side
+
+    if (state is FilmDetailsLoading) {
+      return const Center(child: CircularProgressIndicator());
+    } else if (state is FilmDetailsLoaded) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(state.movie.title),
+          centerTitle: false,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        body: SafeArea(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Left Column - Profile Info
+              Expanded(
+                flex: isLandscape ? 55 : 50,
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: horizontalPadding,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Profile Header
+                      ProfileHeaderWidget(
+                        imagePath: state.movie.backdropPath != null
+                            ? '${Constants.imageOriginalPath}${state.movie.backdropPath}'
+                            : null,
+                        useBackdropImage: true,
+                        actionButton: _buildAddButton(state.movie, true),
+                        additionalInfo: [
+                          Text(state.movie.title,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 26,
+                                  )),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.calendar_today,
+                                color: Colors.white70,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                _formatReleaseDate(state.movie.releaseDate),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(fontSize: 16),
+                              ),
+                              const SizedBox(width: 8),
+                              Text('•',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(fontSize: 16)),
+                              const SizedBox(width: 8),
+                              if (state.movie.runtime != null) ...[
+                                const Icon(
+                                  Icons.access_time,
+                                  color: Colors.white70,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _formatRuntime(state.movie
+                                      .runtime), // You'll need to add this property to your Movie model
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(fontSize: 16),
+                                ),
+                              ],
+                              const SizedBox(width: 8),
+                              Text('•',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(fontSize: 16)),
+                              const SizedBox(width: 8),
+                              if (state.movie.voteAverage > 0) ...[
+                                const Icon(
+                                  Icons.star,
+                                  color: Colors.amber,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${(state.movie.voteAverage * 10).toStringAsFixed(0)}%',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                      ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                        size: isLandscape
+                            ? screenWidth * 0.4
+                            : screenWidth * 0.55,
+                      ),
+
+                      const SizedBox(height: 12),
+                      _buildGenres(state.movie),
+                      const SizedBox(height: 12),
+                      _buildQuoteCard(state.movie),
+
+                      const SizedBox(height: 12),
+                      _buildOverview(state.movie),
+                      const SizedBox(height: 12),
+                      _buildCast(state.cast),
+                      const SizedBox(height: 12),
+                      _buildRecommendedMoviesCard(),
+                    ],
+                  ),
+                ),
+              ),
+              // Vertical Divider
+              if (isLandscape) const VerticalDivider(width: 1),
+
+              // Right Column - Known For Section
+              Expanded(
+                flex: isLandscape ? 45 : 50,
+                child: SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                    ),
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildTrailer(context, state.trailerKey),
+                          const SizedBox(height: 12),
+                          _buildProvidersSection(),
+                          const SizedBox(height: 12),
+                          _buildFriendReviews(),
+                          const SizedBox(height: 12),
+                          _buildAddYourReview(),
+                        ])),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
   Widget _buildBody(BuildContext context, FilmDetailsState state) {
     if (state is FilmDetailsLoading) {
       return const Center(child: CircularProgressIndicator());
     } else if (state is FilmDetailsLoaded) {
       return SafeArea(
           child: CustomScrollView(
+        controller: _scrollController,
         slivers: [
           _buildAppBar(state.movie),
           SliverToBoxAdapter(
@@ -236,13 +421,9 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTitleAndButtons(state.movie),
-                  const SizedBox(height: 8),
-                  _buildReleaseDate(state.movie),
-                  const SizedBox(height: 8),
                   _buildGenres(state.movie),
                   const SizedBox(height: 16),
-                  _buildRating(state.movie),
+                  _buildQuoteCard(state.movie),
                   const SizedBox(height: 16),
                   _buildOverview(state.movie),
                   const SizedBox(height: 16),
@@ -271,75 +452,250 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   }
 
   Widget _buildAppBar(Movie movie) {
+    final bool isTablet = MediaQuery.of(context).size.shortestSide >= 500;
     final colorScheme = Theme.of(context).colorScheme;
     return SliverAppBar(
-      expandedHeight: 200.0,
+      expandedHeight: isTablet
+          ? 450
+          : 350.0, // Increased height to accommodate more content
       pinned: true,
-      flexibleSpace: FlexibleSpaceBar(
-        background: movie.backdropPath != null
-            ? Image.network(
-                '${Constants.imagePath}${movie.backdropPath}',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(color: Colors.grey);
-                },
-              )
-            : Container(color: colorScheme.surface),
+      //stretch: true,
+      title: AnimatedOpacity(
+        opacity: _showTitle ? 1.0 : 0.0,
+        duration: const Duration(milliseconds: 300),
+        child: Text(widget.movie.title,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                )),
       ),
-      leading: Container(
-        decoration: BoxDecoration(
-          color: colorScheme.surface.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(8),
+      flexibleSpace: FlexibleSpaceBar(
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Backdrop image
+            movie.backdropPath != null
+                ? Image.network(
+                    '${Constants.imageOriginalPath}${movie.backdropPath}',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(color: Colors.grey);
+                    },
+                  )
+                : Container(color: colorScheme.surface),
+            // Gradient overlay for fade effect
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.7),
+                  ],
+                ),
+              ),
+            ),
+            // Content overlay
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  isTablet
+                      ? Text(movie.title,
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 26,
+                                  ))
+                      : Text(movie.title,
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  )),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        color: Colors.white70,
+                        size: isTablet ? 20 : 16,
+                      ),
+                      const SizedBox(width: 4),
+                      isTablet
+                          ? Text(
+                              _formatReleaseDate(movie.releaseDate),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(fontSize: 16),
+                            )
+                          : Text(
+                              _formatReleaseDate(movie.releaseDate),
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                      const SizedBox(width: 8),
+                      isTablet
+                          ? Text('•',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(fontSize: 16))
+                          : Text('•',
+                              style: Theme.of(context).textTheme.bodyMedium),
+                      const SizedBox(width: 8),
+                      if (movie.runtime != null) ...[
+                        Icon(
+                          Icons.access_time,
+                          color: Colors.white70,
+                          size: isTablet ? 20 : 16,
+                        ),
+                        const SizedBox(width: 4),
+                        isTablet
+                            ? Text(
+                                _formatRuntime(movie
+                                    .runtime), // You'll need to add this property to your Movie model
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(fontSize: 16),
+                              )
+                            : Text(
+                                _formatRuntime(movie
+                                    .runtime), // You'll need to add this property to your Movie model
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                      ],
+                      const SizedBox(width: 8),
+                      isTablet
+                          ? Text('•',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(fontSize: 16))
+                          : Text('•',
+                              style: Theme.of(context).textTheme.bodyMedium),
+                      const SizedBox(width: 8),
+                      if (movie.voteAverage > 0) ...[
+                        Icon(
+                          Icons.star,
+                          color: Colors.amber,
+                          size: isTablet ? 20 : 16,
+                        ),
+                        const SizedBox(width: 4),
+                        isTablet
+                            ? Text(
+                                '${(movie.voteAverage * 10).toStringAsFixed(0)}%',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                    ),
+                              )
+                            : Text(
+                                '${(movie.voteAverage * 10).toStringAsFixed(0)}%',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: Colors.white,
+                                    ),
+                              ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            _buildAddButton(movie, isTablet),
+          ],
         ),
-        margin: const EdgeInsets.all(8.0),
-        child: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+        stretchModes: const [StretchMode.zoomBackground],
+        collapseMode: CollapseMode.pin,
+      ),
+      leading: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          decoration: BoxDecoration(
+            color: _showTitle
+                ? Colors.transparent
+                : colorScheme.surface.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildTitleAndButtons(Movie movie) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Text(
-            movie.title,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-        ),
-        IconButton(
+  String _formatReleaseDate(String? releaseDate) {
+    if (releaseDate == null || releaseDate.isEmpty) {
+      return 'Release date unknown';
+    }
+    final date = DateTime.tryParse(releaseDate);
+    if (date == null) return releaseDate;
+    return DateFormat.yMMMMd().format(date);
+  }
+
+  String _formatRuntime(int? runtime) {
+    if (runtime == null) return 'Runtime unknown';
+    final hours = runtime ~/ 60;
+    final minutes = runtime % 60;
+    return '${hours}h ${minutes}m';
+  }
+
+  Widget _buildAddButton(Movie movie, bool isTablet) {
+    return Positioned(
+        right: 16,
+        bottom: 16,
+        child: IconButton(
           icon: const Icon(Icons.add),
-          iconSize: 25,
+          iconSize: isTablet ? 45 : 35,
           onPressed: () async {
             await _fetchUserWatchlists();
             await _fetchLikedMovies();
             await _fetchSeenMovies();
             _showWatchlistModal();
           },
-        ),
-      ],
-    );
+        ));
   }
 
-  Widget _buildReleaseDate(Movie movie) {
-    if (movie.releaseDate != null && movie.releaseDate!.isNotEmpty) {
-      final releaseDate = DateTime.tryParse(movie.releaseDate!);
-      if (releaseDate != null) {
-        final formattedDate = DateFormat.yMMMMd().format(releaseDate);
-        return Text(
-          'Release Date: $formattedDate',
-          style: const TextStyle(fontSize: 14, color: Colors.grey),
-        );
-      }
+  // New method to build the quote card
+  Widget _buildQuoteCard(Movie movie) {
+    if (movie.tagline == null || movie.tagline!.isEmpty) {
+      return const SizedBox.shrink(); // Don't show card if no tagline
     }
-    return const Text(
-      'Release Date: Unknown',
-      style: TextStyle(fontSize: 16, color: Colors.grey),
+
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Wrap(
+          children: [
+            const Icon(Icons.format_quote),
+            const SizedBox(width: 12),
+            Text(
+              movie.tagline!,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyLarge
+                  ?.copyWith(fontStyle: FontStyle.italic, fontSize: 18),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -354,38 +710,6 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
             style: TextStyle(fontSize: 16, color: Colors.grey));
   }
 
-  Widget _buildRating(Movie movie) {
-    String rating = movie.voteAverage.toStringAsFixed(1);
-    rating = rating.isNotEmpty ? '$rating/10' : 'N/A';
-
-    return Card(
-      elevation: 4,
-      color: Theme.of(context).colorScheme.surface,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'TMDb Rating',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Row(
-              children: [
-                const Icon(Icons.star, color: Colors.amber),
-                const SizedBox(width: 4),
-                Text(
-                  rating,
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildOverview(Movie movie) {
     return Card(
       elevation: 4,
@@ -394,9 +718,11 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Overview',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -429,9 +755,11 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Cast',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 8),
             SizedBox(
@@ -517,6 +845,9 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   }
 
   Widget _buildTrailer(BuildContext context, String? trailerKey) {
+    bool isTablet = MediaQuery.of(context).size.shortestSide >= 500;
+    bool isHorizontal =
+        MediaQuery.of(context).orientation == Orientation.landscape;
     if (trailerKey == null || trailerKey.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -528,25 +859,43 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         mute: false,
         showControls: true,
         showFullscreenButton: false,
+        //pointerEvents: PointerEvents.none,
       ),
     );
 
     return Card(
       elevation: 4,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: (isTablet && isHorizontal)
+            ? const EdgeInsets.only(bottom: 16, right: 16, left: 16)
+            : const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Trailer',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 8),
             YoutubePlayerScaffold(
               controller: _youtubePlayerController!,
               aspectRatio: 16 / 9,
               enableFullScreenOnVerticalDrag: false,
+              autoFullScreen: false,
+              //gestureRecognizers: const {},
+              fullscreenOrientations: const [
+                DeviceOrientation.portraitDown,
+                DeviceOrientation.portraitUp
+              ],
+              defaultOrientations:
+                  MediaQuery.of(context).size.shortestSide < 500
+                      ? const [
+                          DeviceOrientation.portraitDown,
+                          DeviceOrientation.portraitUp
+                        ]
+                      : DeviceOrientation.values,
               builder: (context, player) => player,
             ),
             const SizedBox(height: 8),
@@ -570,7 +919,10 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         elevation: 4,
         child: Padding(
           padding: EdgeInsets.all(16.0),
-          child: Text('No reviews from followed users available.'),
+          child: Text(
+            'No reviews from followed users available.',
+            style: TextStyle(fontSize: 16),
+          ),
         ),
       );
     }
@@ -640,9 +992,11 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Add your review',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
               const SizedBox(
                 height: 8,
@@ -664,9 +1018,11 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Add your review',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 8),
             Row(
@@ -711,7 +1067,10 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                       }
                     }
                   : null,
-              child: const Text('Submit your review'),
+              child: const Text(
+                'Submit your review',
+                style: TextStyle(fontSize: 16),
+              ),
             ),
           ],
         ),
@@ -736,9 +1095,11 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Available On',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 SizedBox(
                   width: 100,
@@ -806,7 +1167,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                 ),
               )
             else
-              const Text('No providers available for this country'),
+              const Text('No providers available for this country',
+                  style: TextStyle(fontSize: 16)),
           ],
         ),
       ),
@@ -822,9 +1184,11 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'You may also like',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 16),
             SizedBox(

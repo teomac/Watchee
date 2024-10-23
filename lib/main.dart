@@ -17,6 +17,8 @@ import 'package:dima_project/services/user_service.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:auto_orientation/auto_orientation.dart';
 
 enum ThemeOptions { light, dark, system }
 
@@ -178,62 +180,106 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    return ScreenUtilInit(
+      designSize: const Size(360, 690),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (context, child) {
+        return DynamicColorBuilder(
+          builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+            return Consumer<ThemeProvider>(
+              builder: (context, themeProvider, child) {
+                final ColorScheme lightColorScheme = lightDynamic ??
+                    ColorScheme.fromSeed(seedColor: Colors.deepPurple);
+                final ColorScheme darkColorScheme = darkDynamic ??
+                    ColorScheme.fromSeed(
+                        seedColor: Colors.deepPurple,
+                        brightness: Brightness.dark);
 
-    if (isDarkMode) {
-      SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-        statusBarIconBrightness: Brightness.light,
-      ));
-    } else {
-      SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-        statusBarIconBrightness: Brightness.dark,
-      ));
-    }
-
-    return DynamicColorBuilder(
-      builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-        return Consumer<ThemeProvider>(
-          builder: (context, themeProvider, child) {
-            final ColorScheme lightColorScheme = lightDynamic ??
-                ColorScheme.fromSeed(seedColor: Colors.deepPurple);
-            final ColorScheme darkColorScheme = darkDynamic ??
-                ColorScheme.fromSeed(
-                    seedColor: Colors.deepPurple, brightness: Brightness.dark);
-
-            return MaterialApp(
-              navigatorKey: navigatorKey,
-              theme: ThemeData(
-                colorScheme: lightColorScheme,
-                useMaterial3: true,
-                scaffoldBackgroundColor: lightColorScheme.surface,
-                navigationBarTheme: NavigationBarThemeData(
-                    labelTextStyle: WidgetStateProperty.resolveWith((states) {
-                  if (states.contains(WidgetState.selected)) {
-                    return const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.bold);
-                  }
-                  return const TextStyle(fontSize: 14);
-                })),
-              ),
-              darkTheme: ThemeData(
-                colorScheme: darkColorScheme,
-                useMaterial3: true,
-                scaffoldBackgroundColor: darkColorScheme.surface,
-                navigationBarTheme: NavigationBarThemeData(
-                    labelTextStyle: WidgetStateProperty.resolveWith((states) {
-                  if (states.contains(WidgetState.selected)) {
-                    return const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.bold);
-                  }
-                  return const TextStyle(fontSize: 14);
-                })),
-              ),
-              themeMode: themeProvider.themeMode,
-              home: const WidgetTree(),
+                return MaterialApp(
+                  navigatorKey: navigatorKey,
+                  theme: ThemeData(
+                    colorScheme: lightColorScheme,
+                    useMaterial3: true,
+                    scaffoldBackgroundColor: lightColorScheme.surface,
+                    navigationBarTheme: NavigationBarThemeData(labelTextStyle:
+                        WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.selected)) {
+                        return const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold);
+                      }
+                      return const TextStyle(fontSize: 14);
+                    })),
+                  ),
+                  darkTheme: ThemeData(
+                    colorScheme: darkColorScheme,
+                    useMaterial3: true,
+                    scaffoldBackgroundColor: darkColorScheme.surface,
+                    navigationBarTheme: NavigationBarThemeData(labelTextStyle:
+                        WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.selected)) {
+                        return const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold);
+                      }
+                      return const TextStyle(fontSize: 14);
+                    })),
+                  ),
+                  themeMode: themeProvider.themeMode,
+                  home: const OrientationControl(child: WidgetTree()),
+                );
+              },
             );
           },
         );
       },
     );
   }
+}
+
+class OrientationControl extends StatefulWidget {
+  final Widget child;
+
+  const OrientationControl({super.key, required this.child});
+
+  @override
+  State<OrientationControl> createState() => _OrientationControlState();
+}
+
+class _OrientationControlState extends State<OrientationControl> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _setOrientation(context);
+    });
+  }
+
+  void _setOrientation(BuildContext context) {
+    if (isTablet(context)) {
+      AutoOrientation.fullAutoMode();
+    } else {
+      AutoOrientation.portraitAutoMode();
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
+  }
+
+  @override
+  void dispose() {
+    AutoOrientation.fullAutoMode();
+    super.dispose();
+  }
+}
+
+bool isTablet(BuildContext context) {
+  final shortestSide = MediaQuery.of(context).size.shortestSide;
+  final isTablet = shortestSide > 500;
+  return isTablet;
 }

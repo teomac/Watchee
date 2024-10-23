@@ -3,6 +3,7 @@ import 'key.dart';
 
 class Constants {
   static String imagePath = 'https://image.tmdb.org/t/p/w500';
+  static String imageOriginalPath = 'https://image.tmdb.org/t/p/original';
   static String videoPath = '';
   static String trendingMovie =
       'https://api.themoviedb.org/3/trending/movie/day?api_key=${Key.apiKey}';

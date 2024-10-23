@@ -58,12 +58,12 @@ class _UniversalSearchBarWidgetState extends State<UniversalSearchBarWidget>
   }
 
   void _onSearchChanged() {
-    if (_searchController.text.isNotEmpty && !_isExpanded) {
+    if (!_isExpanded) {
       _expandSearchBar();
-    } else if (_searchController.text.isEmpty && _isExpanded) {
-      _collapseSearchBar();
     }
-    _performSearch(_searchController.text);
+    if (_searchController.text.isNotEmpty) {
+      _performSearch(_searchController.text);
+    }
   }
 
   void _onFocusChanged() {
@@ -120,16 +120,22 @@ class _UniversalSearchBarWidgetState extends State<UniversalSearchBarWidget>
             focusNode: _focusNode,
             decoration: InputDecoration(
               hintText: 'Search movies and people...',
-              prefixIcon:
-                  Icon(Icons.search, color: widget.theme.iconTheme.color),
+              prefixIcon: _isExpanded
+                  ? IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () {
+                        widget.onSearchResults([], []);
+                        _searchController.clear();
+                        _focusNode.unfocus();
+                        _collapseSearchBar();
+                      })
+                  : Icon(Icons.search, color: widget.theme.iconTheme.color),
               suffixIcon: _isExpanded
                   ? IconButton(
                       icon: const Icon(Icons.close),
                       onPressed: () {
                         _searchController.clear();
-                        _collapseSearchBar();
-                        _focusNode.unfocus();
-                        widget.onSearchResults([], []);
+                        //widget.onSearchResults([], []);
                       },
                     )
                   : null,
