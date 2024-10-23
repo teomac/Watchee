@@ -5,7 +5,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
 @GenerateMocks([DocumentSnapshot])
-import '../../mocks/watchlist_test.mocks.dart';
+import 'watchlist_test.mocks.dart';
 
 void main() {
   group('WatchList', () {
