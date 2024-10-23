@@ -5,7 +5,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
 @GenerateMocks([DocumentSnapshot])
-import '../../mocks/movie_review_test.mocks.dart';
+import 'movie_review_test.mocks.dart';
 
 void main() {
   group('MovieReview', () {
