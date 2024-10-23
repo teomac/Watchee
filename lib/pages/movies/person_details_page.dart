@@ -13,10 +13,10 @@ class PersonDetailsPage extends StatefulWidget {
   const PersonDetailsPage({super.key, required this.person});
 
   @override
-  State<PersonDetailsPage> createState() => _PersonDetailsPageState();
+  State<PersonDetailsPage> createState() => PersonDetailsPageState();
 }
 
-class _PersonDetailsPageState extends State<PersonDetailsPage> {
+class PersonDetailsPageState extends State<PersonDetailsPage> {
   Person _person = Person(
       adult: false,
       alsoKnownAs: [],
@@ -290,9 +290,9 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
                   ),
             ),
             const SizedBox(height: 8),
-            _buildInfoRow('Born', _formatDate(_person.birthday ?? '    -')),
+            _buildInfoRow('Born', formatDate(_person.birthday ?? '    -')),
             if (widget.person.deathday != null)
-              _buildInfoRow('Died', _formatDate(_person.deathday!)),
+              _buildInfoRow('Died', formatDate(_person.deathday!)),
             _buildInfoRow('Place of Birth', _person.placeOfBirth ?? '    -'),
             _buildInfoRow('Known For', _person.knownForDepartment),
           ],
@@ -469,8 +469,9 @@ class _PersonDetailsPageState extends State<PersonDetailsPage> {
     );
   }
 
-  String _formatDate(String date) {
-    if (date == 'Unknown') return date;
+  String formatDate(String? date) {
+    if (date == null) return '';
+    if (date == 'Unknown') return 'Unknown';
     try {
       final DateTime parsedDate = DateTime.parse(date);
       return DateFormat.yMMMMd().format(parsedDate);

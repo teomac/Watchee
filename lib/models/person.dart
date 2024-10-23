@@ -34,6 +34,38 @@ class Person {
     required this.knownFor,
   });
 
+  Person copyWith({
+    bool? adult,
+    List<String>? alsoKnownAs,
+    String? biography,
+    String? birthday,
+    int? gender,
+    String? homepage,
+    int? id,
+    String? knownForDepartment,
+    String? name,
+    String? placeOfBirth,
+    double? popularity,
+    String? profilePath,
+    List<Movie>? knownFor,
+  }) {
+    return Person(
+      adult: adult ?? this.adult,
+      alsoKnownAs: alsoKnownAs ?? this.alsoKnownAs,
+      biography: biography,
+      birthday: birthday ?? this.birthday,
+      gender: gender ?? this.gender,
+      homepage: homepage ?? this.homepage,
+      id: id ?? this.id,
+      knownForDepartment: knownForDepartment ?? this.knownForDepartment,
+      name: name ?? this.name,
+      placeOfBirth: placeOfBirth ?? this.placeOfBirth,
+      popularity: popularity ?? this.popularity,
+      profilePath: profilePath ?? this.profilePath,
+      knownFor: knownFor ?? this.knownFor,
+    );
+  }
+
   factory Person.fromJson(Map<String, dynamic> json) {
     List<Movie> parseKnownFor(List<dynamic> knownForJson) {
       return knownForJson.map((item) => Movie.fromJson(item)).toList();
