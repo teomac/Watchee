@@ -87,6 +87,7 @@ dev_dependencies:
   mockito: ^5.4.0
   build_runner: ^2.4.0
   bloc_test: ^9.1.7
+  fake_cloud_firestore: ^3.0.3
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
