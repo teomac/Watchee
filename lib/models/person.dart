@@ -39,6 +39,7 @@ class Person {
     List<String>? alsoKnownAs,
     String? biography,
     String? birthday,
+    String? deathday,
     int? gender,
     String? homepage,
     int? id,
@@ -54,6 +55,7 @@ class Person {
       alsoKnownAs: alsoKnownAs ?? this.alsoKnownAs,
       biography: biography,
       birthday: birthday ?? this.birthday,
+      deathday: deathday ?? this.deathday,
       gender: gender ?? this.gender,
       homepage: homepage ?? this.homepage,
       id: id ?? this.id,
@@ -73,11 +75,9 @@ class Person {
 
     List<Movie> knownForMovies;
     if (json.containsKey('movie_credits')) {
-      // This is from person details
       var castMovies = json['known_for'] as List<dynamic>;
       knownForMovies = parseKnownFor(castMovies);
     } else {
-      // This is from search results
       knownForMovies = parseKnownFor(json['known_for'] as List<dynamic>? ?? []);
     }
 
@@ -141,19 +141,24 @@ class Person {
 
   @override
   int get hashCode {
-    return adult.hashCode ^
-        alsoKnownAs.hashCode ^
-        biography.hashCode ^
-        birthday.hashCode ^
-        deathday.hashCode ^
-        gender.hashCode ^
-        homepage.hashCode ^
-        id.hashCode ^
-        knownForDepartment.hashCode ^
-        name.hashCode ^
-        placeOfBirth.hashCode ^
-        popularity.hashCode ^
-        profilePath.hashCode ^
-        knownFor.hashCode;
+    int alsoKnownAsHash = Object.hashAll(alsoKnownAs);
+    int knownForHash = Object.hashAll(knownFor);
+
+    return Object.hash(
+      adult,
+      alsoKnownAsHash,
+      biography,
+      birthday,
+      deathday,
+      gender,
+      homepage,
+      id,
+      knownForDepartment,
+      name,
+      placeOfBirth,
+      popularity,
+      profilePath,
+      knownForHash,
+    );
   }
 }

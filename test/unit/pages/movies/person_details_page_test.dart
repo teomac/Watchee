@@ -225,8 +225,8 @@ void main() {
     });
 
     test('handles null biography', () {
-      testPerson = testPerson.copyWith(biography: null);
-      expect(testPerson.biography, null);
+      final updatedPerson = testPerson.copyWith(biography: null);
+      expect(updatedPerson.biography, null);
     });
   });
 }

@@ -61,6 +61,16 @@ void main() {
       expect(homeMoviesData.recommendedMovies, equals(recommendedMovies));
     });
 
+    test('constructor creates instance with null properties', () {
+      final homeMoviesData = HomeMoviesData();
+
+      expect(homeMoviesData.trendingMovies, isNull);
+      expect(homeMoviesData.topRatedMovies, isNull);
+      expect(homeMoviesData.upcomingMovies, isNull);
+      expect(homeMoviesData.nowPlayingMovies, isNull);
+      expect(homeMoviesData.recommendedMovies, isNull);
+    });
+
     test('copyWith updates only specified fields', () {
       final initialData = HomeMoviesData(
         trendingMovies: [
@@ -133,6 +143,60 @@ void main() {
       expect(
           updatedData.nowPlayingMovies, equals(initialData.nowPlayingMovies));
       expect(updatedData.recommendedMovies, equals(newRecommendedMovies));
+    });
+
+    test(
+        'copyWith with all null parameters returns new instance with same values',
+        () {
+      final initialData = HomeMoviesData(
+        trendingMovies: [
+          Movie(
+              id: 1,
+              title: 'Trending Movie',
+              overview: 'Overview',
+              voteAverage: 7.5,
+              genres: [])
+        ],
+      );
+
+      final copiedData = initialData.copyWith();
+
+      expect(copiedData.trendingMovies, equals(initialData.trendingMovies));
+      expect(copiedData.topRatedMovies, equals(initialData.topRatedMovies));
+      expect(copiedData.upcomingMovies, equals(initialData.upcomingMovies));
+      expect(copiedData.nowPlayingMovies, equals(initialData.nowPlayingMovies));
+      expect(
+          copiedData.recommendedMovies, equals(initialData.recommendedMovies));
+      expect(identical(copiedData, initialData), isFalse);
+    });
+
+    test('copyWith can set fields to null', () {
+      final initialData = HomeMoviesData(
+        trendingMovies: [
+          Movie(
+              id: 1,
+              title: 'Trending Movie',
+              overview: 'Overview',
+              voteAverage: 7.5,
+              genres: [])
+        ],
+        topRatedMovies: [
+          Movie(
+              id: 2,
+              title: 'Top Rated Movie',
+              overview: 'Overview',
+              voteAverage: 8.5,
+              genres: [])
+        ],
+      );
+
+      final updatedData = initialData.copyWith(
+        trendingMovies: null,
+        topRatedMovies: null,
+      );
+
+      expect(updatedData.trendingMovies, isNull);
+      expect(updatedData.topRatedMovies, isNull);
     });
   });
 }

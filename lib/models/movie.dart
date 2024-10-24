@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 class Movie {
   final int id;
   final String title;
@@ -80,19 +82,20 @@ class Movie {
   }
 
   @override
-  //override hashcode
   int get hashCode {
+    const listEquality = ListEquality();
+
     return id.hashCode ^
         title.hashCode ^
         overview.hashCode ^
-        posterPath.hashCode ^
-        backdropPath.hashCode ^
+        (posterPath?.hashCode ?? 0) ^
+        (backdropPath?.hashCode ?? 0) ^
         voteAverage.hashCode ^
-        releaseDate.hashCode ^
-        genres.hashCode ^
-        cast.hashCode ^
-        trailer.hashCode ^
-        runtime.hashCode ^
-        tagline.hashCode;
+        (releaseDate?.hashCode ?? 0) ^
+        listEquality.hash(genres ?? []) ^
+        listEquality.hash(cast ?? []) ^
+        (trailer?.hashCode ?? 0) ^
+        (runtime?.hashCode ?? 0) ^
+        (tagline?.hashCode ?? 0);
   }
 }
