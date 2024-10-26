@@ -91,7 +91,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: DoubleRowSlider(movies: []),
+            body: DoubleRowSlider(movies: const []),
           ),
         ),
       );
