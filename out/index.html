@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AnyMovie - Share Your Watchlists</title>
+    <title>Watchee - Share Your Watchlists</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/material-design-icons/3.0.1/iconfont/material-icons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="profile-picture.css">    <style>
@@ -130,7 +130,7 @@
 <body>
     <header>
         <div class="container">
-            <h1>Welcome to AnyMovie</h1>
+            <h1>Welcome to Watchee</h1>
         </div>
     </header>
     <main class="container">
@@ -139,7 +139,7 @@
         </div>
 
         <div class="dev-note">
-            <p><strong>Developer Note:</strong> AnyMovie is currently in development. If you have the app installed, it should open automatically when accessing a shared watchlist. If not, this page will display the shared watchlist information or provide information about the app.</p>
+            <p><strong>Developer Note:</strong> Watchee is currently in development. If you have the app installed, it should open automatically when accessing a shared watchlist. If not, this page will display the shared watchlist information or provide information about the app.</p>
         </div>
     </main>
 
@@ -172,8 +172,8 @@
                             </div>
                             <span class="creator-name"></span>
                         </div>
-                        <p>Go check it out in the AnyMovieApp!</p>
-                        <a href="#" id="downloadBtn" class="download-btn">Download AnyMovie</a>
+                        <p>Go check it out in the Watchee app!</p>
+                        <a href="#" id="downloadBtn" class="download-btn">Download Watchee</a>
                     </div>`;
                     
                     
@@ -190,7 +190,7 @@
                         document.querySelector('.creator-avatar').src = data.user.profilePicture || '/api/placeholder/30/30';
 
                         const downloadBtn = document.getElementById('downloadBtn');
-                        downloadBtn.href = `anymovie://watchlist/?watchlistId=${watchlistId}&userId=${userId}&invitedBy=${invitedBy}`;
+                        downloadBtn.href = `watchee://watchlist/?watchlistId=${watchlistId}&userId=${userId}&invitedBy=${invitedBy}`;
                         downloadBtn.addEventListener('click', function(e) {
                             e.preventDefault();
                             setTimeout(function() {
@@ -208,9 +208,9 @@
                 contentDiv.innerHTML = `
                     <div class="homepage">
                         <h2>Discover, Share, and Enjoy Movies Together</h2>
-                        <p>AnyMovie is your ultimate companion for creating and sharing movie watchlists with friends. Whether you're a film enthusiast or just looking for your next movie night pick, AnyMovie has got you covered!</p>
-                        <p>Create personalized watchlists, discover new films, and share your favorites with friends. With AnyMovie, you'll never run out of great movies to watch!</p>
-                        <a href="https://github.com/matteolaini" class="download-btn">Download AnyMovie App</a>
+                        <p>Watchee is your ultimate companion for creating and sharing movie watchlists with friends. Whether you're a film enthusiast or just looking for your next movie night pick, Watchee has got you covered!</p>
+                        <p>Create personalized watchlists, discover new films, and share your favorites with friends. With Watchee, you'll never run out of great movies to watch!</p>
+                        <a href="https://github.com/matteolaini" class="download-btn">Download Watchee App</a>
                     </div>`;
             }
         });
