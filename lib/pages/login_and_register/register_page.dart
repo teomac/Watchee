@@ -8,6 +8,8 @@ import 'package:dima_project/models/user.dart';
 import 'package:logger/logger.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:dima_project/services/fcm_service.dart';
+import 'package:dima_project/pages/tos.dart';
+import 'package:dima_project/pages/privacy_policy.dart';
 
 class RegisterPage extends StatefulWidget {
   final VoidCallback showLoginPage;
@@ -191,7 +193,7 @@ class RegisterPageState extends State<RegisterPage> {
         ),
         const SizedBox(width: 10),
         Text(
-          'AnyMovie',
+          'Watchee',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color:
@@ -200,6 +202,16 @@ class RegisterPageState extends State<RegisterPage> {
         ),
       ],
     );
+  }
+
+  void showTos() {
+    Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => const TermsOfServicePage()));
+  }
+
+  void showPrivacyPolicy() {
+    Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => const PrivacyPolicyPage()));
   }
 
   @override
@@ -247,6 +259,16 @@ class RegisterPageState extends State<RegisterPage> {
                   child: const Text('Already have an account? Login now',
                       style: TextStyle(
                           fontSize: 18, fontWeight: FontWeight.bold))),
+              const SizedBox(height: 150),
+              const Text('By registering, you agree to our:'),
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                TextButton(
+                    onPressed: () => showTos(),
+                    child: const Text('Terms of Service')),
+                TextButton(
+                    onPressed: () => showPrivacyPolicy(),
+                    child: const Text('Privacy Policy')),
+              ])
             ],
           ),
         )));

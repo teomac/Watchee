@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:dima_project/theme/theme_provider.dart';
 import 'package:dima_project/services/fcm_settings_service.dart';
 import 'package:logger/logger.dart';
+import 'package:dima_project/pages/tos.dart';
+import 'package:dima_project/pages/privacy_policy.dart ';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -35,20 +37,30 @@ class _SettingsPageState extends State<SettingsPage> {
           ]),
           _buildSection('About', [
             const ListTile(
+              leading: Icon(Icons.info),
               title: Text('Version'),
               subtitle: Text('1.0.0'), // Replace with your app's version
             ),
             ListTile(
+              leading: const Icon(Icons.description),
               title: const Text('Terms of Service'),
               onTap: () {
-                // Navigate to Terms of Service
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TermsOfServicePage(),
+                  ),
+                ); // Navigate to Terms of Service
               },
             ),
             ListTile(
+              leading: const Icon(Icons.policy),
               title: const Text('Privacy Policy'),
-              onTap: () {
-                // Navigate to Privacy Policy
-              },
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const PrivacyPolicyPage()),
+              ),
             ),
           ]),
         ],
