@@ -22,7 +22,7 @@
 
 
     <application
-        android:label="AnyMovie"
+        android:label="Watchee"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -54,7 +54,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="anymovie" />
+                <data android:scheme="watchee" />
             </intent-filter>
 
             <intent-filter>
