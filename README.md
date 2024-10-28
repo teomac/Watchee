@@ -1,4 +1,4 @@
-# dima_project
+# Watchee
 
 A new Flutter project.
 
