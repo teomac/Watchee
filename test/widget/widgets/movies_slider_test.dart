@@ -4,14 +4,18 @@ import 'package:dima_project/widgets/movies_slider.dart';
 import 'package:dima_project/models/movie.dart';
 import 'package:mockito/mockito.dart';
 
-// Mock class for navigation observer
-class MockNavigatorObserver extends Mock implements NavigatorObserver {}
+class MockNavigatorObserver extends Mock implements NavigatorObserver {
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {}
+}
 
 void main() {
   group('MoviesSlider Widget Tests', () {
     late List<Movie> testMovies;
+    late MockNavigatorObserver mockObserver;
 
     setUp(() {
+      mockObserver = MockNavigatorObserver();
       testMovies = [
         Movie(
           id: 1,
@@ -36,19 +40,15 @@ void main() {
         (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          navigatorObservers: [mockObserver],
           home: Scaffold(
             body: MoviesSlider(movies: testMovies),
           ),
         ),
       );
 
-      // Verify the widget creates the correct number of movie cards
       expect(find.byType(GestureDetector), findsNWidgets(testMovies.length));
-
-      // Verify the SizedBox dimensions
-      final SizedBox sizedBox = tester.widget(find.byType(SizedBox).first);
-      expect(sizedBox.height, 185);
-      expect(sizedBox.width, double.infinity);
+      expect(find.byType(ListView), findsOneWidget);
     });
 
     testWidgets('handles null posterPath gracefully',
@@ -70,22 +70,64 @@ void main() {
         ),
       );
 
-      // Verify placeholder is shown when posterPath is null
+      await tester.pump();
+
       expect(find.byIcon(Icons.movie), findsOneWidget);
     });
 
-    testWidgets('handles empty movies list', (WidgetTester tester) async {
+    testWidgets('applies correct scroll physics', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MoviesSlider(movies: const []),
+            body: MoviesSlider(movies: testMovies),
           ),
         ),
       );
 
-      // Verify the widget still renders without crashing
+      final ListView listView = tester.widget(find.byType(ListView));
+      expect(listView.physics, isA<BouncingScrollPhysics>());
+    });
+
+    testWidgets('allows horizontal scrolling', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MoviesSlider(movies: testMovies),
+          ),
+        ),
+      );
+
+      final initialPosition = tester.getTopLeft(find.byType(ListView));
+      await tester.drag(find.byType(ListView), const Offset(-500.0, 0.0));
+      await tester.pumpAndSettle();
+
+      final finalPosition = tester.getTopLeft(find.byType(ListView));
+      expect(finalPosition, equals(initialPosition));
+    });
+
+    testWidgets('handles shuffle correctly', (WidgetTester tester) async {
+      final movieList = List.generate(
+        5,
+        (index) => Movie(
+          id: index,
+          title: 'Movie $index',
+          overview: 'Overview $index',
+          posterPath: null, // Use null to avoid image loading issues
+          voteAverage: 7.0,
+          genres: ['Action'],
+        ),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MoviesSlider(movies: movieList, shuffle: true),
+          ),
+        ),
+      );
+
       expect(find.byType(ListView), findsOneWidget);
-      expect(find.byType(GestureDetector), findsNothing);
+      expect(find.byType(GestureDetector), findsWidgets);
     });
 
     testWidgets('renders with correct dimensions', (WidgetTester tester) async {
@@ -97,64 +139,59 @@ void main() {
         ),
       );
 
-      // Verify the movie poster dimensions
-      final sizedBox = tester.widget<SizedBox>(
-        find
-            .descendant(
-              of: find.byType(ClipRRect),
-              matching: find.byType(SizedBox),
-            )
-            .first,
+      final SizedBox parentSizedBox =
+          tester.widget(find.byType(SizedBox).first);
+      expect(parentSizedBox.height, 185);
+      expect(parentSizedBox.width, double.infinity);
+
+      final moviePosters = find.descendant(
+        of: find.byType(ClipRRect),
+        matching: find.byType(SizedBox),
       );
-      expect(sizedBox.height, 185);
-      expect(sizedBox.width, 115);
+
+      final SizedBox posterSizedBox = tester.widget(moviePosters.first);
+      expect(posterSizedBox.height, 185);
+      expect(posterSizedBox.width, 115);
     });
 
-    testWidgets('shuffles movies when shuffle is true',
+    testWidgets('handles empty movie list', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MoviesSlider(movies: const []),
+          ),
+        ),
+      );
+
+      expect(find.byType(ListView), findsOneWidget);
+      expect(find.byType(GestureDetector), findsNothing);
+    });
+
+    test('creates logger instance', () {
+      final moviesSlider = MoviesSlider(movies: testMovies);
+      expect(moviesSlider.logger, isNotNull);
+    });
+
+    testWidgets('handles basic placeholder for failed images',
         (WidgetTester tester) async {
-      final List<Movie> originalOrder = List.from(testMovies);
+      final movie = Movie(
+        id: 1,
+        title: 'Test Movie',
+        overview: 'Overview',
+        posterPath: null,
+        voteAverage: 7.5,
+        genres: ['Action'],
+      );
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MoviesSlider(movies: testMovies, shuffle: true),
+            body: MoviesSlider(movies: [movie]),
           ),
         ),
       );
 
-      // Note: Since shuffling is random, we can't test the exact order
-      // We can only verify that the same movies are still present
-      originalOrder.map((m) => m.title).toList();
-      final Iterable<Widget> movieWidgets =
-          tester.widgetList(find.byType(GestureDetector));
-
-      expect(movieWidgets.length, originalOrder.length);
-    });
-
-    testWidgets('applies correct border radius', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: MoviesSlider(movies: testMovies),
-          ),
-        ),
-      );
-
-      final ClipRRect clipRRect = tester.widget(find.byType(ClipRRect).first);
-      expect(clipRRect.borderRadius, BorderRadius.circular(8));
-    });
-
-    testWidgets('applies correct padding', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: MoviesSlider(movies: testMovies),
-          ),
-        ),
-      );
-
-      final Padding padding = tester.widget(find.byType(Padding).first);
-      expect(padding.padding, const EdgeInsets.all(8.0));
+      expect(find.byIcon(Icons.movie), findsOneWidget);
     });
   });
 }

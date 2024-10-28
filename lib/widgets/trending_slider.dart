@@ -1,11 +1,9 @@
-// ignore: depend_on_referenced_packages
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:dima_project/api/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:dima_project/models/movie.dart';
 import 'package:dima_project/pages/movies/film_details_page.dart';
 
-//widget used to display the trending movies with a self moving horizontal slider
 class TrendingSlider extends StatelessWidget {
   final List<Movie> trendingMovies;
 
@@ -16,6 +14,10 @@ class TrendingSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (trendingMovies.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return SizedBox(
       width: double.infinity,
       child: CarouselSlider.builder(
