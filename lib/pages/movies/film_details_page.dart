@@ -303,14 +303,16 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodyMedium
-                                    ?.copyWith(fontSize: 16),
+                                    ?.copyWith(
+                                        fontSize: 16, color: Colors.white),
                               ),
                               const SizedBox(width: 8),
                               Text('•',
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodyMedium
-                                      ?.copyWith(fontSize: 16)),
+                                      ?.copyWith(
+                                          fontSize: 16, color: Colors.white)),
                               const SizedBox(width: 8),
                               if (state.movie.runtime != null) ...[
                                 const Icon(
@@ -325,7 +327,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodyMedium
-                                      ?.copyWith(fontSize: 16),
+                                      ?.copyWith(
+                                          fontSize: 16, color: Colors.white),
                                 ),
                               ],
                               const SizedBox(width: 8),
@@ -333,7 +336,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodyMedium
-                                      ?.copyWith(fontSize: 16)),
+                                      ?.copyWith(
+                                          fontSize: 16, color: Colors.white)),
                               const SizedBox(width: 8),
                               if (state.movie.voteAverage > 0) ...[
                                 const Icon(
@@ -454,6 +458,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   Widget _buildAppBar(Movie movie) {
     final bool isTablet = MediaQuery.of(context).size.shortestSide >= 500;
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
     return SliverAppBar(
       expandedHeight: isTablet
           ? 450
@@ -533,11 +538,16 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyMedium
-                                  ?.copyWith(fontSize: 16),
+                                  ?.copyWith(fontSize: 16, color: Colors.white),
                             )
                           : Text(
                               _formatReleaseDate(movie.releaseDate),
-                              style: Theme.of(context).textTheme.bodyMedium,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Colors.white,
+                                  ),
                             ),
                       const SizedBox(width: 8),
                       isTablet
@@ -547,7 +557,12 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                                   .bodyMedium
                                   ?.copyWith(fontSize: 16))
                           : Text('•',
-                              style: Theme.of(context).textTheme.bodyMedium),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Colors.white,
+                                  )),
                       const SizedBox(width: 8),
                       if (movie.runtime != null) ...[
                         Icon(
@@ -563,12 +578,16 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodyMedium
-                                    ?.copyWith(fontSize: 16),
+                                    ?.copyWith(
+                                        fontSize: 16, color: Colors.white),
                               )
                             : Text(
                                 _formatRuntime(movie
                                     .runtime), // You'll need to add this property to your Movie model
-                                style: Theme.of(context).textTheme.bodyMedium,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(color: Colors.white),
                               ),
                       ],
                       const SizedBox(width: 8),
@@ -577,9 +596,14 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyMedium
-                                  ?.copyWith(fontSize: 16))
+                                  ?.copyWith(fontSize: 16, color: Colors.white))
                           : Text('•',
-                              style: Theme.of(context).textTheme.bodyMedium),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Colors.white,
+                                  )),
                       const SizedBox(width: 8),
                       if (movie.voteAverage > 0) ...[
                         Icon(
@@ -630,7 +654,12 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            icon: Icon(Icons.arrow_back,
+                color: _showTitle
+                    ? isDark
+                        ? Colors.white
+                        : Colors.black
+                    : Colors.white),
             onPressed: () {
               Navigator.of(context).pop();
             },
@@ -661,6 +690,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
         right: 16,
         bottom: 16,
         child: IconButton(
+          color: Colors.white,
           icon: const Icon(Icons.add),
           iconSize: isTablet ? 45 : 35,
           onPressed: () async {

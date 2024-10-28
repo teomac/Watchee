@@ -86,7 +86,7 @@ class LoginPageState extends State<LoginPage> {
         ),
         const SizedBox(width: 10),
         Text(
-          'AnyMovie',
+          'Watchee',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color:

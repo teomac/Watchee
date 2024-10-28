@@ -5,21 +5,26 @@ import 'package:dima_project/models/user.dart';
 
 class CollaboratorsListPage extends StatefulWidget {
   final WatchList watchlist;
+  final UserService? userService;
 
-  const CollaboratorsListPage({super.key, required this.watchlist});
+  const CollaboratorsListPage(
+      {super.key, required this.watchlist, this.userService});
 
   @override
   State<CollaboratorsListPage> createState() => _CollaboratorsListPageState();
 }
 
 class _CollaboratorsListPageState extends State<CollaboratorsListPage> {
-  final UserService _userService = UserService();
+  UserService _userService = UserService();
   List<MyUser> _collaborators = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    if (widget.userService != null) {
+      _userService = widget.userService!;
+    }
     _loadCollaborators();
   }
 

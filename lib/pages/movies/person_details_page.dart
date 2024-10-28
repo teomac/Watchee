@@ -184,6 +184,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
   Widget _buildSilverAppBar() {
     final colorScheme = Theme.of(context).colorScheme;
     final bool isTablet = MediaQuery.of(context).size.shortestSide >= 500;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return SliverAppBar(
       expandedHeight: isTablet ? 425 : 325.0,
       pinned: true,
@@ -193,7 +194,6 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
         opacity: _showName ? 1.0 : 0.0,
         child: Text(_person.name,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
                   fontWeight: FontWeight.bold,
                 )),
       ),
@@ -265,7 +265,12 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            icon: Icon(Icons.arrow_back,
+                color: _showName
+                    ? isDark
+                        ? Colors.white
+                        : Colors.black
+                    : Colors.white),
             onPressed: () {
               Navigator.of(context).pop();
             },

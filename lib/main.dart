@@ -29,11 +29,6 @@ Future<void> main() async {
 Future<void> initializeApp() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    systemNavigationBarColor: Colors.transparent,
-  ));
-
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   var connectivityResult = await Connectivity().checkConnectivity();
@@ -106,6 +101,23 @@ class _MyAppState extends State<MyApp> {
 
     _connectivitySubscription =
         Connectivity().onConnectivityChanged.listen(_updateConnectionStatus);
+  }
+
+  void _setSystemUIOverlayStyle(BuildContext context, ThemeMode themeMode) {
+    final isDarkMode = switch (themeMode) {
+      ThemeMode.dark => true,
+      ThemeMode.light => false,
+      ThemeMode.system =>
+        MediaQuery.platformBrightnessOf(context) == Brightness.dark,
+    };
+
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarIconBrightness: isDarkMode ? Brightness.light : Brightness.dark,
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarIconBrightness:
+          isDarkMode ? Brightness.light : Brightness.dark,
+    ));
   }
 
   void _updateConnectionStatus(ConnectivityResult result) {
@@ -189,6 +201,7 @@ class _MyAppState extends State<MyApp> {
           builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
             return Consumer<ThemeProvider>(
               builder: (context, themeProvider, child) {
+                _setSystemUIOverlayStyle(context, themeProvider.themeMode);
                 final ColorScheme lightColorScheme = lightDynamic ??
                     ColorScheme.fromSeed(seedColor: Colors.deepPurple);
                 final ColorScheme darkColorScheme = darkDynamic ??
