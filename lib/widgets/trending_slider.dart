@@ -50,7 +50,7 @@ class TrendingSlider extends StatelessWidget {
                 child: Image.network(
                   filterQuality: FilterQuality.high,
                   fit: BoxFit.cover,
-                  '${Constants.imagePath}${movie.posterPath}',
+                  '${Constants.lowQualityImagePath}${movie.posterPath}',
                   errorBuilder: (context, error, stackTrace) {
                     return const Center(
                       child: Icon(

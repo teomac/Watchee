@@ -716,7 +716,7 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
           final movie = sortedMovies[index];
           return ListTile(
             leading: movie.posterPath != null
-                ? Image.network('${Constants.imagePath}${movie.posterPath}')
+                ? Image.network('${Constants.lowQualityImagePath}${movie.posterPath}')
                 : const Icon(Icons.movie),
             title: Text(movie.title),
             subtitle: Text(movie.releaseDate ?? 'Release date unknown'),

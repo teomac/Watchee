@@ -66,7 +66,7 @@ class MoviesSlider extends StatelessWidget {
 
     try {
       return Image.network(
-        '${Constants.imagePath}${movie.posterPath}',
+        '${Constants.lowQualityImagePath}${movie.posterPath}',
         errorBuilder: (context, error, stackTrace) {
           logger.d('Error loading image for movie ${movie.title}: $error');
           return _buildPlaceholderImage();

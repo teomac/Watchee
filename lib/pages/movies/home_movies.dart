@@ -205,7 +205,7 @@ class HomeMoviesState extends State<HomeMovies>
                   return ListTile(
                     leading: person.profilePath != null
                         ? Image.network(
-                            '${Constants.imagePath}${person.profilePath}',
+                            '${Constants.lowQualityImagePath}${person.profilePath}',
                             width: 50,
                             height: 75,
                             fit: BoxFit.cover,
@@ -242,7 +242,7 @@ class HomeMoviesState extends State<HomeMovies>
       height: 75,
       child: movie.posterPath != null
           ? Image.network(
-              '${Constants.imagePath}${movie.posterPath}',
+              '${Constants.lowQualityImagePath}${movie.posterPath}',
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 logger.w('Failed to load image: ${movie.posterPath}',
