@@ -10,7 +10,11 @@ import 'package:logger/logger.dart';
 import 'package:dima_project/services/user_service.dart';
 
 class WelcomeScreen extends StatefulWidget {
-  const WelcomeScreen({super.key});
+  final FirebaseAuth? auth;
+  final FirebaseFirestore? firestore;
+  WelcomeScreen({super.key, FirebaseAuth? auth, FirebaseFirestore? firestore})
+      : auth = auth ?? FirebaseAuth.instance,
+        firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
   State<WelcomeScreen> createState() => _WelcomeScreenState();
@@ -24,7 +28,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   bool permissionGranted = false;
   bool _isUsernameAvailable = true;
   bool _isTooShort = false;
-  final UserService _userService = UserService();
+  UserService _userService = UserService();
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
@@ -110,7 +114,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         Navigator.of(context).pop(); // Dismiss the loading indicator
         // Navigate to the genre selection page
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const GenreSelectionPage()),
+          MaterialPageRoute(
+              builder: (context) => GenreSelectionPage(
+                  auth: widget.auth, firestore: widget.firestore)),
         );
       }
     } catch (e) {
@@ -233,6 +239,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     _controllerUsername.addListener(() {
       _checkUsernameAvailability(_controllerUsername.text);
     });
+    _userService = UserService(auth: widget.auth, firestore: widget.firestore);
   }
 
   @override

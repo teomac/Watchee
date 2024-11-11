@@ -9,7 +9,7 @@ void main() {
   group('ResetPasswordPage Widget Tests', () {
     testWidgets('renders initial state correctly', (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
+        MaterialApp(
           home: ResetPasswordPage(),
         ),
       );
@@ -32,7 +32,7 @@ void main() {
 
     testWidgets('email field accepts input', (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
+        MaterialApp(
           home: ResetPasswordPage(),
         ),
       );
@@ -46,7 +46,7 @@ void main() {
     testWidgets('clears error message when starting new reset attempt',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
+        MaterialApp(
           home: ResetPasswordPage(),
         ),
       );

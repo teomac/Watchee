@@ -3,8 +3,11 @@ import 'package:dima_project/services/fcm_service.dart';
 import 'package:logger/logger.dart';
 
 class Auth {
-  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final FirebaseAuth _firebaseAuth;
   final Logger logger = Logger();
+
+  Auth({FirebaseAuth? firebaseAuth})
+      : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
 
   User? get currentUser => _firebaseAuth.currentUser;
 
@@ -14,30 +17,30 @@ class Auth {
     required String email,
     required String password,
   }) async {
+    if (email.isEmpty || password.isEmpty) {
+      throw 'Please fill in all fields';
+    }
     try {
       await _firebaseAuth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
     } on FirebaseAuthException catch (e) {
-      logger.e('Firebase Auth Exception: ${e.code}', error: e);
       switch (e.code) {
         case 'user-not-found':
-          throw 'No user found for that email.';
         case 'wrong-password':
-          throw 'Wrong password provided for that user.';
+          throw 'Invalid email or password';
         case 'invalid-email':
           throw 'The email address is badly formatted.';
         case 'user-disabled':
-          throw 'This user account has been disabled.';
-        case 'ERROR_INVALID_CREDENTIAL':
-          throw 'The email or password you entered is invalid.';
+          throw 'This account has been disabled.';
+        case 'too-many-requests':
+          throw 'Too many failed login attempts. Please try again later.';
         default:
-          throw 'An error occurred: ${e.message}';
+          throw 'An error occurred during sign in. Please try again.';
       }
     } catch (e) {
-      logger.e('Unexpected error during sign in', error: e);
-      throw 'An unexpected error occurred: $e';
+      throw 'An unexpected error occurred. Please try again.';
     }
   }
 

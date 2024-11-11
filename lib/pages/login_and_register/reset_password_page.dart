@@ -4,7 +4,9 @@ import 'package:dima_project/widgets/my_textfield.dart';
 import 'package:dima_project/widgets/custom_submit_button.dart';
 
 class ResetPasswordPage extends StatefulWidget {
-  const ResetPasswordPage({super.key});
+  final FirebaseAuth? auth;
+  ResetPasswordPage({super.key, FirebaseAuth? auth})
+      : auth = auth ?? FirebaseAuth.instance;
 
   @override
   State<ResetPasswordPage> createState() => _ResetPasswordPageState();
@@ -28,7 +30,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     );
 
     try {
-      await FirebaseAuth.instance.sendPasswordResetEmail(
+      await widget.auth!.sendPasswordResetEmail(
         email: _controllerEmail.text.trim(),
       );
       setState(() {

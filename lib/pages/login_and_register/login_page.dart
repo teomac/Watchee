@@ -1,18 +1,34 @@
 import 'dart:async';
 import 'package:dima_project/services/auth.dart';
+import 'package:dima_project/services/user_service.dart';
 import 'package:dima_project/services/fcm_service.dart';
 import 'package:dima_project/services/google_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:dima_project/widgets/my_textfield.dart';
 import 'package:flutter/gestures.dart';
 import 'package:dima_project/pages/login_and_register/register_page.dart';
-//import 'package:dima_project/services/error_handler.dart';
 import 'package:dima_project/pages/login_and_register/reset_password_page.dart';
 import 'package:dima_project/widgets/custom_submit_button.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final FirebaseAuth? auth;
+  final FirebaseFirestore? firestore;
+  final GoogleSignIn? googleSignIn;
+  final UserService? userService;
+  LoginPage(
+      {super.key,
+      FirebaseAuth? auth,
+      FirebaseFirestore? firestore,
+      GoogleSignIn? googleSignIn,
+      UserService? userService})
+      : auth = auth ?? FirebaseAuth.instance,
+        firestore = firestore ?? FirebaseFirestore.instance,
+        googleSignIn = googleSignIn ?? GoogleSignIn(),
+        userService = userService ?? UserService();
 
   @override
   State<LoginPage> createState() => LoginPageState();
@@ -36,9 +52,16 @@ class LoginPageState extends State<LoginPage> {
             child: CircularProgressIndicator(),
           );
         });
+    if (_controllerEmail.text.isEmpty || _controllerPassword.text.isEmpty) {
+      setState(() {
+        errorMessage = 'Please fill in all fields';
+      });
+      Navigator.pop(dialogContext);
+      return;
+    }
     try {
       _cleanErrorMessage();
-      await Auth().signInWithEmailAndPassword(
+      await Auth(firebaseAuth: widget.auth).signInWithEmailAndPassword(
           email: _controllerEmail.text, password: _controllerPassword.text);
 
       FirebaseMessaging messaging = FirebaseMessaging.instance;
@@ -64,7 +87,10 @@ class LoginPageState extends State<LoginPage> {
   void _forgotPassword() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const ResetPasswordPage()),
+      MaterialPageRoute(
+          builder: (context) => ResetPasswordPage(
+                auth: widget.auth,
+              )),
     );
   }
 
@@ -230,7 +256,13 @@ class LoginPageState extends State<LoginPage> {
                               : Colors.white,
                         ),
                         child: GestureDetector(
-                          onTap: () => AuthService().signInWithGoogle(),
+                          key: const Key('google_sign_in_button'),
+                          onTap: () => AuthService(
+                                  googleSignIn: widget.googleSignIn,
+                                  auth: widget.auth,
+                                  firestore: widget.firestore,
+                                  userService: widget.userService)
+                              .signInWithGoogle(),
                           child: Image.asset(
                             'lib/assets/google.png',
                             fit: BoxFit.cover,

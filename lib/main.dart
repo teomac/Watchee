@@ -3,6 +3,7 @@ import 'package:dima_project/pages/no_internet_page.dart';
 import 'package:dima_project/services/fcm_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'package:dima_project/widget_tree.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,7 @@ import 'package:app_links/app_links.dart';
 import 'package:dima_project/pages/watchlists/manage_watchlist_page.dart';
 import 'dart:async';
 import 'package:logger/logger.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:dima_project/models/user.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:dynamic_color/dynamic_color.dart';
@@ -19,6 +21,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:auto_orientation/auto_orientation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum ThemeOptions { light, dark, system }
 
@@ -82,7 +85,22 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 class MyApp extends StatefulWidget {
   final Uri? initialUri;
-  const MyApp({super.key, this.initialUri});
+  final FirebaseAuth? auth;
+  final FirebaseFirestore? firestore;
+  final GoogleSignIn? googleSignIn;
+  final UserService? userService;
+
+  MyApp({
+    super.key,
+    this.initialUri,
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+    GoogleSignIn? googleSignIn,
+    UserService? userService,
+  })  : auth = auth ?? FirebaseAuth.instance,
+        firestore = firestore ?? FirebaseFirestore.instance,
+        googleSignIn = googleSignIn ?? GoogleSignIn(),
+        userService = userService ?? UserService();
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -238,7 +256,12 @@ class _MyAppState extends State<MyApp> {
                     })),
                   ),
                   themeMode: themeProvider.themeMode,
-                  home: const OrientationControl(child: WidgetTree()),
+                  home: OrientationControl(
+                      child: WidgetTree(
+                          auth: widget.auth,
+                          firestore: widget.firestore,
+                          userService: widget.userService,
+                          googleSignIn: widget.googleSignIn)),
                 );
               },
             );

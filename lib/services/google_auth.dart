@@ -6,10 +6,23 @@ import 'package:dima_project/services/user_service.dart'; // Import UserService
 import 'package:logger/logger.dart';
 
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
-  final Logger logger = Logger();
-  final UserService userService = UserService();
+  final FirebaseAuth _auth;
+  final GoogleSignIn _googleSignIn;
+  final Logger logger;
+  final UserService userService;
+  final FirebaseFirestore _firestore;
+
+  AuthService({
+    FirebaseAuth? auth,
+    GoogleSignIn? googleSignIn,
+    FirebaseFirestore? firestore,
+    UserService? userService,
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _googleSignIn = googleSignIn ?? GoogleSignIn(),
+        logger = Logger(),
+        userService = userService ?? UserService(),
+        _firestore = firestore ?? FirebaseFirestore.instance;
+
   Future<UserCredential?> signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
@@ -55,13 +68,13 @@ class AuthService {
         );
 
         // Save user data to Firestore
-        await FirebaseFirestore.instance
+        await _firestore
             .collection('users')
             .doc(userCredential.user!.uid)
             .set(newUser.toMap());
       }
 
-      await UserService().updateUserWithNameLowerCase(
+      await userService.updateUserWithNameLowerCase(
           userCredential.user!.uid, googleUser.displayName ?? "");
 
       return userCredential;

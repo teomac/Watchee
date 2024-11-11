@@ -2,14 +2,18 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dima_project/models/movie_review.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:firebase_auth/firebase_auth.dart' as auth;
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dima_project/models/user.dart';
 import 'package:logger/logger.dart';
 
 class UserService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final auth.FirebaseAuth _auth = auth.FirebaseAuth.instance;
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
   final Logger logger = Logger();
+
+  UserService({FirebaseFirestore? firestore, FirebaseAuth? auth})
+      : _firestore = firestore ?? FirebaseFirestore.instance,
+        _auth = auth ?? FirebaseAuth.instance;
 
   // Create a new user in Firestore
   Future<void> createUser(MyUser user) async {
@@ -186,7 +190,7 @@ class UserService {
 
   // Get current logged-in user
   Future<MyUser?> getCurrentUser() async {
-    auth.User? firebaseUser = _auth.currentUser;
+    User? firebaseUser = _auth.currentUser;
     if (firebaseUser != null) {
       return await getUser(firebaseUser.uid);
     }

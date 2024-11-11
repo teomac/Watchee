@@ -12,9 +12,17 @@ import 'package:dima_project/pages/tos.dart';
 import 'package:dima_project/pages/privacy_policy.dart';
 
 class RegisterPage extends StatefulWidget {
+  final FirebaseAuth? auth;
+  final FirebaseFirestore? firestore;
   final VoidCallback showLoginPage;
 
-  const RegisterPage({super.key, required this.showLoginPage});
+  RegisterPage(
+      {super.key,
+      required this.showLoginPage,
+      FirebaseAuth? auth,
+      FirebaseFirestore? firestore})
+      : auth = auth ?? FirebaseAuth.instance,
+        firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
   State<RegisterPage> createState() => RegisterPageState();
@@ -84,7 +92,7 @@ class RegisterPageState extends State<RegisterPage> {
       logger.d("Generating unique username");
       logger.d("Creating user account with Firebase");
       UserCredential userCredential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          await widget.auth!.createUserWithEmailAndPassword(
         email: _controllerEmail.text.trim(),
         password: _controllerPassword.text,
       );
@@ -105,7 +113,7 @@ class RegisterPageState extends State<RegisterPage> {
         );
 
         logger.d("Saving user data to Firestore");
-        await FirebaseFirestore.instance
+        await widget.firestore!
             .collection('users')
             .doc(userCredential.user!.uid)
             .set(newUser.toMap());
@@ -133,7 +141,9 @@ class RegisterPageState extends State<RegisterPage> {
 
         if (mounted) {
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+            MaterialPageRoute(
+                builder: (context) => WelcomeScreen(
+                    auth: widget.auth, firestore: widget.firestore)),
             (Route<dynamic> route) => false,
           );
         }
