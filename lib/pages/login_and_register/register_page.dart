@@ -258,6 +258,7 @@ class RegisterPageState extends State<RegisterPage> {
               _errorMessage(),
               const SizedBox(height: 20),
               CustomSubmitButton(
+                key: const Key('register_button'),
                 backgroundColor: colorScheme.primary,
                 foregroundColor: colorScheme.onPrimary,
                 text: 'Register',

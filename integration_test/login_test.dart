@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:dima_project/main.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:logger/logger.dart';
 import './test_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:dima_project/theme/theme_provider.dart';
 
 void main() {
+  final logger = Logger();
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   // Test account credentials - use a dedicated test account
@@ -146,7 +148,7 @@ void main() {
         expect(find.text('Home'), findsOneWidget);
         expect(FirebaseAuth.instance.currentUser, isNotNull);
       } catch (e) {
-        print('Current widget tree:');
+        logger.d('Current widget tree:');
         debugDumpApp();
         rethrow;
       }

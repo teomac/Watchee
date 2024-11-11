@@ -113,6 +113,7 @@ class _GenreSelectionPageState extends State<GenreSelectionPage> {
               ),
               const SizedBox(height: 16),
               ElevatedButton(
+                key: const Key('continue_button'),
                 onPressed:
                     selectedGenres.length >= 3 ? _saveGenresAndNavigate : null,
                 style: ElevatedButton.styleFrom(

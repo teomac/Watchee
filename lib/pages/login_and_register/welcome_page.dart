@@ -220,6 +220,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 ),
                 const SizedBox(height: 35),
                 CustomSubmitButton(
+                  key: const Key('next_button'),
                   backgroundColor: colorScheme.primary,
                   foregroundColor: colorScheme.onPrimary,
                   text: 'Next',
