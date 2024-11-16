@@ -676,6 +676,7 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: ElevatedButton.icon(
+        key: const Key('add_movie_button'),
         style: ElevatedButton.styleFrom(
           minimumSize: const Size(double.infinity, 50),
           foregroundColor: theme.primary,
@@ -716,7 +717,8 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
           final movie = sortedMovies[index];
           return ListTile(
             leading: movie.posterPath != null
-                ? Image.network('${Constants.lowQualityImagePath}${movie.posterPath}')
+                ? Image.network(
+                    '${Constants.lowQualityImagePath}${movie.posterPath}')
                 : const Icon(Icons.movie),
             title: Text(movie.title),
             subtitle: Text(movie.releaseDate ?? 'Release date unknown'),

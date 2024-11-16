@@ -265,6 +265,7 @@ class _MyListsState extends State<MyLists> {
                       width: 68,
                       child: FittedBox(
                         child: FloatingActionButton(
+                          key: const Key('add_watchlist_button'),
                           elevation: 4,
 
                           //edit rounded corners
@@ -293,6 +294,7 @@ class _MyListsState extends State<MyLists> {
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: const EdgeInsets.only(left: 12, bottom: 12),
               title: Text(
+                key: const Key('my_lists_title'),
                 'My Lists',
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
