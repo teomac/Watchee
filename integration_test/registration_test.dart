@@ -33,6 +33,10 @@ void main() {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
+        await user.reauthenticateWithCredential(
+          EmailAuthProvider.credential(
+              email: testEmail, password: testPassword),
+        );
         await user.delete();
       }
     } catch (e) {
