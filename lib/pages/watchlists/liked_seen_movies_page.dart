@@ -7,7 +7,8 @@ import 'package:dima_project/pages/movies/film_details_page.dart';
 import 'package:dima_project/api/constants.dart';
 import 'package:dima_project/pages/watchlists/search_page.dart'; // Add this import
 import 'package:dima_project/pages/account/user_profile_page.dart'; // Import UserProfilePage class
-import 'package:dima_project/models/user.dart'; // Import MyUser class
+import 'package:dima_project/models/user.dart';
+import 'package:provider/provider.dart';
 
 // Events
 abstract class LikedSeenMoviesEvent {}
@@ -123,19 +124,20 @@ class LikedSeenMoviesPage extends StatefulWidget {
 
 class _LikedSeenMoviesPageState extends State<LikedSeenMoviesPage> {
   late LikedSeenMoviesBloc _likedSeenMoviesBloc;
-  final UserService _userService = UserService();
   MyUser? user;
 
   @override
   void initState() {
     super.initState();
-    _likedSeenMoviesBloc = LikedSeenMoviesBloc(UserService());
+    _likedSeenMoviesBloc =
+        LikedSeenMoviesBloc(Provider.of<UserService>(context, listen: false));
     loadBasics();
   }
 
   Future<void> loadBasics() async {
     _likedSeenMoviesBloc.add(LoadMovies(widget.userId, widget.isLiked));
-    user = await _userService.getUser(widget.userId);
+    user = await Provider.of<UserService>(context, listen: false)
+        .getUser(widget.userId);
   }
 
   @override
@@ -322,14 +324,16 @@ class _LikedSeenMoviesPageState extends State<LikedSeenMoviesPage> {
 
   void _showRemoveMovieMenu(BuildContext context, Movie movie, String name) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
         return Container(
-          decoration: const BoxDecoration(
-            borderRadius: BorderRadius.only(
+          decoration: BoxDecoration(
+            color: isDark ? Colors.grey[900] : Colors.white,
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),
             ),

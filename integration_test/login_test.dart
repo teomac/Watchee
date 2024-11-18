@@ -35,116 +35,184 @@ void main() {
   Widget createTestableApp() {
     return ChangeNotifierProvider(
       create: (_) => ThemeProvider()..loadThemeMode(),
-      child: MyApp(initialUri: null),
+      child: const MyApp(initialUri: null),
     );
   }
 
-  testWidgets('Successful login test', (WidgetTester tester) async {
-    // Build app
-    await tester.pumpWidget(createTestableApp());
-    await tester.pumpAndSettle(const Duration(seconds: 2));
+  group('Login UI Tests', () {
+    testWidgets('Basic UI elements are displayed correctly',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestableApp());
+      await tester.pumpAndSettle();
 
-    // Find and fill text fields
-    final emailField = find.widgetWithText(TextField, 'Email');
-    final passwordField = find.widgetWithText(TextField, 'Password');
+      // Verify presence of all major UI elements
+      expect(find.text('Watchee'), findsOneWidget);
+      expect(find.byIcon(Icons.movie), findsOneWidget);
+      expect(find.widgetWithText(TextField, 'Email'), findsOneWidget);
+      expect(find.widgetWithText(TextField, 'Password'), findsOneWidget);
+      expect(find.text('Forgot password?'), findsOneWidget);
+      expect(find.text('Sign In'), findsOneWidget);
+      expect(find.text('Or continue with'), findsOneWidget);
+      expect(find.text('Not a member? Register now'), findsOneWidget);
+    });
 
-    await tester.enterText(emailField, testEmail);
-    await tester.enterText(passwordField, testPassword);
+    testWidgets('Password visibility toggle works',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestableApp());
+      await tester.pumpAndSettle();
 
-    // Find and tap login button
-    final loginButton = find.text('Sign In');
-    await tester.tap(loginButton);
+      // Find password field and verify it's initially obscured
+      final passwordField = find.widgetWithText(TextField, 'Password');
+      expect(tester.widget<TextField>(passwordField).obscureText, isTrue);
 
-    // Wait for authentication and navigation
-    await Future.delayed(const Duration(seconds: 3));
-    await tester.pumpAndSettle();
+      // Toggle visibility and verify it changes
+      final visibilityIcon = find.byIcon(Icons.visibility_off).first;
+      await tester.tap(visibilityIcon);
+      await tester.pumpAndSettle();
 
-    // Here we add error handling for widget building
-    try {
-      // Verify we're on the home page
-      expect(find.text('Home'), findsOneWidget);
-
-      // Additional verifications you might want to add
-      expect(FirebaseAuth.instance.currentUser, isNotNull);
-      expect(FirebaseAuth.instance.currentUser?.email, equals(testEmail));
-    } catch (e) {
-      // If we get an error, log the current widget tree
-      debugDumpApp();
-      rethrow;
-    }
+      expect(tester.widget<TextField>(passwordField).obscureText, isFalse);
+    });
   });
 
-  group('Login Tests', () {
-    testWidgets('Failed login - incorrect credentials',
-        (WidgetTester tester) async {
-      // Build app
+  group('Login Functionality Tests', () {
+    testWidgets('Successful login test', (WidgetTester tester) async {
       await tester.pumpWidget(createTestableApp());
       await tester.pumpAndSettle(const Duration(seconds: 2));
 
-      // Find and fill text fields with incorrect credentials
+      // Find and fill text fields
       final emailField = find.widgetWithText(TextField, 'Email');
       final passwordField = find.widgetWithText(TextField, 'Password');
 
-      await tester.enterText(emailField, 'invalidemail');
-      await tester.enterText(passwordField, 'password123');
+      await tester.enterText(emailField, testEmail);
+      await tester.enterText(passwordField, testPassword);
 
       // Find and tap login button
       final loginButton = find.text('Sign In');
       await tester.tap(loginButton);
 
-      // Wait for authentication attempt
-      await Future.delayed(const Duration(seconds: 2));
+      // Wait for authentication and navigation
+      await Future.delayed(const Duration(seconds: 3));
       await tester.pumpAndSettle();
 
-      // Verify error state
-      expect(
-          find.text(
-              'The email address is badly formatted.'), // This is the error message we expect
-          findsOneWidget);
-
-      // Additional verification
-      expect(FirebaseAuth.instance.currentUser, isNull);
+      try {
+        // Verify we're on the home page
+        expect(find.text('Home'), findsOneWidget);
+        expect(FirebaseAuth.instance.currentUser, isNotNull);
+        expect(FirebaseAuth.instance.currentUser?.email, equals(testEmail));
+      } catch (e) {
+        debugDumpApp();
+        rethrow;
+      }
     });
 
-    testWidgets('Failed login - empty fields', (WidgetTester tester) async {
-      // Build app
+    testWidgets('Failed login - incorrect credentials',
+        (WidgetTester tester) async {
       await tester.pumpWidget(createTestableApp());
       await tester.pumpAndSettle(const Duration(seconds: 2));
 
-      // Find and tap login button without entering credentials
-      final loginButton = find.text('Sign In');
-      await tester.tap(loginButton);
+      // Test with invalid email format
+      await tester.enterText(
+          find.widgetWithText(TextField, 'Email'), 'invalidemail');
+      await tester.enterText(
+          find.widgetWithText(TextField, 'Password'), 'wrongpassword');
+      await tester.tap(find.text('Sign In'));
       await tester.pumpAndSettle();
+      expect(
+          find.text('The email address is badly formatted.'), findsOneWidget);
 
-      // Verify validation message
-      expect(find.text('Please fill in all fields'), findsOneWidget);
-
-      // Additional verification
-      expect(FirebaseAuth.instance.currentUser, isNull);
+      // Test with correct email format but wrong credentials
+      await tester.enterText(
+          find.widgetWithText(TextField, 'Email'), 'test@test.com');
+      await tester.enterText(
+          find.widgetWithText(TextField, 'Password'), 'wrongpassword');
+      await tester.tap(find.text('Sign In'));
+      await Future.delayed(const Duration(seconds: 2));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('No user found'), findsOneWidget);
     });
 
-    testWidgets('Successful Google Sign In', (WidgetTester tester) async {
-      // Build app
+    testWidgets('Failed login - empty fields', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestableApp());
+      await tester.pumpAndSettle(const Duration(seconds: 2));
+
+      // Test with both fields empty
+      await tester.tap(find.text('Sign In'));
+      await tester.pumpAndSettle();
+      expect(find.text('Please fill in all fields'), findsOneWidget);
+
+      // Test with only email
+      await tester.enterText(
+          find.widgetWithText(TextField, 'Email'), 'test@test.com');
+      await tester.tap(find.text('Sign In'));
+      await tester.pumpAndSettle();
+      expect(find.text('Please fill in all fields'), findsOneWidget);
+
+      // Test with only password
+      await tester.enterText(find.widgetWithText(TextField, 'Email'), '');
+      await tester.enterText(
+          find.widgetWithText(TextField, 'Password'), 'password123');
+      await tester.tap(find.text('Sign In'));
+      await tester.pumpAndSettle();
+      expect(find.text('Please fill in all fields'), findsOneWidget);
+    });
+
+    testWidgets('Forgot password navigation test', (WidgetTester tester) async {
       await tester.pumpWidget(createTestableApp());
       await tester.pumpAndSettle();
 
-      // Find and tap the Google sign in button
+      // Tap forgot password link
+      await tester.tap(find.text('Forgot password?'));
+      await tester.pumpAndSettle();
+
+      // Verify we're on the reset password page
+      expect(find.text('Reset Password'), findsOneWidget);
+
+      // Test empty email submission
+      await tester.tap(find.text('Send Reset Link'));
+      await tester.pumpAndSettle();
+      expect(find.text('Please enter your email'), findsOneWidget);
+
+      // Test invalid email format
+      await tester.enterText(find.byType(TextField), 'invalid-email');
+      await tester.tap(find.text('Send Reset Link'));
+      await tester.pumpAndSettle();
+      expect(find.text('Please enter a valid email'), findsOneWidget);
+
+      // Test back navigation
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pumpAndSettle();
+      expect(find.text('Sign In'), findsOneWidget);
+    });
+
+    testWidgets('Register navigation test', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestableApp());
+      await tester.pumpAndSettle();
+
+      // Tap register link
+      await tester.tap(find.text('Not a member? Register now'));
+      await tester.pumpAndSettle();
+
+      // Verify we're on the register page
+      expect(find.text('Register'), findsOneWidget);
+    });
+  });
+
+  group('Google Sign In Tests', () {
+    testWidgets('Successful Google Sign In', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestableApp());
+      await tester.pumpAndSettle();
+
       final googleSignInButton = find.byKey(const Key('google_sign_in_button'));
       expect(googleSignInButton, findsOneWidget);
       await tester.tap(googleSignInButton);
       await tester.pumpAndSettle();
-      // Wait for Google Sign In process and navigation
       await Future.delayed(const Duration(seconds: 5));
 
       try {
-        // Pump until navigation completes
         await tester.pumpAndSettle();
-
-        // Wait for Firestore operations
         await Future.delayed(const Duration(seconds: 2));
         await tester.pumpAndSettle();
 
-        // Verify we're on the home page
         expect(find.text('Home'), findsOneWidget);
         expect(FirebaseAuth.instance.currentUser, isNotNull);
       } catch (e) {
@@ -152,6 +220,21 @@ void main() {
         debugDumpApp();
         rethrow;
       }
+    });
+
+    testWidgets('Google Sign In cancellation handling',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestableApp());
+      await tester.pumpAndSettle();
+
+      // Simulate cancelled Google Sign In
+      final googleSignInButton = find.byKey(const Key('google_sign_in_button'));
+      await tester.tap(googleSignInButton);
+      await tester.pumpAndSettle();
+
+      // Verify we're still on the login page
+      expect(find.text('Sign In'), findsOneWidget);
+      expect(FirebaseAuth.instance.currentUser, isNull);
     });
   });
 }

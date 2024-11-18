@@ -5,6 +5,7 @@ import 'package:dima_project/services/watchlist_service.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:provider/provider.dart';
 
 class NotificationsPage extends StatefulWidget {
   final MyUser user;
@@ -16,24 +17,24 @@ class NotificationsPage extends StatefulWidget {
 }
 
 class _NotificationsPageState extends State<NotificationsPage> {
-  final UserService _userService = UserService();
-  final WatchlistService _watchlistService = WatchlistService();
-
   late Future<List<Map<String, dynamic>>> _notificationsFuture;
 
   @override
   void initState() {
     super.initState();
-    _notificationsFuture = _userService.getNotifications(widget.user.id);
+    _notificationsFuture = Provider.of<UserService>(context, listen: false)
+        .getNotifications(widget.user.id);
   }
 
   Future<void> _refreshNotifications() async {
     setState(() {
-      _notificationsFuture = _userService.getNotifications(widget.user.id);
+      _notificationsFuture = Provider.of<UserService>(context, listen: false)
+          .getNotifications(widget.user.id);
     });
   }
 
   Future<void> _confirmClearAll() async {
+    final userService = Provider.of<UserService>(context, listen: false);
     final bool? result = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
@@ -56,9 +57,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
 
     if (result == true) {
-      await _userService.clearNotifications(widget.user.id);
+      await userService.clearNotifications(widget.user.id);
       setState(() {
-        _notificationsFuture = _userService.getNotifications(widget.user.id);
+        _notificationsFuture = userService.getNotifications(widget.user.id);
       });
     }
   }
@@ -141,8 +142,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         child: const Icon(Icons.delete, color: Colors.white),
                       ),
                       onDismissed: (direction) async {
-                        await _userService.removeNotification(
-                            widget.user.id, notification['notificationId']);
+                        await Provider.of<UserService>(context, listen: false)
+                            .removeNotification(
+                                widget.user.id, notification['notificationId']);
 
                         setState(() {
                           notifications.removeAt(index);
@@ -183,7 +185,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
                               onTap: notification['type'] != 'new_invitation'
                                   ? () async {
                                       MyUser? user =
-                                          await _userService.getUser(userId);
+                                          await Provider.of<UserService>(
+                                                  context,
+                                                  listen: false)
+                                              .getUser(userId);
                                       if (user != null && context.mounted) {
                                         Navigator.push(
                                           context,
@@ -249,25 +254,32 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   Future<void> _acceptInvitation(
       String userId, Map<String, dynamic> notification) async {
-    await _watchlistService.acceptInvite(
+    final userService = Provider.of<UserService>(context, listen: false);
+    final watchlistService =
+        Provider.of<WatchlistService>(context, listen: false);
+
+    await watchlistService.acceptInvite(
         notification['watchlistId'], notification['watchlistOwner'], userId);
     //remove notification
-    await _userService.removeNotification(
+    await userService.removeNotification(
         userId, notification['notificationId']);
     setState(() {
-      _notificationsFuture = _userService.getNotifications(widget.user.id);
+      _notificationsFuture = userService.getNotifications(widget.user.id);
     });
   }
 
   Future<void> _declineInvitation(
       String userId, Map<String, dynamic> notification) async {
-    await _watchlistService.declineInvite(
+    final userService = Provider.of<UserService>(context, listen: false);
+    final watchlistService =
+        Provider.of<WatchlistService>(context, listen: false);
+    await watchlistService.declineInvite(
         notification['watchlistId'], notification['watchlistOwner'], userId);
     //remove notification
-    await _userService.removeNotification(
+    await userService.removeNotification(
         userId, notification['notificationId']);
     setState(() {
-      _notificationsFuture = _userService.getNotifications(widget.user.id);
+      _notificationsFuture = userService.getNotifications(widget.user.id);
     });
   }
 }

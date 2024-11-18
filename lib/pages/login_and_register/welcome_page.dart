@@ -8,13 +8,12 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:logger/logger.dart';
 import 'package:dima_project/services/user_service.dart';
+import 'package:provider/provider.dart';
 
 class WelcomeScreen extends StatefulWidget {
-  final FirebaseAuth? auth;
-  final FirebaseFirestore? firestore;
-  WelcomeScreen({super.key, FirebaseAuth? auth, FirebaseFirestore? firestore})
-      : auth = auth ?? FirebaseAuth.instance,
-        firestore = firestore ?? FirebaseFirestore.instance;
+  const WelcomeScreen({
+    super.key,
+  });
 
   @override
   State<WelcomeScreen> createState() => _WelcomeScreenState();
@@ -28,7 +27,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   bool permissionGranted = false;
   bool _isUsernameAvailable = true;
   bool _isTooShort = false;
-  UserService _userService = UserService();
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
@@ -43,6 +41,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   Future<void> _checkUsernameAvailability(String username) async {
+    final userService = Provider.of<UserService>(context, listen: false);
+
     if (username.length < 3) {
       setState(() {
         _isTooShort = true;
@@ -50,7 +50,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       });
       return;
     }
-    bool isAvailable = await _userService.isUsernameAvailable(username);
+    bool isAvailable = await userService.isUsernameAvailable(username);
     setState(() {
       _isUsernameAvailable = isAvailable;
       _isTooShort = false;
@@ -58,9 +58,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   void _submitForm() async {
-    if (_controllerName.text.isEmpty || _controllerUsername.text.isEmpty) {
+    final auth = Provider.of<FirebaseAuth>(context, listen: false);
+    final userService = Provider.of<UserService>(context, listen: false);
+    final firestore = Provider.of<FirebaseFirestore>(context, listen: false);
+
+    if (_controllerName.text.trim().isEmpty ||
+        _controllerUsername.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
+        const SnackBar(content: Text('Please fill in all fields.')),
       );
       return;
     }
@@ -89,24 +94,23 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     );
 
     try {
-      String uid = FirebaseAuth.instance.currentUser!.uid;
+      String uid = auth.currentUser!.uid;
       String? profilePictureUrl;
 
       if (_image != null) {
         logger.d("Starting image upload");
-        profilePictureUrl = await UserService().uploadImage(_image!);
+        profilePictureUrl = await userService.uploadImage(_image!);
         logger.d("Image upload completed. URL: $profilePictureUrl");
       }
 
       logger.d("Updating user document for UID: $uid");
-      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      await firestore.collection('users').doc(uid).update({
         'name': _controllerName.text,
         'username': _controllerUsername.text,
         if (profilePictureUrl != null) 'profilePicture': profilePictureUrl,
       });
 
-      await UserService()
-          .updateUserWithNameLowerCase(uid, _controllerName.text);
+      await userService.updateUserWithNameLowerCase(uid, _controllerName.text);
 
       logger.d("User document updated successfully");
 
@@ -114,9 +118,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         Navigator.of(context).pop(); // Dismiss the loading indicator
         // Navigate to the genre selection page
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-              builder: (context) => GenreSelectionPage(
-                  auth: widget.auth, firestore: widget.firestore)),
+          MaterialPageRoute(builder: (context) => const GenreSelectionPage()),
         );
       }
     } catch (e) {
@@ -240,7 +242,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     _controllerUsername.addListener(() {
       _checkUsernameAvailability(_controllerUsername.text);
     });
-    _userService = UserService(auth: widget.auth, firestore: widget.firestore);
   }
 
   @override

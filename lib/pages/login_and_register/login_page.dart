@@ -1,34 +1,21 @@
 import 'dart:async';
-import 'package:dima_project/services/auth.dart';
-import 'package:dima_project/services/user_service.dart';
+import 'package:dima_project/services/custom_auth.dart';
 import 'package:dima_project/services/fcm_service.dart';
-import 'package:dima_project/services/google_auth.dart';
+import 'package:dima_project/services/custom_google_auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:dima_project/widgets/my_textfield.dart';
 import 'package:flutter/gestures.dart';
 import 'package:dima_project/pages/login_and_register/register_page.dart';
 import 'package:dima_project/pages/login_and_register/reset_password_page.dart';
 import 'package:dima_project/widgets/custom_submit_button.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:provider/provider.dart';
 
 class LoginPage extends StatefulWidget {
-  final FirebaseAuth? auth;
-  final FirebaseFirestore? firestore;
-  final GoogleSignIn? googleSignIn;
-  final UserService? userService;
-  LoginPage(
-      {super.key,
-      FirebaseAuth? auth,
-      FirebaseFirestore? firestore,
-      GoogleSignIn? googleSignIn,
-      UserService? userService})
-      : auth = auth ?? FirebaseAuth.instance,
-        firestore = firestore ?? FirebaseFirestore.instance,
-        googleSignIn = googleSignIn ?? GoogleSignIn(),
-        userService = userService ?? UserService();
+  const LoginPage({
+    super.key,
+  });
 
   @override
   State<LoginPage> createState() => LoginPageState();
@@ -42,6 +29,8 @@ class LoginPageState extends State<LoginPage> {
   final TextEditingController _controllerPassword = TextEditingController();
 
   Future<void> signInWithEmailAndPassword() async {
+    final auth = Provider.of<FirebaseAuth>(context, listen: false);
+
     BuildContext dialogContext = context;
     //show loading circle
     showDialog(
@@ -61,7 +50,7 @@ class LoginPageState extends State<LoginPage> {
     }
     try {
       _cleanErrorMessage();
-      await Auth(firebaseAuth: widget.auth).signInWithEmailAndPassword(
+      await CustomAuth(firebaseAuth: auth).signInWithEmailAndPassword(
           email: _controllerEmail.text, password: _controllerPassword.text);
 
       FirebaseMessaging messaging = FirebaseMessaging.instance;
@@ -87,10 +76,7 @@ class LoginPageState extends State<LoginPage> {
   void _forgotPassword() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-          builder: (context) => ResetPasswordPage(
-                auth: widget.auth,
-              )),
+      MaterialPageRoute(builder: (context) => const ResetPasswordPage()),
     );
   }
 
@@ -257,11 +243,7 @@ class LoginPageState extends State<LoginPage> {
                         ),
                         child: GestureDetector(
                           key: const Key('google_sign_in_button'),
-                          onTap: () => AuthService(
-                                  googleSignIn: widget.googleSignIn,
-                                  auth: widget.auth,
-                                  firestore: widget.firestore,
-                                  userService: widget.userService)
+                          onTap: () => Provider.of<CustomGoogleAuth>(context)
                               .signInWithGoogle(),
                           child: Image.asset(
                             'lib/assets/google.png',

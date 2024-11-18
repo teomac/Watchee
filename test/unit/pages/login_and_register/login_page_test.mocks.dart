@@ -5,7 +5,7 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i6;
 
-import 'package:dima_project/services/auth.dart' as _i5;
+import 'package:dima_project/services/custom_auth.dart' as _i5;
 import 'package:firebase_auth/firebase_auth.dart' as _i4;
 import 'package:firebase_core/firebase_core.dart' as _i3;
 import 'package:logger/logger.dart' as _i2;
@@ -81,7 +81,7 @@ class _FakeConfirmationResult_4 extends _i1.SmartFake
 /// A class which mocks [Auth].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockAuth extends _i1.Mock implements _i5.Auth {
+class MockAuth extends _i1.Mock implements _i5.CustomAuth {
   MockAuth() {
     _i1.throwOnMissingStub(this);
   }

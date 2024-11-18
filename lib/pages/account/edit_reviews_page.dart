@@ -2,6 +2,7 @@ import 'package:dima_project/models/movie_review.dart';
 import 'package:dima_project/models/user.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class EditReviewsPage extends StatefulWidget {
   final MyUser user;
@@ -16,7 +17,6 @@ class EditReviewsPage extends StatefulWidget {
 
 class _EditReviewsPageState extends State<EditReviewsPage> {
   final List<MovieReview> _selectedReviews = [];
-  final UserService _userService = UserService();
   MyUser? _currentUser;
 
   @override
@@ -26,8 +26,9 @@ class _EditReviewsPageState extends State<EditReviewsPage> {
   }
 
   Future<void> _initializeData() async {
+    final userService = Provider.of<UserService>(context, listen: false);
     try {
-      final currentUser = await _userService.getCurrentUser();
+      final currentUser = await userService.getCurrentUser();
       if (currentUser != null) {
         _currentUser = currentUser;
       }
@@ -51,6 +52,7 @@ class _EditReviewsPageState extends State<EditReviewsPage> {
   }
 
   Future<void> _deleteSelectedReviews() async {
+    final userService = Provider.of<UserService>(context, listen: false);
     bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
@@ -81,7 +83,7 @@ class _EditReviewsPageState extends State<EditReviewsPage> {
 
     if (confirmed == true) {
       try {
-        await _userService.deleteReviews(_currentUser!.id, _selectedReviews);
+        await userService.deleteReviews(_currentUser!.id, _selectedReviews);
         setState(() {
           widget.userReviews
               .removeWhere((review) => _selectedReviews.contains(review));

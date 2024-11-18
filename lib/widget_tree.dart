@@ -1,30 +1,21 @@
 import 'package:dima_project/pages/dispatcher.dart';
-import 'package:dima_project/services/user_service.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dima_project/pages/login_and_register/login_page.dart';
 import 'package:dima_project/pages/login_and_register/welcome_page.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:provider/provider.dart';
 
 class WidgetTree extends StatelessWidget {
-  final FirebaseAuth auth;
-  final FirebaseFirestore firestore;
-  final GoogleSignIn googleSignIn;
-  final UserService userService;
-  WidgetTree(
-      {super.key,
-      FirebaseAuth? auth,
-      FirebaseFirestore? firestore,
-      GoogleSignIn? googleSignIn,
-      UserService? userService})
-      : auth = auth ?? FirebaseAuth.instance,
-        firestore = firestore ?? FirebaseFirestore.instance,
-        googleSignIn = googleSignIn ?? GoogleSignIn(),
-        userService = userService ?? UserService();
+  const WidgetTree({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<FirebaseAuth>(context);
+    final firestore = Provider.of<FirebaseFirestore>(context);
+
     return StreamBuilder<User?>(
       stream: auth.authStateChanges(),
       builder: (context, snapshot) {
@@ -50,23 +41,15 @@ class WidgetTree extends StatelessWidget {
                           userData['name'].isNotEmpty)) {
                     return const Dispatcher();
                   }
-                  return WelcomeScreen(auth: auth, firestore: firestore);
+                  return const WelcomeScreen();
                 }
               }
-              return LoginPage(
-                  auth: auth,
-                  firestore: firestore,
-                  googleSignIn: googleSignIn,
-                  userService: userService);
+              return const LoginPage();
             },
           );
         } else {
           // User is not signed in
-          return LoginPage(
-              auth: auth,
-              firestore: firestore,
-              googleSignIn: googleSignIn,
-              userService: userService);
+          return const LoginPage();
         }
       },
     );

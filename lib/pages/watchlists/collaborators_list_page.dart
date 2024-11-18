@@ -2,29 +2,24 @@ import 'package:dima_project/models/watchlist.dart';
 import 'package:flutter/material.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:dima_project/models/user.dart';
+import 'package:provider/provider.dart';
 
 class CollaboratorsListPage extends StatefulWidget {
   final WatchList watchlist;
-  final UserService? userService;
 
-  const CollaboratorsListPage(
-      {super.key, required this.watchlist, this.userService});
+  const CollaboratorsListPage({super.key, required this.watchlist});
 
   @override
   State<CollaboratorsListPage> createState() => _CollaboratorsListPageState();
 }
 
 class _CollaboratorsListPageState extends State<CollaboratorsListPage> {
-  UserService _userService = UserService();
   List<MyUser> _collaborators = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    if (widget.userService != null) {
-      _userService = widget.userService!;
-    }
     _loadCollaborators();
   }
 
@@ -33,7 +28,9 @@ class _CollaboratorsListPageState extends State<CollaboratorsListPage> {
     try {
       if (widget.watchlist.collaborators.isNotEmpty) {
         for (final userId in widget.watchlist.collaborators) {
-          final collaborator = await _userService.getUser(userId);
+          final collaborator =
+              await Provider.of<UserService>(context, listen: false)
+                  .getUser(userId);
           if (collaborator != null) {
             collaborators.add(collaborator);
           }

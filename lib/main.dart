@@ -16,6 +16,10 @@ import 'package:logger/logger.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:dima_project/models/user.dart';
 import 'package:dima_project/services/user_service.dart';
+import 'package:dima_project/services/watchlist_service.dart';
+import 'package:dima_project/services/custom_auth.dart';
+import 'package:dima_project/services/custom_google_auth.dart';
+import 'package:dima_project/services/notifications_service.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/services.dart';
@@ -61,10 +65,66 @@ Future<void> initializeApp() async {
   final initialUri = await appLinks.getInitialLink();
 
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeProvider()..loadThemeMode(),
-      child: MyApp(initialUri: initialUri),
-    ),
+    MultiProvider(providers: [
+      //thememode provider
+      ChangeNotifierProvider(
+        create: (_) => ThemeProvider()..loadThemeMode(),
+      ),
+
+      //firebaseauth provider
+      Provider<FirebaseAuth>(
+        create: (_) => FirebaseAuth.instance,
+      ),
+
+      //firestore provider
+      Provider<FirebaseFirestore>(
+        create: (_) => FirebaseFirestore.instance,
+      ),
+
+      //google sign in provider
+      Provider<GoogleSignIn>(
+        create: (_) => GoogleSignIn(),
+      ),
+
+      //custom auth service provider
+      ProxyProvider<FirebaseAuth, CustomAuth>(
+        update: (_, auth, __) => CustomAuth(firebaseAuth: auth),
+      ),
+
+      //user service provider
+      ProxyProvider2<FirebaseAuth, FirebaseFirestore, UserService>(
+        update: (_, auth, firestore, __) => UserService(
+          auth: auth,
+          firestore: firestore,
+        ),
+      ),
+      //custom google auth service provider
+      ProxyProvider4<FirebaseAuth, FirebaseFirestore, GoogleSignIn, UserService,
+          CustomGoogleAuth>(
+        update: (_, auth, firestore, googleSignIn, userService, __) =>
+            CustomGoogleAuth(
+          auth: auth,
+          firestore: firestore,
+          googleSignIn: googleSignIn,
+          userService: userService,
+        ),
+      ),
+      //watchlist service provider
+      ProxyProvider2<FirebaseFirestore, UserService, WatchlistService>(
+        update: (_, firestore, userService, __) => WatchlistService(
+          firestore: firestore,
+          userService: userService,
+        ),
+      ),
+      //fcm service provider
+      Provider<FCMService>(
+        create: (_) => FCMService(),
+      ),
+      //notofications service provider
+      Provider<NotificationsService>(
+        create: (_) => NotificationsService(),
+      ),
+    ], child: MyApp(initialUri: initialUri)),
   );
 
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
@@ -85,22 +145,11 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 class MyApp extends StatefulWidget {
   final Uri? initialUri;
-  final FirebaseAuth? auth;
-  final FirebaseFirestore? firestore;
-  final GoogleSignIn? googleSignIn;
-  final UserService? userService;
 
-  MyApp({
+  const MyApp({
     super.key,
     this.initialUri,
-    FirebaseAuth? auth,
-    FirebaseFirestore? firestore,
-    GoogleSignIn? googleSignIn,
-    UserService? userService,
-  })  : auth = auth ?? FirebaseAuth.instance,
-        firestore = firestore ?? FirebaseFirestore.instance,
-        googleSignIn = googleSignIn ?? GoogleSignIn(),
-        userService = userService ?? UserService();
+  });
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -256,12 +305,7 @@ class _MyAppState extends State<MyApp> {
                     })),
                   ),
                   themeMode: themeProvider.themeMode,
-                  home: OrientationControl(
-                      child: WidgetTree(
-                          auth: widget.auth,
-                          firestore: widget.firestore,
-                          userService: widget.userService,
-                          googleSignIn: widget.googleSignIn)),
+                  home: const OrientationControl(child: WidgetTree()),
                 );
               },
             );

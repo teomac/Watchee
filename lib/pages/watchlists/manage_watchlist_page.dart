@@ -15,6 +15,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:dima_project/pages/watchlists/invite_collaborators_page.dart';
 import 'package:dima_project/pages/watchlists/collaborators_list_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 
 // Events
 abstract class ManageWatchlistEvent {}
@@ -199,7 +200,6 @@ class ManageWatchlistPage extends StatefulWidget {
 
 class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
   late ManageWatchlistBloc _manageWatchlistBloc;
-  final UserService _userService = UserService();
   MyUser? user, currentUser;
   bool canEdit = false;
   WatchList? actualWatchlist;
@@ -209,11 +209,21 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
   final prefs = SharedPreferences.getInstance();
   bool needsRefresh = true;
   List<Movie> sortedMovies = [];
+  late ScrollController _scrollController;
+  bool showName = false;
 
   @override
   void initState() {
     super.initState();
-    _manageWatchlistBloc = ManageWatchlistBloc(WatchlistService());
+    _scrollController = ScrollController()
+      ..addListener(() {
+        setState(() {
+          showName = _scrollController.hasClients &&
+              _scrollController.offset > (100 - kToolbarHeight);
+        });
+      });
+    _manageWatchlistBloc = ManageWatchlistBloc(
+        Provider.of<WatchlistService>(context, listen: false));
     if (needsRefresh) {
       _loadBasics();
     }
@@ -221,11 +231,12 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
   }
 
   Future<void> _loadBasics() async {
+    final userService = Provider.of<UserService>(context, listen: false);
     isCollaborator = false;
     actualWatchlist = await _manageWatchlistBloc._watchlistService
         .getWatchList(widget.userId, widget.watchlistId);
-    user = await _userService.getUser(widget.userId);
-    currentUser = await _userService.getCurrentUser();
+    user = await userService.getUser(widget.userId);
+    currentUser = await userService.getCurrentUser();
 
     //load prefs
     currentSortOption = await prefs
@@ -294,6 +305,7 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
       return const Center(child: CircularProgressIndicator());
     } else if (state is ManageWatchlistLoaded) {
       return CustomScrollView(
+        controller: _scrollController,
         slivers: [
           _buildSliverAppBar(context, state),
           SliverToBoxAdapter(
@@ -316,8 +328,17 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
       expandedHeight: 20.0,
       floating: false,
       pinned: true,
+      stretch: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       elevation: 0,
+      title: AnimatedOpacity(
+        duration: const Duration(milliseconds: 300),
+        opacity: showName ? 1.0 : 0.0,
+        child: Text(state.watchlist.name,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                )),
+      ),
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
         onPressed: () => Navigator.of(context).pop(),
@@ -748,14 +769,16 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
   void _showRemoveMovieMenu(
       BuildContext context, Movie movie, String watchlistName) {
     final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
         return Container(
-          decoration: const BoxDecoration(
-            borderRadius: BorderRadius.only(
+          decoration: BoxDecoration(
+            color: isDarkMode ? Colors.grey[900] : Colors.white,
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),
             ),

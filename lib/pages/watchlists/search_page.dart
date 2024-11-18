@@ -6,6 +6,7 @@ import 'package:dima_project/pages/movies/film_details_page.dart';
 import 'package:dima_project/services/watchlist_service.dart';
 import 'package:logger/logger.dart';
 import 'package:dima_project/services/user_service.dart';
+import 'package:provider/provider.dart';
 
 class SearchPage extends StatefulWidget {
   final WatchList? watchlist;
@@ -27,8 +28,6 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   List<Movie> _searchResults = [];
-  final WatchlistService _watchlistService = WatchlistService();
-  final UserService _userService = UserService();
   final Logger logger = Logger();
   final Set<int> _addedMovies = {};
   List<int> _moviesIds = [];
@@ -120,7 +119,8 @@ class _SearchPageState extends State<SearchPage> {
   void _addMovie(int movieId) async {
     if (widget.watchlist != null) {
       try {
-        await _watchlistService.addMovieToWatchlist(
+        await Provider.of<WatchlistService>(context, listen: false)
+            .addMovieToWatchlist(
           widget.watchlist!.userID,
           widget.watchlist!.id,
           movieId,
@@ -148,7 +148,8 @@ class _SearchPageState extends State<SearchPage> {
     } else {
       if (widget.isLiked!) {
         try {
-          await _userService.addToLikedMovies(widget.userId!, movieId);
+          await Provider.of<UserService>(context, listen: false)
+              .addToLikedMovies(widget.userId!, movieId);
           setState(() {
             _addedMovies.add(movieId);
           });
@@ -171,7 +172,8 @@ class _SearchPageState extends State<SearchPage> {
         }
       } else if (widget.isLiked == false) {
         try {
-          await _userService.addToSeenMovies(widget.userId!, movieId);
+          await Provider.of<UserService>(context, listen: false)
+              .addToSeenMovies(widget.userId!, movieId);
           setState(() {
             _addedMovies.add(movieId);
           });
@@ -199,7 +201,8 @@ class _SearchPageState extends State<SearchPage> {
   void _removeMovie(int movieId) async {
     if (widget.watchlist != null) {
       try {
-        await _watchlistService.removeMovieFromWatchlist(
+        await Provider.of<WatchlistService>(context, listen: false)
+            .removeMovieFromWatchlist(
           widget.watchlist!.userID,
           widget.watchlist!.id,
           movieId,
@@ -227,7 +230,8 @@ class _SearchPageState extends State<SearchPage> {
     } else {
       if (widget.isLiked!) {
         try {
-          await _userService.removeFromLikedMovies(widget.userId!, movieId);
+          await Provider.of<UserService>(context, listen: false)
+              .removeFromLikedMovies(widget.userId!, movieId);
           setState(() {
             _addedMovies.remove(movieId);
           });
@@ -250,7 +254,8 @@ class _SearchPageState extends State<SearchPage> {
         }
       } else if (widget.isLiked == false) {
         try {
-          await _userService.removeFromSeenMovies(widget.userId!, movieId);
+          await Provider.of<UserService>(context, listen: false)
+              .removeFromSeenMovies(widget.userId!, movieId);
           setState(() {
             _addedMovies.remove(movieId);
           });

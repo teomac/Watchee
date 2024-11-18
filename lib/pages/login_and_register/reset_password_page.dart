@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dima_project/widgets/my_textfield.dart';
 import 'package:dima_project/widgets/custom_submit_button.dart';
+import 'package:provider/provider.dart';
 
 class ResetPasswordPage extends StatefulWidget {
-  final FirebaseAuth? auth;
-  ResetPasswordPage({super.key, FirebaseAuth? auth})
-      : auth = auth ?? FirebaseAuth.instance;
+  const ResetPasswordPage({super.key});
 
   @override
   State<ResetPasswordPage> createState() => _ResetPasswordPageState();
@@ -18,6 +17,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   String? successMessage = '';
 
   Future<void> resetPassword() async {
+    final auth = Provider.of<FirebaseAuth>(context, listen: false);
+
     setState(() {
       errorMessage = '';
       successMessage = '';
@@ -30,7 +31,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     );
 
     try {
-      await widget.auth!.sendPasswordResetEmail(
+      await auth.sendPasswordResetEmail(
         email: _controllerEmail.text.trim(),
       );
       setState(() {

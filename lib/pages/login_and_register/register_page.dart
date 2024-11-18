@@ -10,19 +10,15 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:dima_project/services/fcm_service.dart';
 import 'package:dima_project/pages/tos.dart';
 import 'package:dima_project/pages/privacy_policy.dart';
+import 'package:provider/provider.dart';
 
 class RegisterPage extends StatefulWidget {
-  final FirebaseAuth? auth;
-  final FirebaseFirestore? firestore;
   final VoidCallback showLoginPage;
 
-  RegisterPage(
-      {super.key,
-      required this.showLoginPage,
-      FirebaseAuth? auth,
-      FirebaseFirestore? firestore})
-      : auth = auth ?? FirebaseAuth.instance,
-        firestore = firestore ?? FirebaseFirestore.instance;
+  const RegisterPage({
+    super.key,
+    required this.showLoginPage,
+  });
 
   @override
   State<RegisterPage> createState() => RegisterPageState();
@@ -35,6 +31,8 @@ class RegisterPageState extends State<RegisterPage> {
       TextEditingController();
   String? errorMessage = '';
   final Logger logger = Logger();
+  bool isPasswordVisible = false;
+  bool isConfirmPasswordVisible = false;
 
   bool isPasswordValid(String password) {
     if (password.length < 8) return false;
@@ -49,6 +47,19 @@ class RegisterPageState extends State<RegisterPage> {
   }
 
   Future<void> createUserWithEmailAndPassword() async {
+    final auth = Provider.of<FirebaseAuth>(context, listen: false);
+    final firestore = Provider.of<FirebaseFirestore>(context, listen: false);
+
+    if (_controllerEmail.text.isEmpty ||
+        _controllerPassword.text.isEmpty ||
+        _controllerConfirmPassword.text.isEmpty) {
+      setState(() {
+        errorMessage = 'Please fill in all fields.';
+      });
+      logger.w("Empty fields detected");
+      return;
+    }
+
     logger.d("Starting user registration process");
     if (_controllerPassword.text != _controllerConfirmPassword.text) {
       setState(() {
@@ -91,8 +102,7 @@ class RegisterPageState extends State<RegisterPage> {
 
       logger.d("Generating unique username");
       logger.d("Creating user account with Firebase");
-      UserCredential userCredential =
-          await widget.auth!.createUserWithEmailAndPassword(
+      UserCredential userCredential = await auth.createUserWithEmailAndPassword(
         email: _controllerEmail.text.trim(),
         password: _controllerPassword.text,
       );
@@ -113,7 +123,7 @@ class RegisterPageState extends State<RegisterPage> {
         );
 
         logger.d("Saving user data to Firestore");
-        await widget.firestore!
+        await firestore
             .collection('users')
             .doc(userCredential.user!.uid)
             .set(newUser.toMap());
@@ -141,9 +151,7 @@ class RegisterPageState extends State<RegisterPage> {
 
         if (mounted) {
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(
-                builder: (context) => WelcomeScreen(
-                    auth: widget.auth, firestore: widget.firestore)),
+            MaterialPageRoute(builder: (context) => const WelcomeScreen()),
             (Route<dynamic> route) => false,
           );
         }
@@ -248,12 +256,26 @@ class RegisterPageState extends State<RegisterPage> {
               MyTextField(
                   controller: _controllerPassword,
                   title: 'Password',
-                  obscureText: true),
+                  obscureText: !isPasswordVisible,
+                  fieldKey: const Key('password_field'),
+                  showVisibilityToggle: true,
+                  onVisibilityToggle: () {
+                    setState(() {
+                      isPasswordVisible = !isPasswordVisible;
+                    });
+                  }),
               const SizedBox(height: 25),
               MyTextField(
                   controller: _controllerConfirmPassword,
                   title: 'Confirm password',
-                  obscureText: true),
+                  obscureText: !isConfirmPasswordVisible,
+                  fieldKey: const Key('confirm_password_field'),
+                  showVisibilityToggle: true,
+                  onVisibilityToggle: () {
+                    setState(() {
+                      isConfirmPasswordVisible = !isConfirmPasswordVisible;
+                    });
+                  }),
               const SizedBox(height: 25),
               _errorMessage(),
               const SizedBox(height: 20),
@@ -283,5 +305,13 @@ class RegisterPageState extends State<RegisterPage> {
             ],
           ),
         )));
+  }
+
+  @override
+  void dispose() {
+    _controllerEmail.dispose();
+    _controllerPassword.dispose();
+    _controllerConfirmPassword.dispose();
+    super.dispose();
   }
 }

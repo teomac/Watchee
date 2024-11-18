@@ -29,7 +29,7 @@ void main() {
   Widget createTestableApp() {
     return ChangeNotifierProvider(
       create: (_) => ThemeProvider()..loadThemeMode(),
-      child: MyApp(initialUri: null),
+      child: const MyApp(initialUri: null),
     );
   }
 

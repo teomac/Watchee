@@ -3,11 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dima_project/models/user.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:dima_project/services/user_menu_manager.dart';
-import 'package:rxdart/rxdart.dart';
 import 'package:logger/logger.dart';
 import 'package:dima_project/pages/account/user_profile_page.dart';
 import 'package:dima_project/widgets/user_search_bar_widget.dart';
 import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
 
 // Events
 abstract class FollowEvent {}
@@ -56,27 +56,28 @@ class SearchPerformedWithNoResults extends FollowState {}
 
 // BLoC
 class FollowBloc extends Bloc<FollowEvent, FollowState> {
-  final UserService _userService;
   final Logger logger = Logger();
+  final UserService userService;
 
-  FollowBloc(this._userService) : super(FollowInitial()) {
-    on<LoadFollowData>(_onLoadFollowData);
-    on<SearchUsers>(_onSearchUsers,
-        transformer: (events, mapper) => events
-            .debounceTime(const Duration(milliseconds: 300))
-            .switchMap(mapper));
-    on<UnfollowUser>(_onUnfollowUser);
-    on<RemoveFollower>(_onRemoveFollower);
+  FollowBloc(this.userService) : super(FollowInitial()) {
+    on<LoadFollowData>(
+        (event, emit) => _onLoadFollowData(event, emit, userService));
+    on<SearchUsers>((event, emit) => _onSearchUsers(event, emit, userService));
+
+    on<UnfollowUser>(
+        (event, emit) => _onUnfollowUser(event, emit, userService));
+    on<RemoveFollower>(
+        (event, emit) => _onRemoveFollower(event, emit, userService));
   }
 
-  Future<void> _onLoadFollowData(
-      LoadFollowData event, Emitter<FollowState> emit) async {
+  Future<void> _onLoadFollowData(LoadFollowData event,
+      Emitter<FollowState> emit, UserService userService) async {
     emit(FollowLoading());
     try {
-      final currentUser = await _userService.getCurrentUser();
+      final currentUser = await userService.getCurrentUser();
       if (currentUser != null) {
-        final following = await _userService.getFollowing(currentUser.id);
-        final followers = await _userService.getFollowers(currentUser.id);
+        final following = await userService.getFollowing(currentUser.id);
+        final followers = await userService.getFollowers(currentUser.id);
         emit(FollowDataLoaded(following, followers));
       } else {
         emit(FollowError("User not found"));
@@ -87,15 +88,15 @@ class FollowBloc extends Bloc<FollowEvent, FollowState> {
     }
   }
 
-  Future<void> _onSearchUsers(
-      SearchUsers event, Emitter<FollowState> emit) async {
+  Future<void> _onSearchUsers(SearchUsers event, Emitter<FollowState> emit,
+      UserService userService) async {
     if (event.query.length < 3) {
       emit(SearchResultsLoaded([]));
       return;
     }
 
     try {
-      final users = await _userService.searchUsers(event.query);
+      final users = await userService.searchUsers(event.query);
       if (users.isEmpty) {
         emit(SearchPerformedWithNoResults());
       } else {
@@ -107,14 +108,14 @@ class FollowBloc extends Bloc<FollowEvent, FollowState> {
     }
   }
 
-  Future<void> _onUnfollowUser(
-      UnfollowUser event, Emitter<FollowState> emit) async {
+  Future<void> _onUnfollowUser(UnfollowUser event, Emitter<FollowState> emit,
+      UserService userService) async {
     try {
       final currentState = state;
       if (currentState is FollowDataLoaded) {
-        final currentUser = await _userService.getCurrentUser();
+        final currentUser = await userService.getCurrentUser();
         if (currentUser != null) {
-          await _userService.unfollowUser(currentUser.id, event.user.id);
+          await userService.unfollowUser(currentUser.id, event.user.id);
 
           // Update the local list of following users without reloading everything
           final updatedFollowing = List<MyUser>.from(currentState.following)
@@ -130,12 +131,12 @@ class FollowBloc extends Bloc<FollowEvent, FollowState> {
     }
   }
 
-  Future<void> _onRemoveFollower(
-      RemoveFollower event, Emitter<FollowState> emit) async {
+  Future<void> _onRemoveFollower(RemoveFollower event,
+      Emitter<FollowState> emit, UserService userService) async {
     try {
-      final currentUser = await _userService.getCurrentUser();
+      final currentUser = await userService.getCurrentUser();
       if (currentUser != null) {
-        await _userService.removeFollower(currentUser.id, event.user.id);
+        await userService.removeFollower(currentUser.id, event.user.id);
         add(LoadFollowData());
       }
     } catch (e) {
@@ -160,7 +161,7 @@ class _FollowViewState extends State<FollowView> {
   @override
   void initState() {
     super.initState();
-    _followBloc = FollowBloc(UserService());
+    _followBloc = FollowBloc(Provider.of<UserService>(context, listen: false));
     if (isLoadingNecessary) {
       _followBloc.add(LoadFollowData());
     }

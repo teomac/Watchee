@@ -2,14 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dima_project/pages/dispatcher.dart';
+import 'package:provider/provider.dart';
 
 class GenreSelectionPage extends StatefulWidget {
-  final FirebaseAuth? auth;
-  final FirebaseFirestore? firestore;
-  GenreSelectionPage(
-      {super.key, FirebaseAuth? auth, FirebaseFirestore? firestore})
-      : auth = auth ?? FirebaseAuth.instance,
-        firestore = firestore ?? FirebaseFirestore.instance;
+  const GenreSelectionPage({super.key});
 
   @override
   State<GenreSelectionPage> createState() => _GenreSelectionPageState();
@@ -50,9 +46,12 @@ class _GenreSelectionPageState extends State<GenreSelectionPage> {
   }
 
   void _saveGenresAndNavigate() async {
+    final auth = Provider.of<FirebaseAuth>(context, listen: false);
+    final firestore = Provider.of<FirebaseFirestore>(context, listen: false);
+
     if (selectedGenres.length >= 3) {
-      String uid = widget.auth!.currentUser!.uid;
-      await widget.firestore!.collection('users').doc(uid).update({
+      String uid = auth.currentUser!.uid;
+      await firestore.collection('users').doc(uid).update({
         'favoriteGenres': selectedGenres,
       });
       if (mounted) {

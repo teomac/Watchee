@@ -5,9 +5,13 @@ import 'package:logger/logger.dart';
 import 'package:dima_project/services/user_service.dart';
 
 class WatchlistService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore;
   final Logger logger = Logger();
-  final UserService _userService = UserService();
+  final UserService _userService;
+
+  WatchlistService({FirebaseFirestore? firestore, UserService? userService})
+      : _firestore = firestore ?? FirebaseFirestore.instance,
+        _userService = userService ?? UserService();
 
   Future<void> createWatchList(MyUser user, String name, bool isPrivate) async {
     DocumentReference docRef = await _firestore

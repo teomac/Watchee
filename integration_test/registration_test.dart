@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import './test_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:dima_project/theme/theme_provider.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -47,145 +48,89 @@ void main() {
   Widget createTestableApp() {
     return ChangeNotifierProvider(
       create: (_) => ThemeProvider()..loadThemeMode(),
-      child: MyApp(initialUri: null),
+      child: const MyApp(initialUri: null),
     );
   }
 
-  group('Registration successfull', () {
-    testWidgets('Complete registration flow test', (WidgetTester tester) async {
+  group('Registration UI and Navigation Tests', () {
+    testWidgets('Test registration page UI elements',
+        (WidgetTester tester) async {
       await tester.pumpWidget(createTestableApp());
       await tester.pumpAndSettle();
 
-      // Step 1: Navigate to Registration page
-      final registerNowButton = find.text('Not a member? Register now');
-      await tester.tap(registerNowButton);
+      // Navigate to registration page
+      await tester.tap(find.text('Not a member? Register now'));
       await tester.pumpAndSettle();
 
-      // Step 2: Fill registration form
-      final emailField = find.widgetWithText(TextField, 'Email');
-      final passwordField = find
-          .ancestor(
-            of: find.text('Password'),
-            matching: find.byType(TextField),
-          )
-          .first;
-      final confirmPasswordField =
-          find.widgetWithText(TextField, 'Confirm password');
+      // Verify all UI elements are present
+      expect(find.text('Register'), findsOneWidget);
+      expect(find.widgetWithText(TextField, 'Email'), findsOneWidget);
+      expect(find.widgetWithText(TextField, 'Password'), findsOneWidget);
+      expect(
+          find.widgetWithText(TextField, 'Confirm password'), findsOneWidget);
+      expect(find.byType(ElevatedButton), findsOneWidget);
+      expect(find.text('Already have an account? Login now'), findsOneWidget);
 
-      await tester.enterText(emailField, testEmail);
-      await tester.enterText(passwordField, testPassword);
-      await tester.enterText(confirmPasswordField, testPassword);
+      // Test back navigation
+      await tester.tap(find.text('Already have an account? Login now'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sign In'), findsOneWidget);
+    });
+  });
 
-      // Submit registration
-      final registerButton = find.byKey(const Key('register_button'));
-      await tester.tap(registerButton);
-      await tester.pumpAndSettle(const Duration(seconds: 2));
-
-      // Step 3: Fill Welcome page form
-      final nameField = find.widgetWithText(TextField, 'Name *');
-      final usernameField = find.widgetWithText(TextField, 'Username *');
-
-      await tester.enterText(nameField, testName);
-      await tester.enterText(usernameField, testUsername);
-
-      // Wait for username availability check
-      await Future.delayed(const Duration(seconds: 2));
+  group('Registration Form Validation Tests', () {
+    testWidgets('Test empty fields validation', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestableApp());
       await tester.pumpAndSettle();
 
-      final nextButton = find.byKey(const Key('next_button'));
-      await tester.tap(nextButton);
+      await tester.tap(find.text('Not a member? Register now'));
       await tester.pumpAndSettle();
 
-      // Step 4: Genre Selection
-      // Find AppBar title
-      final appBarTitle = find.byType(AppBar);
-      expect(appBarTitle, findsOneWidget);
-      debugPrint('Found AppBar');
+      // Test empty submission
+      await tester.tap(find.byKey(const Key('register_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('Please fill in all fields.'), findsOneWidget);
+    });
 
-      // Find all FilterChips within SingleChildScrollView
-      final scrollView = find.byType(SingleChildScrollView);
-      expect(scrollView, findsOneWidget);
-      debugPrint('Found ScrollView');
+    testWidgets('Test invalid email formats', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestableApp());
+      await tester.pumpAndSettle();
 
-      final wrapFinder = find.descendant(
-        of: scrollView,
-        matching: find.byType(Wrap),
-      );
-      expect(wrapFinder, findsOneWidget);
-      debugPrint('Found Wrap widget');
+      await tester.tap(find.text('Not a member? Register now'));
+      await tester.pumpAndSettle();
 
-      // Select first three genres using their text labels
-      final firstThreeGenres = ['Action', 'Adventure', 'Animation'];
-      for (final genre in firstThreeGenres) {
-        debugPrint('Attempting to tap genre: $genre');
+      final invalidEmails = [
+        'notanemail',
+        'missing@',
+        '@nodomain.com',
+        'invalid@email.',
+        'spaces in@email.com'
+      ];
 
-        // Find the Text widget within FilterChip
-        final genreText = find.text(genre);
-        expect(genreText, findsOneWidget,
-            reason: 'Could not find genre: $genre');
+      for (var email in invalidEmails) {
+        await tester.enterText(find.widgetWithText(TextField, 'Email'), email);
+        await tester.enterText(
+            find
+                .ancestor(
+                    of: find.text('Password'), matching: find.byType(TextField))
+                .first,
+            testPassword);
+        await tester.enterText(
+            find.widgetWithText(TextField, 'Confirm password'), testPassword);
 
-        // Get the center position of the text widget
-        final center = tester.getCenter(genreText);
-
-        // Tap at that position
-        await tester.tapAt(center);
+        await tester.tap(find.byKey(const Key('register_button')));
         await tester.pumpAndSettle();
-        debugPrint('Tapped genre: $genre');
-      }
 
-      // Find and tap continue button
-
-      final continueButton = find.byKey(const Key('continue_button'));
-      expect(continueButton, findsOneWidget);
-      await tester.tap(continueButton);
-      await Future.delayed(const Duration(seconds: 3));
-      await tester.pumpAndSettle();
-
-      try {
-        // Verify we're on the home page
-        expect(find.text('Home'), findsOneWidget);
-
-        debugPrint('Registration flow completed successfully');
-      } catch (e) {
-        // If we get an error, log the current widget tree
-        debugDumpApp();
-        rethrow;
+        expect(
+            find.text('Please enter a valid email address.'), findsOneWidget);
       }
     });
   });
 
-  group('Registration failed', () {
-    testWidgets('Registration with invalid email format',
+  group('Welcome Page Tests', () {
+    testWidgets('Test name and username validation',
         (WidgetTester tester) async {
-      await tester.pumpWidget(createTestableApp());
-      await tester.pumpAndSettle();
-
-      // Navigate to Registration
-      await tester.tap(find.text('Not a member? Register now'));
-      await tester.pumpAndSettle();
-
-      // Enter invalid email
-      await tester.enterText(
-          find.widgetWithText(TextField, 'Email'), 'invalid-email');
-      await tester.enterText(
-          find
-              .ancestor(
-                of: find.text('Password'),
-                matching: find.byType(TextField),
-              )
-              .first,
-          testPassword);
-      await tester.enterText(
-          find.widgetWithText(TextField, 'Confirm password'), testPassword);
-
-      await tester.tap(find.text('Register'));
-      await tester.pumpAndSettle();
-
-      // Verify error message
-      expect(find.text('Please enter a valid email address.'), findsOneWidget);
-    });
-
-    testWidgets('Registration with weak password', (WidgetTester tester) async {
+      // Complete registration first
       await tester.pumpWidget(createTestableApp());
       await tester.pumpAndSettle();
 
@@ -197,61 +142,44 @@ void main() {
       await tester.enterText(
           find
               .ancestor(
-                of: find.text('Password'),
-                matching: find.byType(TextField),
-              )
-              .first,
-          'weak');
-      await tester.enterText(
-          find.widgetWithText(TextField, 'Confirm password'), 'weak');
-
-      await tester.tap(find.text('Register'));
-      await tester.pumpAndSettle();
-
-      expect(
-          find.text(
-              'Password must be at least 8 characters long, contain 1 uppercase letter, 1 number, and 1 special character.'),
-          findsOneWidget);
-    });
-
-    testWidgets('Welcome page with empty fields', (WidgetTester tester) async {
-      // First complete registration
-      await tester.pumpWidget(createTestableApp());
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Not a member? Register now'));
-      await tester.pumpAndSettle();
-
-      await tester.enterText(
-          find.widgetWithText(TextField, 'Email'), testEmail);
-      await tester.enterText(
-          find
-              .ancestor(
-                of: find.text('Password'),
-                matching: find.byType(TextField),
-              )
+                  of: find.text('Password'), matching: find.byType(TextField))
               .first,
           testPassword);
       await tester.enterText(
           find.widgetWithText(TextField, 'Confirm password'), testPassword);
-      await tester.tap(find.text('Register'));
+      await tester.tap(find.byKey(const Key('register_button')));
       await tester.pumpAndSettle(const Duration(seconds: 2));
 
-      // Try to proceed without filling fields
-      await tester.tap(find.text('Next'));
+      // Test empty fields
+      await tester.tap(find.byKey(const Key('next_button')));
       await tester.pumpAndSettle();
+      expect(find.text('Please fill in all fields.'), findsOneWidget);
 
-      // Verify error message in snackbar
-      expect(find.text('Please fill in all fields'), findsOneWidget);
+      // Test name only
+      await tester.enterText(
+          find.widgetWithText(TextField, 'Name *'), testName);
+      await tester.tap(find.byKey(const Key('next_button')));
+      await tester.pumpAndSettle();
+      expect(find.text('Please fill in all fields.'), findsOneWidget);
+
+      // Test username only
+      await tester.enterText(find.widgetWithText(TextField, 'Name *'), '');
+      await tester.enterText(
+          find.widgetWithText(TextField, 'Username *'), testUsername);
+      await tester.pump(const Duration(seconds: 2));
+      await tester.tap(find.byKey(const Key('next_button')));
+
+      await tester.pumpAndSettle();
+      expect(find.text('Please fill in all fields.'), findsOneWidget);
     });
+  });
 
-    testWidgets('Genre selection with less than 3 genres',
-        (WidgetTester tester) async {
+  group('Genre Selection Tests', () {
+    testWidgets('Test genre selection validation', (WidgetTester tester) async {
       // Complete registration and welcome page first
       await tester.pumpWidget(createTestableApp());
       await tester.pumpAndSettle();
 
-      // Registration
       await tester.tap(find.text('Not a member? Register now'));
       await tester.pumpAndSettle();
 
@@ -260,9 +188,7 @@ void main() {
       await tester.enterText(
           find
               .ancestor(
-                of: find.text('Password'),
-                matching: find.byType(TextField),
-              )
+                  of: find.text('Password'), matching: find.byType(TextField))
               .first,
           testPassword);
       await tester.enterText(
@@ -270,59 +196,288 @@ void main() {
       await tester.tap(find.text('Register'));
       await tester.pumpAndSettle(const Duration(seconds: 2));
 
-      // Welcome page
       await tester.enterText(
           find.widgetWithText(TextField, 'Name *'), testName);
       await tester.enterText(
           find.widgetWithText(TextField, 'Username *'), testUsername2);
-
-      // Wait for username availability check
-      await Future.delayed(const Duration(seconds: 2));
-      await tester.pumpAndSettle();
-
+      await tester.pump(const Duration(seconds: 2));
       await tester.tap(find.byKey(const Key('next_button')));
       await tester.pumpAndSettle();
 
-      // Step 4: Genre Selection
-      // Find AppBar title
-      final appBarTitle = find.byType(AppBar);
-      expect(appBarTitle, findsOneWidget);
-      debugPrint('Found AppBar');
+      // Verify initial state
+      expect(find.byType(FilterChip), findsWidgets);
+      expect(
+          tester
+              .widget<ElevatedButton>(
+                  find.widgetWithText(ElevatedButton, 'Continue'))
+              .onPressed,
+          isNull);
 
-      // Find all FilterChips within SingleChildScrollView
-      final scrollView = find.byType(SingleChildScrollView);
-      expect(scrollView, findsOneWidget);
-      debugPrint('Found ScrollView');
+      // Select one genre
+      await tester.tap(find.text('Action'));
+      await tester.pumpAndSettle();
 
-      final wrapFinder = find.descendant(
-        of: scrollView,
-        matching: find.byType(Wrap),
-      );
-      expect(wrapFinder, findsOneWidget);
-      debugPrint('Found Wrap widget');
+      // Verify button still disabled with only one selection
+      expect(
+          tester
+              .widget<ElevatedButton>(
+                  find.widgetWithText(ElevatedButton, 'Continue'))
+              .onPressed,
+          isNull);
 
-      // Select first two genres using their text labels
-      final firstTwoGenres = ['Action', 'Adventure'];
-      for (final genre in firstTwoGenres) {
-        debugPrint('Attempting to tap genre: $genre');
+      // Select two more genres
+      await tester.tap(find.text('Adventure'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Animation'));
+      await tester.pumpAndSettle();
 
-        // Find the Text widget within FilterChip
-        final genreText = find.text(genre);
-        expect(genreText, findsOneWidget,
-            reason: 'Could not find genre: $genre');
+      // Verify button is enabled with three selections
+      expect(
+          tester
+              .widget<ElevatedButton>(
+                  find.widgetWithText(ElevatedButton, 'Continue'))
+              .onPressed,
+          isNotNull);
 
-        // Get the center position of the text widget
-        final center = tester.getCenter(genreText);
+      // Test unselecting genre
+      await tester.tap(find.text('Action'));
+      await tester.pumpAndSettle();
 
-        // Tap at that position
-        await tester.tapAt(center);
+      // Verify button is disabled again
+      expect(
+          tester
+              .widget<ElevatedButton>(
+                  find.widgetWithText(ElevatedButton, 'Continue'))
+              .onPressed,
+          isNull);
+    });
+  });
+
+  group('Complete Registration Flow', () {
+    testWidgets('Successful registration flow test',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestableApp());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Not a member? Register now'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+          find.widgetWithText(TextField, 'Email'), testEmail);
+      await tester.enterText(
+          find
+              .ancestor(
+                  of: find.text('Password'), matching: find.byType(TextField))
+              .first,
+          testPassword);
+      await tester.enterText(
+          find.widgetWithText(TextField, 'Confirm password'), testPassword);
+      await tester.tap(find.text('Register'));
+      await tester.pumpAndSettle(const Duration(seconds: 2));
+
+      await tester.enterText(
+          find.widgetWithText(TextField, 'Name *'), testName);
+      await tester.enterText(
+          find.widgetWithText(TextField, 'Username *'), testUsername);
+      await tester.pump(const Duration(seconds: 2));
+      await tester.tap(find.byKey(const Key('next_button')));
+      await tester.pumpAndSettle();
+
+      // Select three genres
+      await tester.tap(find.text('Action'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Adventure'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Animation'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Continue'));
+      await Future.delayed(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+
+      // Verify successful registration
+      expect(find.text('Home'), findsOneWidget);
+      expect(FirebaseAuth.instance.currentUser, isNotNull);
+    });
+  });
+
+  group('Terms and Privacy Policy Tests', () {
+    testWidgets('Test Terms of Service page access and content',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestableApp());
+      await tester.pumpAndSettle();
+
+      // Navigate to registration
+      await tester.tap(find.text('Not a member? Register now'));
+      await tester.pumpAndSettle();
+
+      // Look for and tap Terms of Service link
+      final termsLink = find.text('Terms of Service');
+      expect(termsLink, findsOneWidget);
+      await tester.tap(termsLink);
+      await tester.pumpAndSettle();
+
+      // Verify Terms of Service page content
+      expect(find.text('Terms of Service'), findsWidgets);
+      expect(find.byType(AppBar), findsOneWidget);
+
+      // Check for specific sections
+      expect(find.text('1. Introduction'), findsOneWidget);
+      expect(find.text('2. Data Sources and Attribution'), findsOneWidget);
+      expect(find.text('3. User Accounts'), findsOneWidget);
+
+      // Test navigation back
+      final backButton = find.byType(BackButton);
+      expect(backButton, findsOneWidget);
+      await tester.tap(backButton);
+      await tester.pumpAndSettle();
+
+      // Verify we're back on registration page
+      expect(find.text('Register'), findsOneWidget);
+    });
+
+    group('Terms and Privacy Policy Tests', () {
+      testWidgets('Test Terms of Service page access and functionality',
+          (WidgetTester tester) async {
+        await tester.pumpWidget(createTestableApp());
         await tester.pumpAndSettle();
-      }
 
-      // Verify Continue button is disabled
-      final continueButton = tester.widget<ElevatedButton>(
-          find.widgetWithText(ElevatedButton, 'Continue'));
-      expect(continueButton.onPressed, isNull);
+        // Navigate to registration
+        await tester.tap(find.text('Not a member? Register now'));
+        await tester.pumpAndSettle();
+
+        // Look for and tap Terms of Service link
+        final termsLink = find.text('Terms of Service');
+        expect(termsLink, findsOneWidget);
+        await tester.tap(termsLink);
+        await tester.pumpAndSettle();
+
+        // Verify Terms of Service page content
+        expect(find.text('Terms of Service'), findsWidgets);
+        expect(find.byType(AppBar), findsOneWidget);
+        expect(find.byType(Markdown), findsOneWidget);
+
+        // Try to find some specific content sections
+        expect(find.text('1. Introduction'), findsOneWidget);
+        expect(find.textContaining('TMDB Attribution'), findsOneWidget);
+
+        // Test scrolling
+        await tester.dragFrom(const Offset(0, 300), const Offset(0, -300));
+        await tester.pumpAndSettle();
+
+        // Test back navigation
+        final backButton = find.byType(BackButton);
+        expect(backButton, findsOneWidget);
+        await tester.tap(backButton);
+        await tester.pumpAndSettle();
+
+        // Verify we're back on registration page
+        expect(find.text('Register'), findsOneWidget);
+      });
+
+      testWidgets('Test Privacy Policy page access and functionality',
+          (WidgetTester tester) async {
+        await tester.pumpWidget(createTestableApp());
+        await tester.pumpAndSettle();
+
+        // Navigate to registration
+        await tester.tap(find.text('Not a member? Register now'));
+        await tester.pumpAndSettle();
+
+        // Look for and tap Privacy Policy link
+        final privacyLink = find.text('Privacy Policy');
+        expect(privacyLink, findsOneWidget);
+        await tester.tap(privacyLink);
+        await tester.pumpAndSettle();
+
+        // Verify Privacy Policy page content
+        expect(find.text('Privacy Policy'), findsWidgets);
+        expect(find.byType(AppBar), findsOneWidget);
+        expect(find.byType(Markdown), findsOneWidget);
+
+        // Check for specific privacy policy sections
+        expect(find.text('1. Introduction'), findsOneWidget);
+        expect(find.textContaining('Information We Collect'), findsOneWidget);
+
+        // Test scrolling
+        await tester.dragFrom(const Offset(0, 300), const Offset(0, -300));
+        await tester.pumpAndSettle();
+
+        // Test back navigation
+        final backButton = find.byType(BackButton);
+        expect(backButton, findsOneWidget);
+        await tester.tap(backButton);
+        await tester.pumpAndSettle();
+
+        // Verify we're back on registration page
+        expect(find.text('Register'), findsOneWidget);
+      });
+
+      testWidgets('Test navigation between Terms and Privacy pages',
+          (WidgetTester tester) async {
+        await tester.pumpWidget(createTestableApp());
+        await tester.pumpAndSettle();
+
+        // Navigate to registration
+        await tester.tap(find.text('Not a member? Register now'));
+        await tester.pumpAndSettle();
+
+        // Test Terms of Service navigation
+        await tester.tap(find.text('Terms of Service'));
+        await tester.pumpAndSettle();
+
+        // Verify Terms page content and scroll
+        expect(find.byType(Markdown), findsOneWidget);
+        await tester.dragFrom(const Offset(0, 300), const Offset(0, -300));
+        await tester.pumpAndSettle();
+
+        // Navigate back
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+
+        // Test Privacy Policy navigation
+        await tester.tap(find.text('Privacy Policy'));
+        await tester.pumpAndSettle();
+
+        // Verify Privacy page content and scroll
+        expect(find.byType(Markdown), findsOneWidget);
+        await tester.dragFrom(const Offset(0, 300), const Offset(0, -300));
+        await tester.pumpAndSettle();
+
+        // Navigate back
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+
+        // Verify final return to registration page
+        expect(find.text('Register'), findsOneWidget);
+      });
+
+      testWidgets('Test URL launching functionality',
+          (WidgetTester tester) async {
+        await tester.pumpWidget(createTestableApp());
+        await tester.pumpAndSettle();
+
+        // Navigate to registration
+        await tester.tap(find.text('Not a member? Register now'));
+        await tester.pumpAndSettle();
+
+        // Navigate to Privacy Policy
+        await tester.tap(find.text('Privacy Policy'));
+        await tester.pumpAndSettle();
+
+        // Verify Markdown widget is present
+        expect(find.byType(Markdown), findsOneWidget);
+
+        // Get the Markdown widget
+        final markdownWidget = tester.widget<Markdown>(find.byType(Markdown));
+
+        // Verify onTapLink callback is set
+        expect(markdownWidget.onTapLink, isNotNull);
+
+        // Navigate back
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+      });
     });
   });
 }

@@ -12,6 +12,7 @@ import 'package:dima_project/pages/watchlists/liked_seen_movies_page.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
 
 // Events
 abstract class MyListsEvent {}
@@ -224,7 +225,9 @@ class _MyListsState extends State<MyLists> {
       _loadSortPreference();
       loadBasics();
     }
-    myListsBloc = MyListsBloc(WatchlistService(), UserService());
+    myListsBloc = MyListsBloc(
+        Provider.of<WatchlistService>(context, listen: false),
+        Provider.of<UserService>(context, listen: false));
     needsReload = true;
   }
 
@@ -239,7 +242,8 @@ class _MyListsState extends State<MyLists> {
   }
 
   void loadBasics() async {
-    currentUser = await UserService().getCurrentUser();
+    currentUser =
+        await Provider.of<UserService>(context, listen: false).getCurrentUser();
     myListsBloc.add(LoadMyLists(
         currentSortOptionOWN: currentSortOptionOWN,
         currentSortOptionFOLLOWED: currentSortOptionFOLLOWED));
@@ -586,7 +590,8 @@ class _MyListsState extends State<MyLists> {
   }
 
   Future<String> findCreatorUsername(WatchList watchlist) async {
-    final user = await UserService().getUser(watchlist.userID);
+    final user = await Provider.of<UserService>(context, listen: false)
+        .getUser(watchlist.userID);
     if (user == null) {
       return 'Unknown';
     }

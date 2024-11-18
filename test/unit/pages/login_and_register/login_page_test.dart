@@ -1,11 +1,11 @@
 import 'package:dima_project/pages/login_and_register/login_page.dart';
-import 'package:dima_project/services/auth.dart';
+import 'package:dima_project/services/custom_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-@GenerateMocks([Auth, FirebaseAuth])
+@GenerateMocks([CustomAuth, FirebaseAuth])
 import 'login_page_test.mocks.dart';
 
 void main() {

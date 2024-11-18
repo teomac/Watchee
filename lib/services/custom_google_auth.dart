@@ -5,14 +5,14 @@ import 'package:dima_project/models/user.dart';
 import 'package:dima_project/services/user_service.dart'; // Import UserService
 import 'package:logger/logger.dart';
 
-class AuthService {
+class CustomGoogleAuth {
   final FirebaseAuth _auth;
   final GoogleSignIn _googleSignIn;
   final Logger logger;
   final UserService userService;
   final FirebaseFirestore _firestore;
 
-  AuthService({
+  CustomGoogleAuth({
     FirebaseAuth? auth,
     GoogleSignIn? googleSignIn,
     FirebaseFirestore? firestore,

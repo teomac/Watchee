@@ -2,6 +2,7 @@ import 'package:dima_project/models/watchlist.dart';
 import 'package:flutter/material.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:dima_project/models/user.dart';
+import 'package:provider/provider.dart';
 
 class FollowersListPage extends StatefulWidget {
   final WatchList watchlist;
@@ -13,7 +14,6 @@ class FollowersListPage extends StatefulWidget {
 }
 
 class _FollowersListPageState extends State<FollowersListPage> {
-  final UserService _userService = UserService();
   List<MyUser> _followers = [];
   bool _isLoading = true;
 
@@ -28,7 +28,9 @@ class _FollowersListPageState extends State<FollowersListPage> {
     try {
       if (widget.watchlist.followers.isNotEmpty) {
         for (final followerId in widget.watchlist.followers) {
-          final follower = await _userService.getUser(followerId);
+          final follower =
+              await Provider.of<UserService>(context, listen: false)
+                  .getUser(followerId);
           if (follower != null) {
             followers.add(follower);
           }

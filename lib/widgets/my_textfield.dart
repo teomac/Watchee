@@ -6,14 +6,20 @@ class MyTextField extends StatelessWidget {
   final bool obscureText;
   final TextInputType keyboardType;
   final Widget? suffixIcon;
+  final Key? fieldKey;
+  final VoidCallback? onVisibilityToggle;
+  final bool showVisibilityToggle;
 
   const MyTextField({
     super.key,
     required this.controller,
     required this.title,
     required this.obscureText,
+    this.fieldKey,
     this.keyboardType = TextInputType.text,
-    this.suffixIcon, // Default to text input
+    this.suffixIcon,
+    this.onVisibilityToggle,
+    this.showVisibilityToggle = false,
   });
 
   @override
@@ -21,6 +27,7 @@ class MyTextField extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25.0),
       child: TextField(
+        key: fieldKey,
         controller: controller,
         obscureText: obscureText,
         keyboardType: keyboardType,
@@ -28,7 +35,16 @@ class MyTextField extends StatelessWidget {
           border: const OutlineInputBorder(),
           labelText: title,
           labelStyle: const TextStyle(fontSize: 18),
-          suffixIcon: suffixIcon,
+          suffixIcon: suffixIcon ??
+              (showVisibilityToggle
+                  ? IconButton(
+                      key: Key('visibility_toggle_$title'),
+                      icon: Icon(
+                        obscureText ? Icons.visibility : Icons.visibility_off,
+                      ),
+                      onPressed: onVisibilityToggle,
+                    )
+                  : null),
         ),
       ),
     );

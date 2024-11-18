@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dima_project/models/user.dart';
 import 'package:dima_project/services/user_service.dart';
+import 'package:provider/provider.dart';
 
 class ManageAccountPage extends StatefulWidget {
   final VoidCallback? onFavoriteGenresUpdated;
@@ -20,7 +21,6 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
   late Future<MyUser?> _userFuture;
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
-  final UserService _userService = UserService();
   List<String> _selectedGenres = [];
   final List<String> _allGenres = [
     'Action',
@@ -47,7 +47,8 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
   @override
   void initState() {
     super.initState();
-    _userFuture = UserService().getCurrentUser();
+    _userFuture =
+        Provider.of<UserService>(context, listen: false).getCurrentUser();
     _userFuture.then((user) {
       if (user != null) {
         _usernameController.text = user.username;
@@ -69,6 +70,10 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
   }
 
   Future<void> _saveChanges() async {
+    final userService = Provider.of<UserService>(context, listen: false);
+    final auth = Provider.of<FirebaseAuth>(context, listen: false);
+    final firestore = Provider.of<FirebaseFirestore>(context, listen: false);
+
     if (_usernameController.text.isEmpty || _nameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in all fields')),
@@ -84,9 +89,9 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
     }
 
     bool isUsernameAvailable =
-        await _userService.isUsernameAvailable(_usernameController.text);
+        await userService.isUsernameAvailable(_usernameController.text);
 
-    MyUser? currentUser = await _userService.getCurrentUser();
+    MyUser? currentUser = await userService.getCurrentUser();
     if (currentUser != null &&
         currentUser.username == _usernameController.text) {
       isUsernameAvailable = true;
@@ -101,7 +106,7 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
       }
     }
     try {
-      final String uid = FirebaseAuth.instance.currentUser!.uid;
+      final String uid = auth.currentUser!.uid;
       Map<String, dynamic> updateData = {
         'username': _usernameController.text,
         'name': _nameController.text,
@@ -109,22 +114,17 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
       };
 
       if (_image != null) {
-        String? imageUrl = await UserService().uploadImage(_image!);
+        String? imageUrl = await userService.uploadImage(_image!);
         if (imageUrl != null) {
           updateData['profilePicture'] = imageUrl;
         }
       }
 
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .update(updateData);
+      await firestore.collection('users').doc(uid).update(updateData);
 
-      await UserService()
-          .updateUsernameInReviews(uid, _usernameController.text);
+      await userService.updateUsernameInReviews(uid, _usernameController.text);
 
-      await UserService()
-          .updateUserWithNameLowerCase(uid, _nameController.text);
+      await userService.updateUserWithNameLowerCase(uid, _nameController.text);
 
       if (widget.onFavoriteGenresUpdated != null) {
         widget.onFavoriteGenresUpdated!();
@@ -138,7 +138,7 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
 
       // Refresh user data
       setState(() {
-        _userFuture = UserService().getCurrentUser();
+        _userFuture = userService.getCurrentUser();
       });
     } catch (e) {
       if (mounted) {

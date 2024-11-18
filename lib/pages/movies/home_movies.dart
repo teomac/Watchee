@@ -1,4 +1,5 @@
 import 'package:dima_project/models/genres.dart';
+import 'package:provider/provider.dart';
 import 'package:dima_project/models/movie.dart';
 import 'package:dima_project/models/user.dart';
 import 'package:dima_project/pages/movies/film_details_page.dart';
@@ -31,7 +32,6 @@ class HomeMoviesState extends State<HomeMovies>
   List<Person> _peopleResults = [];
   bool _isSearchExpanded = false;
   bool _isSearching = false;
-  final UserService _userService = UserService();
   MyUser? _currentUser;
   final MovieGenres movieGenres = MovieGenres();
   late TabController _tabController;
@@ -44,7 +44,8 @@ class HomeMoviesState extends State<HomeMovies>
   }
 
   Future<void> _initializeData() async {
-    final currentUser = await _userService.getCurrentUser();
+    final currentUser =
+        await Provider.of<UserService>(context, listen: false).getCurrentUser();
     if (currentUser != null) {
       _currentUser = currentUser;
     }

@@ -9,7 +9,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dima_project/models/movie.dart';
 import 'package:intl/intl.dart';
-import 'package:dima_project/pages/movies/film_details_bloc.dart';
 import 'package:dima_project/api/constants.dart';
 import 'package:logger/logger.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
@@ -17,6 +16,59 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:dima_project/pages/movies/person_details_page.dart';
 import 'package:dima_project/models/person.dart';
 import 'package:dima_project/widgets/squared_header.dart';
+import 'package:provider/provider.dart';
+
+class FilmDetailsBloc extends Bloc<FilmDetailsEvent, FilmDetailsState> {
+  FilmDetailsBloc() : super(FilmDetailsInitial()) {
+    on<LoadFilmDetails>(_onLoadFilmDetails);
+  }
+
+  Future<void> _onLoadFilmDetails(
+    LoadFilmDetails event,
+    Emitter<FilmDetailsState> emit,
+  ) async {
+    emit(FilmDetailsLoading());
+    try {
+      final movie = await retrieveFilmInfo(event.movieId);
+      final trailerKey = await retrieveTrailer(event.movieId);
+      final cast = await retrieveCast(event.movieId);
+
+      emit(FilmDetailsLoaded(movie, trailerKey: trailerKey, cast: cast));
+    } catch (e) {
+      emit(FilmDetailsError(e.toString()));
+    }
+  }
+}
+
+// Event
+abstract class FilmDetailsEvent {}
+
+class LoadFilmDetails extends FilmDetailsEvent {
+  final int movieId;
+  LoadFilmDetails(this.movieId);
+}
+
+class DisposeYoutubePlayer extends FilmDetailsEvent {}
+
+// State
+abstract class FilmDetailsState {}
+
+class FilmDetailsInitial extends FilmDetailsState {}
+
+class FilmDetailsLoading extends FilmDetailsState {}
+
+class FilmDetailsLoaded extends FilmDetailsState {
+  final Movie movie;
+  final String? trailerKey;
+  final List<Map<String, dynamic>>? cast;
+
+  FilmDetailsLoaded(this.movie, {this.trailerKey, this.cast});
+}
+
+class FilmDetailsError extends FilmDetailsState {
+  final String message;
+  FilmDetailsError(this.message);
+}
 
 class FilmDetailsPage extends StatefulWidget {
   final Movie movie;
@@ -33,9 +85,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   final TextEditingController _reviewController = TextEditingController();
   int _selectedRating = 0;
   MyUser? _currentUser;
-  final UserService _userService = UserService();
   List<MovieReview> _friendsReviews = [];
-  final WatchlistService _watchlistService = WatchlistService();
   List<WatchList> _userWatchlists = [];
   List<int> _likedMovies = [];
   List<int> _seenMovies = [];
@@ -84,9 +134,13 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
 
   Future<void> _initializeData() async {
     try {
-      final currentUser = await _userService.getCurrentUser();
+      final currentUser = await Provider.of<UserService>(context, listen: false)
+          .getCurrentUser();
       if (currentUser != null) {
         _currentUser = currentUser;
+        _fetchUserWatchlists();
+        _fetchLikedMovies();
+        _fetchSeenMovies();
       }
     } catch (e) {
       if (mounted) {
@@ -100,7 +154,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   Future<void> _fetchLikedMovies() async {
     if (_currentUser == null) return;
     List<int> likedMovies =
-        await _userService.getLikedMovieIds(_currentUser!.id);
+        await Provider.of<UserService>(context, listen: false)
+            .getLikedMovieIds(_currentUser!.id);
     if (mounted) {
       setState(() {
         _likedMovies = likedMovies;
@@ -110,7 +165,9 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
 
   Future<void> _fetchSeenMovies() async {
     if (_currentUser == null) return;
-    List<int> seenMovies = await _userService.getSeenMovieIds(_currentUser!.id);
+    List<int> seenMovies =
+        await Provider.of<UserService>(context, listen: false)
+            .getSeenMovieIds(_currentUser!.id);
     if (mounted) {
       setState(() {
         _seenMovies = seenMovies;
@@ -121,7 +178,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   Future<void> _fetchFriendsReviews() async {
     if (_currentUser == null) return;
     List<MovieReview> reviews =
-        await _userService.getFriendsReviews(_currentUser!.id, widget.movie.id);
+        await Provider.of<UserService>(context, listen: false)
+            .getFriendsReviews(_currentUser!.id, widget.movie.id);
     if (mounted) {
       setState(() {
         _friendsReviews = reviews;
@@ -130,12 +188,14 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   }
 
   Future<void> _fetchUserWatchlists() async {
+    final watchlistService =
+        Provider.of<WatchlistService>(context, listen: false);
     if (_currentUser == null) return;
     try {
       List<WatchList> watchlists =
-          await _watchlistService.getOwnWatchLists(_currentUser!.id);
+          await watchlistService.getOwnWatchLists(_currentUser!.id);
       List<WatchList> collabWatchlists =
-          await _watchlistService.getCollabWatchLists(_currentUser!.id);
+          await watchlistService.getCollabWatchLists(_currentUser!.id);
       setState(() {
         _userWatchlists = watchlists + collabWatchlists;
       });
@@ -693,10 +753,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
           color: Colors.white,
           icon: const Icon(Icons.add),
           iconSize: isTablet ? 45 : 35,
-          onPressed: () async {
-            await _fetchUserWatchlists();
-            await _fetchLikedMovies();
-            await _fetchSeenMovies();
+          onPressed: () {
             _showWatchlistModal();
           },
         ));
@@ -1286,7 +1343,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   }
 
   void _submitReview() async {
-    final currentUser = await _userService.getCurrentUser();
+    final userService = Provider.of<UserService>(context, listen: false);
+    final currentUser = await userService.getCurrentUser();
     if (currentUser == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1323,7 +1381,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     }
 
     try {
-      await _userService.addMovieReview(
+      await userService.addMovieReview(
           currentUser.id, movieId, rating, reviewText, title, name);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1362,6 +1420,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                 ListTile(
                   title: const Text('Liked movies'),
                   trailing: IconButton(
+                    key: const Key('like_button'),
                     icon: Icon(
                       isLiked ? Icons.favorite : Icons.favorite_border,
                       color: isLiked ? Colors.red : Colors.grey,
@@ -1430,7 +1489,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
       List<int> likedMovies, StateSetter modalSetState) async {
     if (_currentUser == null) return;
     try {
-      await _userService.addToLikedMovies(_currentUser!.id, widget.movie.id);
+      await Provider.of<UserService>(context, listen: false)
+          .addToLikedMovies(_currentUser!.id, widget.movie.id);
       setState(() {});
       modalSetState(() {
         likedMovies.add(widget.movie.id);
@@ -1448,8 +1508,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
       List<int> likedMovies, StateSetter modalSetState) async {
     if (_currentUser == null) return;
     try {
-      await _userService.removeFromLikedMovies(
-          _currentUser!.id, widget.movie.id);
+      await Provider.of<UserService>(context, listen: false)
+          .removeFromLikedMovies(_currentUser!.id, widget.movie.id);
       setState(() {});
       modalSetState(() {
         likedMovies.remove(widget.movie.id);
@@ -1467,7 +1527,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
       List<int> seenMovies, StateSetter modalSetState) async {
     if (_currentUser == null) return;
     try {
-      await _userService.addToSeenMovies(_currentUser!.id, widget.movie.id);
+      await Provider.of<UserService>(context, listen: false)
+          .addToSeenMovies(_currentUser!.id, widget.movie.id);
       setState(() {});
       modalSetState(() {
         seenMovies.add(widget.movie.id);
@@ -1485,8 +1546,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
       List<int> seenMovies, StateSetter modalSetState) async {
     if (_currentUser == null) return;
     try {
-      await _userService.removeFromSeenMovies(
-          _currentUser!.id, widget.movie.id);
+      await Provider.of<UserService>(context, listen: false)
+          .removeFromSeenMovies(_currentUser!.id, widget.movie.id);
       setState(() {});
       modalSetState(() {
         seenMovies.remove(widget.movie.id);
@@ -1503,8 +1564,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   Future<void> _addMovieInWatchlist(
       WatchList watchlist, StateSetter modalSetState) async {
     try {
-      await _watchlistService.addMovieToWatchlist(
-          watchlist.userID, watchlist.id, widget.movie.id);
+      await Provider.of<WatchlistService>(context, listen: false)
+          .addMovieToWatchlist(watchlist.userID, watchlist.id, widget.movie.id);
       setState(() {});
       modalSetState(() {
         watchlist.movies.add(widget.movie.id);
@@ -1526,8 +1587,9 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   Future<void> _removeMovieFromWatchlist(
       WatchList watchlist, StateSetter modalSetState) async {
     try {
-      await _watchlistService.removeMovieFromWatchlist(
-          watchlist.userID, watchlist.id, widget.movie.id);
+      await Provider.of<WatchlistService>(context, listen: false)
+          .removeMovieFromWatchlist(
+              watchlist.userID, watchlist.id, widget.movie.id);
       setState(() {});
       modalSetState(() {
         watchlist.movies.remove(widget.movie.id);

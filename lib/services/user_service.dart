@@ -310,6 +310,7 @@ class UserService {
   // retrieve friends reviews
   Future<List<MovieReview>> getFriendsReviews(
       String currentUserId, int movieId) async {
+    List<MovieReview> reviews = [];
     try {
       // retrieve followed users
       DocumentSnapshot userDoc =
@@ -325,13 +326,13 @@ class UserService {
           .orderBy('timestamp', descending: true)
           .get();
 
-      return reviewsSnapshot.docs
+      reviews = reviewsSnapshot.docs
           .map((doc) => MovieReview.fromFirestore(doc))
           .toList();
     } catch (e) {
       logger.d('Failed to retrieve friends reviews: $e');
-      return [];
     }
+    return reviews;
   }
 
   // add movie to liked movies

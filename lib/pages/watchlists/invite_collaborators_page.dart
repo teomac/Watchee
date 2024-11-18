@@ -3,6 +3,7 @@ import 'package:dima_project/models/user.dart';
 import 'package:dima_project/models/watchlist.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:dima_project/services/watchlist_service.dart';
+import 'package:provider/provider.dart';
 
 class InviteCollaboratorsPage extends StatefulWidget {
   final WatchList watchlist;
@@ -15,8 +16,6 @@ class InviteCollaboratorsPage extends StatefulWidget {
 }
 
 class _InviteCollaboratorsPageState extends State<InviteCollaboratorsPage> {
-  final UserService _userService = UserService();
-  final WatchlistService _watchlistService = WatchlistService();
   List<MyUser> _followedUsers = [];
   final List<MyUser> _alreadyInvited = [];
   bool _isLoading = true;
@@ -28,11 +27,12 @@ class _InviteCollaboratorsPageState extends State<InviteCollaboratorsPage> {
   }
 
   Future<void> _loadFollowedUsers() async {
+    final userService = Provider.of<UserService>(context, listen: false);
     setState(() => _isLoading = true);
     try {
-      final currentUser = await _userService.getCurrentUser();
+      final currentUser = await userService.getCurrentUser();
       if (currentUser != null) {
-        _followedUsers = await _userService.getFollowing(currentUser.id);
+        _followedUsers = await userService.getFollowing(currentUser.id);
         for (final userId in widget.watchlist.collaborators) {
           if (_followedUsers.any((user) => user.id == userId)) {
             //remove it
@@ -49,8 +49,9 @@ class _InviteCollaboratorsPageState extends State<InviteCollaboratorsPage> {
 
   Future<void> _inviteCollaborator(MyUser user) async {
     try {
-      final result = await _watchlistService.inviteCollaborator(
-          widget.watchlist.id, widget.watchlist.userID, user.id);
+      final result = await Provider.of<WatchlistService>(context, listen: false)
+          .inviteCollaborator(
+              widget.watchlist.id, widget.watchlist.userID, user.id);
       if (result) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

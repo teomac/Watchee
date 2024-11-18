@@ -6,6 +6,7 @@ import 'package:dima_project/services/user_service.dart';
 import 'package:dima_project/services/watchlist_service.dart';
 import 'package:dima_project/models/watchlist.dart';
 import 'package:dima_project/pages/watchlists/manage_watchlist_page.dart';
+import 'package:provider/provider.dart';
 
 class UserProfilePage extends StatefulWidget {
   final MyUser user;
@@ -20,14 +21,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
   late bool isFollowing = false;
   bool isLoading = true;
   bool followStatusChanged = false;
-  final UserService _userService = UserService();
   MyUser? _currentUser;
   List<MyUser> _followedByUsers = [];
   List<MovieReview> _userReviews = [];
   bool _showAllReviews = false;
-
-  //for watchlists retrieval
-  final WatchlistService _watchlistService = WatchlistService();
   List<WatchList> _publicWatchlists = [];
   bool _isLoadingWatchlists = true;
 
@@ -39,7 +36,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
   Future<void> _initializeData() async {
     try {
-      final currentUser = await _userService.getCurrentUser();
+      final currentUser = await Provider.of<UserService>(context, listen: false)
+          .getCurrentUser();
       if (currentUser != null) {
         _currentUser = currentUser;
         await Future.wait([
@@ -68,8 +66,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
   Future<void> _checkFollowStatus() async {
     if (_currentUser == null) return;
-    bool followStatus =
-        await _userService.isFollowing(_currentUser!.id, widget.user.id);
+    bool followStatus = await Provider.of<UserService>(context, listen: false)
+        .isFollowing(_currentUser!.id, widget.user.id);
     if (mounted) {
       setState(() {
         isFollowing = followStatus;
@@ -79,7 +77,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
   Future<void> _fetchFollowedByUsers() async {
     if (_currentUser == null) return;
-    List<MyUser> followers = await _userService.getFollowers(widget.user.id);
+    List<MyUser> followers =
+        await Provider.of<UserService>(context, listen: false)
+            .getFollowers(widget.user.id);
     _followedByUsers = followers
         .where((follower) =>
             _currentUser!.following.contains(follower.id) &&
@@ -88,6 +88,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
   }
 
   Future<void> _toggleFollowStatus() async {
+    final userService = Provider.of<UserService>(context, listen: false);
     if (!mounted || _currentUser == null) return;
     try {
       setState(() {
@@ -95,9 +96,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
       });
 
       if (isFollowing) {
-        await _userService.followUser(_currentUser!.id, widget.user.id);
+        await userService.followUser(_currentUser!.id, widget.user.id);
       } else {
-        await _userService.unfollowUser(_currentUser!.id, widget.user.id);
+        await userService.unfollowUser(_currentUser!.id, widget.user.id);
       }
 
       if (mounted) {
@@ -122,7 +123,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
   Future<void> _fetchUserReviews() async {
     if (_currentUser == null) return;
     List<MovieReview> reviews =
-        await _userService.getReviewsByUser(widget.user.id);
+        await Provider.of<UserService>(context, listen: false)
+            .getReviewsByUser(widget.user.id);
     if (mounted) {
       setState(() {
         _userReviews = reviews;
@@ -134,7 +136,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
     if (_currentUser == null) return;
     try {
       List<WatchList> watchlists =
-          await _watchlistService.getPublicWatchLists(widget.user.id);
+          await Provider.of<WatchlistService>(context, listen: false)
+              .getPublicWatchLists(widget.user.id);
       if (mounted) {
         setState(() {
           _publicWatchlists = watchlists;

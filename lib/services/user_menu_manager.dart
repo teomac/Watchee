@@ -1,6 +1,6 @@
 import 'package:dima_project/pages/account/notifications_page.dart';
 import 'package:dima_project/pages/account/user_profile_page.dart';
-import 'package:dima_project/services/auth.dart';
+import 'package:dima_project/services/custom_auth.dart';
 import 'package:dima_project/services/notifications_service.dart';
 import 'package:flutter/material.dart';
 import 'package:dima_project/models/user.dart';
@@ -24,7 +24,7 @@ class _UserInfoState extends State<UserInfo> {
   MyUser? _currentUser;
   final Logger logger = Logger();
   final UserService _userService = UserService();
-  final Auth _auth = Auth();
+  final CustomAuth _auth = CustomAuth();
   final NotificationsService _notificationsService = NotificationsService();
 
   @override

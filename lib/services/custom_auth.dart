@@ -2,11 +2,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dima_project/services/fcm_service.dart';
 import 'package:logger/logger.dart';
 
-class Auth {
+class CustomAuth {
   final FirebaseAuth _firebaseAuth;
   final Logger logger = Logger();
 
-  Auth({FirebaseAuth? firebaseAuth})
+  CustomAuth({FirebaseAuth? firebaseAuth})
       : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
 
   User? get currentUser => _firebaseAuth.currentUser;
