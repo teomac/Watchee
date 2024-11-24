@@ -7,6 +7,13 @@ import './test_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:dima_project/theme/theme_provider.dart';
 import 'package:dima_project/widgets/home_carousel.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dima_project/services/user_service.dart';
+import 'package:dima_project/services/watchlist_service.dart';
+import 'package:dima_project/services/custom_auth.dart';
+import 'package:dima_project/services/custom_google_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -24,9 +31,40 @@ void main() {
   });
 
   Widget createTestableApp() {
-    return ChangeNotifierProvider(
-      create: (_) => ThemeProvider()..loadThemeMode(),
-      child: const MyApp(initialUri: null),
+    final auth = FirebaseAuth.instance;
+    final firestore = FirebaseFirestore.instance;
+    final googleSignIn = GoogleSignIn();
+    final userService = UserService(auth: auth, firestore: firestore);
+    final messaging = FirebaseMessaging.instance;
+    final watchlistService = WatchlistService(
+      firestore: firestore,
+      userService: userService,
+    );
+    final customAuth = CustomAuth(firebaseAuth: auth);
+    final customGoogleAuth = CustomGoogleAuth(
+      auth: auth,
+      firestore: firestore,
+      googleSignIn: googleSignIn,
+      userService: userService,
+    );
+
+    return MaterialApp(
+      home: MultiProvider(
+        providers: [
+          ChangeNotifierProvider(
+            create: (_) => ThemeProvider()..loadThemeMode(),
+          ),
+          Provider<FirebaseAuth>.value(value: auth),
+          Provider<FirebaseFirestore>.value(value: firestore),
+          Provider<GoogleSignIn>.value(value: googleSignIn),
+          Provider<FirebaseMessaging>.value(value: messaging),
+          Provider<UserService>.value(value: userService),
+          Provider<CustomAuth>.value(value: customAuth),
+          Provider<CustomGoogleAuth>.value(value: customGoogleAuth),
+          Provider<WatchlistService>.value(value: watchlistService),
+        ],
+        child: const MyApp(initialUri: null),
+      ),
     );
   }
 
@@ -69,7 +107,7 @@ void main() {
       // Tap the first movie in the trending section
       await tester.tap(movieItems.first);
       await Future.delayed(const Duration(seconds: 2));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       // Step 4: Verify MoviePage elements
       // Check essential movie details are present

@@ -78,11 +78,11 @@ class _FakeConfirmationResult_4 extends _i1.SmartFake
         );
 }
 
-/// A class which mocks [Auth].
+/// A class which mocks [CustomAuth].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockAuth extends _i1.Mock implements _i5.CustomAuth {
-  MockAuth() {
+class MockCustomAuth extends _i1.Mock implements _i5.CustomAuth {
+  MockCustomAuth() {
     _i1.throwOnMissingStub(this);
   }
 

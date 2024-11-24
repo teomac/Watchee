@@ -1,5 +1,6 @@
 import 'package:dima_project/pages/account/notifications_page.dart';
 import 'package:dima_project/pages/account/user_profile_page.dart';
+import 'package:dima_project/pages/login_and_register/login_page.dart';
 import 'package:dima_project/services/custom_auth.dart';
 import 'package:dima_project/services/notifications_service.dart';
 import 'package:flutter/material.dart';
@@ -142,7 +143,13 @@ class _UserInfoState extends State<UserInfo> {
       bool success = await _auth.signOut();
       if (success) {
         logger.d('Sign out successful');
-        //come back to the login page
+        //remove anything from the stack and navigate to the login page
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+            (Route<dynamic> route) => false,
+          );
+        }
       } else {
         logger.e('Sign out failed');
         if (mounted) {

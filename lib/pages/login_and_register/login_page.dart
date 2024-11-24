@@ -28,8 +28,26 @@ class LoginPageState extends State<LoginPage> {
   final TextEditingController _controllerEmail = TextEditingController();
   final TextEditingController _controllerPassword = TextEditingController();
 
+  bool isEmailValid(String email) {
+    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+  }
+
   Future<void> signInWithEmailAndPassword() async {
     final auth = Provider.of<FirebaseAuth>(context, listen: false);
+
+    if (_controllerEmail.text.isEmpty || _controllerPassword.text.isEmpty) {
+      setState(() {
+        errorMessage = 'Please fill in all fields';
+      });
+      return;
+    }
+
+    if (!isEmailValid(_controllerEmail.text.trim())) {
+      setState(() {
+        errorMessage = 'Please enter a valid email address.';
+      });
+      return;
+    }
 
     BuildContext dialogContext = context;
     //show loading circle
@@ -41,13 +59,7 @@ class LoginPageState extends State<LoginPage> {
             child: CircularProgressIndicator(),
           );
         });
-    if (_controllerEmail.text.isEmpty || _controllerPassword.text.isEmpty) {
-      setState(() {
-        errorMessage = 'Please fill in all fields';
-      });
-      Navigator.pop(dialogContext);
-      return;
-    }
+
     try {
       _cleanErrorMessage();
       await CustomAuth(firebaseAuth: auth).signInWithEmailAndPassword(
@@ -243,7 +255,8 @@ class LoginPageState extends State<LoginPage> {
                         ),
                         child: GestureDetector(
                           key: const Key('google_sign_in_button'),
-                          onTap: () => Provider.of<CustomGoogleAuth>(context)
+                          onTap: () => Provider.of<CustomGoogleAuth>(context,
+                                  listen: false)
                               .signInWithGoogle(),
                           child: Image.asset(
                             'lib/assets/google.png',

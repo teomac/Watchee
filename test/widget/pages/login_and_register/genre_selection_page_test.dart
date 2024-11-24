@@ -29,7 +29,7 @@ void main() {
     });
 
     testWidgets('renders initial state correctly', (WidgetTester tester) async {
-      await tester.pumpWidget(MaterialApp(home: GenreSelectionPage()));
+      await tester.pumpWidget(const MaterialApp(home: GenreSelectionPage()));
 
       // Verify title and instructions are present
       expect(find.text('Select Your Favorite Genres'), findsOneWidget);
@@ -43,7 +43,7 @@ void main() {
 
     testWidgets('enables submit button when 3 or more genres selected',
         (WidgetTester tester) async {
-      await tester.pumpWidget(MaterialApp(home: GenreSelectionPage()));
+      await tester.pumpWidget(const MaterialApp(home: GenreSelectionPage()));
 
       // Select 3 genres
       await tester.tap(find.text('Action'));
@@ -58,7 +58,7 @@ void main() {
 
     testWidgets('disables submit button when less than 3 genres selected',
         (WidgetTester tester) async {
-      await tester.pumpWidget(MaterialApp(home: GenreSelectionPage()));
+      await tester.pumpWidget(const MaterialApp(home: GenreSelectionPage()));
 
       // Select only 2 genres
       await tester.tap(find.text('Action'));
@@ -71,7 +71,7 @@ void main() {
     });
 
     testWidgets('allows deselection of genres', (WidgetTester tester) async {
-      await tester.pumpWidget(MaterialApp(home: GenreSelectionPage()));
+      await tester.pumpWidget(const MaterialApp(home: GenreSelectionPage()));
 
       // Select 3 genres
       await tester.tap(find.text('Action'));
@@ -89,7 +89,7 @@ void main() {
     });
 
     testWidgets('shows selected state for genres', (WidgetTester tester) async {
-      await tester.pumpWidget(MaterialApp(home: GenreSelectionPage()));
+      await tester.pumpWidget(const MaterialApp(home: GenreSelectionPage()));
 
       // Select a genre
       await tester.tap(find.text('Action'));
@@ -107,7 +107,7 @@ void main() {
 
     testWidgets('maintains selection state during rebuild',
         (WidgetTester tester) async {
-      await tester.pumpWidget(MaterialApp(home: GenreSelectionPage()));
+      await tester.pumpWidget(const MaterialApp(home: GenreSelectionPage()));
 
       // Select genres
       await tester.tap(find.text('Action'));
@@ -115,7 +115,7 @@ void main() {
       await tester.pump();
 
       // Trigger a rebuild
-      await tester.pumpWidget(MaterialApp(home: GenreSelectionPage()));
+      await tester.pumpWidget(const MaterialApp(home: GenreSelectionPage()));
 
       // Verify selections are maintained
       final actionChip = tester.widget<FilterChip>(

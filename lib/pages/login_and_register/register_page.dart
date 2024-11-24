@@ -48,6 +48,7 @@ class RegisterPageState extends State<RegisterPage> {
 
   Future<void> createUserWithEmailAndPassword() async {
     final auth = Provider.of<FirebaseAuth>(context, listen: false);
+    final messaging = Provider.of<FirebaseMessaging>(context, listen: false);
     final firestore = Provider.of<FirebaseFirestore>(context, listen: false);
 
     if (_controllerEmail.text.isEmpty ||
@@ -80,7 +81,7 @@ class RegisterPageState extends State<RegisterPage> {
     if (!isPasswordValid(_controllerPassword.text)) {
       setState(() {
         errorMessage =
-            'Password must be at least 8 characters long, contain 1 uppercase letter, 1 number, and 1 special character.';
+            'Password must have: at least 8 characters, including 1 uppercase, 1 number, and 1 special character.';
       });
       logger.w("Invalid password");
       return;
@@ -91,11 +92,13 @@ class RegisterPageState extends State<RegisterPage> {
     });
 
     try {
+      late BuildContext dialogContext;
       logger.d("Showing loading dialog");
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) {
+          dialogContext = context;
           return const Center(child: CircularProgressIndicator());
         },
       );
@@ -129,7 +132,6 @@ class RegisterPageState extends State<RegisterPage> {
             .set(newUser.toMap());
         logger.d("User data saved to Firestore");
 
-        FirebaseMessaging messaging = FirebaseMessaging.instance;
         String? token = await messaging.getToken();
         if (token != null) {
           await FCMService.storeFCMToken(token);
@@ -142,9 +144,9 @@ class RegisterPageState extends State<RegisterPage> {
         FCMService.setupTokenRefreshListener();
         logger.d("FCM token refresh listener set up");
 
-        logger.d("Dismissing loading dialog");
-        if (mounted) {
-          Navigator.of(context).pop();
+        if (dialogContext.mounted) {
+          logger.d("Dismissing loading dialog");
+          Navigator.of(dialogContext).pop();
         }
 
         logger.d("Navigating to WelcomeScreen");

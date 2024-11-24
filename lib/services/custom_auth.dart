@@ -27,15 +27,16 @@ class CustomAuth {
       );
     } on FirebaseAuthException catch (e) {
       switch (e.code) {
+        case 'invalid-credential':
+          throw 'Invalid email or password';
         case 'user-not-found':
+          throw 'No user found for that email.';
         case 'wrong-password':
           throw 'Invalid email or password';
         case 'invalid-email':
           throw 'The email address is badly formatted.';
         case 'user-disabled':
           throw 'This account has been disabled.';
-        case 'too-many-requests':
-          throw 'Too many failed login attempts. Please try again later.';
         default:
           throw 'An error occurred during sign in. Please try again.';
       }

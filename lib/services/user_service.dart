@@ -87,8 +87,16 @@ class UserService {
     //for followers in followerIds retrieve the user data
     List<MyUser> followersList = [];
     for (String followerId in followerIds) {
-      MyUser follower = await getUser(followerId).then((value) => value!);
-      followersList.add(follower);
+      MyUser? temp = await getUser(followerId);
+      if (temp != null) {
+        followersList.add(temp);
+      } else {
+        logger.d('User not found');
+        //remove from followers list
+        await _firestore.collection('users').doc(userId).update({
+          'followers': FieldValue.arrayRemove([followerId])
+        });
+      }
     }
 
     return followersList;
@@ -104,8 +112,16 @@ class UserService {
     // Retrieve user data for each user ID in followingIds
     List<MyUser> followingList = [];
     for (String id in followingIds) {
-      MyUser following = await getUser(id).then((value) => value!);
-      followingList.add(following);
+      final MyUser? temp = await getUser(id);
+      if (temp != null) {
+        followingList.add(temp);
+      } else {
+        logger.d('User not found');
+        //remove from following list
+        await _firestore.collection('users').doc(userId).update({
+          'following': FieldValue.arrayRemove([id])
+        });
+      }
     }
 
     return followingList;

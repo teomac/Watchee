@@ -84,11 +84,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       );
       return;
     }
-
+    late BuildContext dialogContext;
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
+        dialogContext = context;
         return const Center(child: CircularProgressIndicator());
       },
     );
@@ -114,11 +115,15 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
       logger.d("User document updated successfully");
 
+      if (dialogContext.mounted) {
+        Navigator.of(dialogContext).pop(); // Dismiss the loading indicator
+      }
+
       if (mounted) {
-        Navigator.of(context).pop(); // Dismiss the loading indicator
         // Navigate to the genre selection page
-        Navigator.of(context).pushReplacement(
+        Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const GenreSelectionPage()),
+          (Route<dynamic> route) => false,
         );
       }
     } catch (e) {

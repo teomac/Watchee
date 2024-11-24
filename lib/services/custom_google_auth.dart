@@ -3,12 +3,10 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dima_project/models/user.dart';
 import 'package:dima_project/services/user_service.dart'; // Import UserService
-import 'package:logger/logger.dart';
 
 class CustomGoogleAuth {
   final FirebaseAuth _auth;
   final GoogleSignIn _googleSignIn;
-  final Logger logger;
   final UserService userService;
   final FirebaseFirestore _firestore;
 
@@ -19,7 +17,6 @@ class CustomGoogleAuth {
     UserService? userService,
   })  : _auth = auth ?? FirebaseAuth.instance,
         _googleSignIn = googleSignIn ?? GoogleSignIn(),
-        logger = Logger(),
         userService = userService ?? UserService(),
         _firestore = firestore ?? FirebaseFirestore.instance;
 
@@ -79,7 +76,6 @@ class CustomGoogleAuth {
 
       return userCredential;
     } catch (e) {
-      logger.d("Error during Google sign in: $e");
       return null;
     }
   }

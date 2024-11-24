@@ -7,6 +7,13 @@ import './test_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:dima_project/theme/theme_provider.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dima_project/services/user_service.dart';
+import 'package:dima_project/services/watchlist_service.dart';
+import 'package:dima_project/services/custom_auth.dart';
+import 'package:dima_project/services/custom_google_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -46,9 +53,40 @@ void main() {
   });
 
   Widget createTestableApp() {
-    return ChangeNotifierProvider(
-      create: (_) => ThemeProvider()..loadThemeMode(),
-      child: const MyApp(initialUri: null),
+    final auth = FirebaseAuth.instance;
+    final firestore = FirebaseFirestore.instance;
+    final googleSignIn = GoogleSignIn();
+    final userService = UserService(auth: auth, firestore: firestore);
+    final messaging = FirebaseMessaging.instance;
+    final watchlistService = WatchlistService(
+      firestore: firestore,
+      userService: userService,
+    );
+    final customAuth = CustomAuth(firebaseAuth: auth);
+    final customGoogleAuth = CustomGoogleAuth(
+      auth: auth,
+      firestore: firestore,
+      googleSignIn: googleSignIn,
+      userService: userService,
+    );
+
+    return MaterialApp(
+      home: MultiProvider(
+        providers: [
+          ChangeNotifierProvider(
+            create: (_) => ThemeProvider()..loadThemeMode(),
+          ),
+          Provider<FirebaseAuth>.value(value: auth),
+          Provider<FirebaseFirestore>.value(value: firestore),
+          Provider<FirebaseMessaging>.value(value: messaging),
+          Provider<GoogleSignIn>.value(value: googleSignIn),
+          Provider<UserService>.value(value: userService),
+          Provider<CustomAuth>.value(value: customAuth),
+          Provider<CustomGoogleAuth>.value(value: customGoogleAuth),
+          Provider<WatchlistService>.value(value: watchlistService),
+        ],
+        child: const MyApp(initialUri: null),
+      ),
     );
   }
 
@@ -148,8 +186,27 @@ void main() {
       await tester.enterText(
           find.widgetWithText(TextField, 'Confirm password'), testPassword);
       await tester.tap(find.byKey(const Key('register_button')));
-      await tester.pumpAndSettle(const Duration(seconds: 2));
 
+      // Wait for Firebase auth and dialog to show
+      await tester.pump();
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      // Wait for Firebase operations
+      await Future.delayed(const Duration(seconds: 3));
+
+      // Wait for dialog to be dismissed and navigation to complete
+      while (find.byType(CircularProgressIndicator).evaluate().isNotEmpty) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      // Wait for welcome page
+      await tester.pumpAndSettle();
+
+      // Verify we've reached the welcome page
+      expect(find.byType(CircularProgressIndicator), findsNothing,
+          reason: 'Loading indicator should be gone');
+      expect(find.widgetWithText(TextField, 'Name *'), findsOneWidget,
+          reason: 'Welcome page should be loaded');
       // Test empty fields
       await tester.tap(find.byKey(const Key('next_button')));
       await tester.pumpAndSettle();
@@ -194,14 +251,37 @@ void main() {
       await tester.enterText(
           find.widgetWithText(TextField, 'Confirm password'), testPassword);
       await tester.tap(find.text('Register'));
-      await tester.pumpAndSettle(const Duration(seconds: 2));
+      // Wait for Firebase auth and dialog to show
+      await tester.pump();
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      // Wait for Firebase operations
+      await Future.delayed(const Duration(seconds: 3));
+
+      // Wait for dialog to be dismissed and navigation to complete
+      while (find.byType(CircularProgressIndicator).evaluate().isNotEmpty) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      // Wait for welcome page
+      await tester.pumpAndSettle();
 
       await tester.enterText(
           find.widgetWithText(TextField, 'Name *'), testName);
       await tester.enterText(
           find.widgetWithText(TextField, 'Username *'), testUsername2);
-      await tester.pump(const Duration(seconds: 2));
+      //close keyboard to avoid overflow
+
+      await Future.delayed(const Duration(seconds: 3));
+      FocusManager.instance.primaryFocus?.unfocus();
       await tester.tap(find.byKey(const Key('next_button')));
+      await Future.delayed(const Duration(seconds: 3));
+      // Wait for dialog to be dismissed and navigation to complete
+      while (find.byType(CircularProgressIndicator).evaluate().isNotEmpty) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      // Wait for welcome page
       await tester.pumpAndSettle();
 
       // Verify initial state
@@ -273,14 +353,29 @@ void main() {
       await tester.enterText(
           find.widgetWithText(TextField, 'Confirm password'), testPassword);
       await tester.tap(find.text('Register'));
-      await tester.pumpAndSettle(const Duration(seconds: 2));
+      // Wait for Firebase auth and dialog to show
+      await tester.pump();
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      // Wait for Firebase operations
+      await Future.delayed(const Duration(seconds: 3));
+
+      // Wait for dialog to be dismissed and navigation to complete
+      while (find.byType(CircularProgressIndicator).evaluate().isNotEmpty) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      // Wait for welcome page
+      await tester.pumpAndSettle();
 
       await tester.enterText(
           find.widgetWithText(TextField, 'Name *'), testName);
       await tester.enterText(
           find.widgetWithText(TextField, 'Username *'), testUsername);
-      await tester.pump(const Duration(seconds: 2));
+      await Future.delayed(const Duration(seconds: 3));
+      FocusManager.instance.primaryFocus?.unfocus();
       await tester.tap(find.byKey(const Key('next_button')));
+      await Future.delayed(const Duration(seconds: 3));
       await tester.pumpAndSettle();
 
       // Select three genres

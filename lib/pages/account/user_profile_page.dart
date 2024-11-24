@@ -36,8 +36,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
   Future<void> _initializeData() async {
     try {
-      final currentUser = await Provider.of<UserService>(context, listen: false)
-          .getCurrentUser();
+      final userServices = Provider.of<UserService>(context, listen: false);
+      final currentUser = await userServices.getCurrentUser();
       if (currentUser != null) {
         _currentUser = currentUser;
         await Future.wait([

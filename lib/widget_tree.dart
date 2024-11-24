@@ -13,8 +13,8 @@ class WidgetTree extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final auth = Provider.of<FirebaseAuth>(context);
-    final firestore = Provider.of<FirebaseFirestore>(context);
+    final auth = Provider.of<FirebaseAuth>(context, listen: false);
+    final firestore = Provider.of<FirebaseFirestore>(context, listen: false);
 
     return StreamBuilder<User?>(
       stream: auth.authStateChanges(),
@@ -38,7 +38,9 @@ class WidgetTree extends StatelessWidget {
                 if (userData != null) {
                   if (userData['profilePicture'] != null ||
                       (userData['name'] != null &&
-                          userData['name'].isNotEmpty)) {
+                          userData['name'].isNotEmpty) ||
+                      (userData['username'] != null &&
+                          userData['username'].isNotEmpty)) {
                     return const Dispatcher();
                   }
                   return const WelcomeScreen();

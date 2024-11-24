@@ -16,19 +16,41 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   String? errorMessage = '';
   String? successMessage = '';
 
-  Future<void> resetPassword() async {
-    final auth = Provider.of<FirebaseAuth>(context, listen: false);
-
+  void cleanErrorMessages() {
     setState(() {
       errorMessage = '';
       successMessage = '';
     });
+  }
 
+  Future<void> resetPassword() async {
+    final auth = Provider.of<FirebaseAuth>(context, listen: false);
+
+    cleanErrorMessages();
+
+    if (_controllerEmail.text.isEmpty) {
+      setState(() {
+        errorMessage = 'Please enter your email';
+      });
+      return;
+    }
+    //check if the email is valid
+    if (!_controllerEmail.text.contains('@')) {
+      setState(() {
+        errorMessage = 'Please enter a valid email';
+      });
+      return;
+    }
+
+    BuildContext dialogContext = context;
     showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
+        context: context,
+        builder: (BuildContext context) {
+          dialogContext = context;
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        });
 
     try {
       await auth.sendPasswordResetEmail(
@@ -46,9 +68,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         errorMessage = 'An error occurred. Please try again.';
       });
     }
-    if (mounted) {
-      Navigator.of(context).pop();
-    } // Dismiss the loading dialog
+    if (dialogContext.mounted) {
+      Navigator.pop(dialogContext); // Dismiss the loading dialog
+    }
   }
 
   @override
@@ -78,6 +100,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                 ),
                 const SizedBox(height: 20),
                 CustomSubmitButton(
+                  key: const Key('reset_password_button'),
                   backgroundColor: colorScheme.primary,
                   foregroundColor: colorScheme.onPrimary,
                   text: 'Reset Password',

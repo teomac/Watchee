@@ -29,13 +29,65 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum ThemeOptions { light, dark, system }
 
+class AppDependencies {
+  final FirebaseAuth auth;
+  final FirebaseFirestore firestore;
+  final GoogleSignIn googleSignIn;
+  final FirebaseMessaging messaging;
+  final CustomAuth customAuth;
+  final UserService userService;
+  final CustomGoogleAuth customGoogleAuth;
+  final AppLinks appLinks;
+  final WatchlistService watchlistService;
+
+  AppDependencies({
+    required this.auth,
+    required this.firestore,
+    required this.googleSignIn,
+    required this.messaging,
+    required this.customAuth,
+    required this.userService,
+    required this.customGoogleAuth,
+    required this.appLinks,
+    required this.watchlistService,
+  });
+
+  factory AppDependencies.production() {
+    final auth = FirebaseAuth.instance;
+    final firestore = FirebaseFirestore.instance;
+    final googleSignIn = GoogleSignIn();
+    final userService = UserService(auth: auth, firestore: firestore);
+
+    return AppDependencies(
+      auth: auth,
+      firestore: firestore,
+      googleSignIn: googleSignIn,
+      messaging: FirebaseMessaging.instance,
+      customAuth: CustomAuth(firebaseAuth: auth),
+      userService: UserService(
+        auth: FirebaseAuth.instance,
+        firestore: FirebaseFirestore.instance,
+      ),
+      customGoogleAuth: CustomGoogleAuth(
+        auth: auth,
+        firestore: firestore,
+        googleSignIn: googleSignIn,
+        userService: userService,
+      ),
+      appLinks: AppLinks(),
+      watchlistService:
+          WatchlistService(firestore: firestore, userService: userService),
+    );
+  }
+}
+
 Future<void> main() async {
   await initializeApp();
 }
 
-Future<void> initializeApp() async {
+Future<void> initializeApp({AppDependencies? dependencies}) async {
+  //initialize core
   WidgetsFlutterBinding.ensureInitialized();
-
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   var connectivityResult = await Connectivity().checkConnectivity();
@@ -44,15 +96,16 @@ Future<void> initializeApp() async {
     return;
   }
 
+  //initialize firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  FirebaseMessaging messaging = FirebaseMessaging.instance;
-  NotificationSettings settings = await messaging.requestPermission();
+  final deps = dependencies ?? AppDependencies.production();
 
+  final settings = await deps.messaging.requestPermission();
   if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-    String? token = await messaging.getToken();
+    String? token = await deps.messaging.getToken();
     if (token != null) {
       await FCMService.storeFCMToken(token);
       await FCMService.storeFCMTokenToFirestore(token);
@@ -61,71 +114,10 @@ Future<void> initializeApp() async {
 
   FCMService.setupTokenRefreshListener();
 
-  final appLinks = AppLinks();
-  final initialUri = await appLinks.getInitialLink();
+  ///////////////////////////////////////
+  final initialUri = await deps.appLinks.getInitialLink();
 
-  runApp(
-    MultiProvider(providers: [
-      //thememode provider
-      ChangeNotifierProvider(
-        create: (_) => ThemeProvider()..loadThemeMode(),
-      ),
-
-      //firebaseauth provider
-      Provider<FirebaseAuth>(
-        create: (_) => FirebaseAuth.instance,
-      ),
-
-      //firestore provider
-      Provider<FirebaseFirestore>(
-        create: (_) => FirebaseFirestore.instance,
-      ),
-
-      //google sign in provider
-      Provider<GoogleSignIn>(
-        create: (_) => GoogleSignIn(),
-      ),
-
-      //custom auth service provider
-      ProxyProvider<FirebaseAuth, CustomAuth>(
-        update: (_, auth, __) => CustomAuth(firebaseAuth: auth),
-      ),
-
-      //user service provider
-      ProxyProvider2<FirebaseAuth, FirebaseFirestore, UserService>(
-        update: (_, auth, firestore, __) => UserService(
-          auth: auth,
-          firestore: firestore,
-        ),
-      ),
-      //custom google auth service provider
-      ProxyProvider4<FirebaseAuth, FirebaseFirestore, GoogleSignIn, UserService,
-          CustomGoogleAuth>(
-        update: (_, auth, firestore, googleSignIn, userService, __) =>
-            CustomGoogleAuth(
-          auth: auth,
-          firestore: firestore,
-          googleSignIn: googleSignIn,
-          userService: userService,
-        ),
-      ),
-      //watchlist service provider
-      ProxyProvider2<FirebaseFirestore, UserService, WatchlistService>(
-        update: (_, firestore, userService, __) => WatchlistService(
-          firestore: firestore,
-          userService: userService,
-        ),
-      ),
-      //fcm service provider
-      Provider<FCMService>(
-        create: (_) => FCMService(),
-      ),
-      //notofications service provider
-      Provider<NotificationsService>(
-        create: (_) => NotificationsService(),
-      ),
-    ], child: MyApp(initialUri: initialUri)),
-  );
+  runApp(_createApp(deps, initialUri));
 
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
     if (message.data['screen'] == 'notifications') {
@@ -140,6 +132,49 @@ Future<void> initializeApp() async {
     }
   });
 }
+
+Widget _createApp(AppDependencies deps, Uri? initialUri) {
+  return MultiProvider(
+    providers: [
+      ChangeNotifierProvider(
+        create: (_) => ThemeProvider()..loadThemeMode(),
+      ),
+      Provider<FirebaseAuth>(
+        create: (_) => deps.auth,
+      ),
+      Provider<FirebaseFirestore>(
+        create: (_) => deps.firestore,
+      ),
+      Provider<GoogleSignIn>(
+        create: (_) => deps.googleSignIn,
+      ),
+      Provider<FirebaseMessaging>(
+        create: (_) => deps.messaging,
+      ),
+      Provider<UserService>(
+        create: (_) => deps.userService,
+      ),
+      Provider<CustomAuth>(
+        create: (_) => deps.customAuth,
+      ),
+      Provider<CustomGoogleAuth>(
+        create: (_) => deps.customGoogleAuth,
+      ),
+      Provider<WatchlistService>(
+        create: (_) => deps.watchlistService,
+      ),
+      Provider<FCMService>(
+        create: (_) => FCMService(),
+      ),
+      Provider<NotificationsService>(
+        create: (_) => NotificationsService(),
+      ),
+    ],
+    child: MyApp(initialUri: initialUri),
+  );
+}
+
+///////////////////////////////////////////////////////////////////////////
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 

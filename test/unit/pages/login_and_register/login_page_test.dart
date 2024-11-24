@@ -10,10 +10,10 @@ import 'login_page_test.mocks.dart';
 
 void main() {
   group('LoginPage Unit Tests', () {
-    late MockAuth mockAuth;
+    late MockCustomAuth mockAuth;
 
     setUp(() {
-      mockAuth = MockAuth();
+      mockAuth = MockCustomAuth();
     });
 
     test('signInWithEmailAndPassword succeeds with valid credentials',
