@@ -294,8 +294,12 @@ class _MyListsState extends State<MyLists> {
           SliverAppBar(
             floating: true,
             pinned: true,
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            elevation: 0,
             flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                color: Theme.of(context)
+                    .scaffoldBackgroundColor, // Match scaffold background
+              ),
               titlePadding: const EdgeInsets.only(left: 12, bottom: 12),
               title: Text(
                 key: const Key('my_lists_title'),

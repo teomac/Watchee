@@ -50,6 +50,7 @@ class RegisterPageState extends State<RegisterPage> {
     final auth = Provider.of<FirebaseAuth>(context, listen: false);
     final messaging = Provider.of<FirebaseMessaging>(context, listen: false);
     final firestore = Provider.of<FirebaseFirestore>(context, listen: false);
+    final fcm = Provider.of<FCMService>(context, listen: false);
 
     if (_controllerEmail.text.isEmpty ||
         _controllerPassword.text.isEmpty ||
@@ -134,14 +135,14 @@ class RegisterPageState extends State<RegisterPage> {
 
         String? token = await messaging.getToken();
         if (token != null) {
-          await FCMService.storeFCMToken(token);
-          await FCMService.storeFCMTokenToFirestore(token);
+          await fcm.storeFCMToken(token);
+          await fcm.storeFCMTokenToFirestore(token);
           logger.d("FCM token saved successfully");
         } else {
           logger.w("FCM token is null");
         }
 
-        FCMService.setupTokenRefreshListener();
+        fcm.setupTokenRefreshListener();
         logger.d("FCM token refresh listener set up");
 
         if (dialogContext.mounted) {

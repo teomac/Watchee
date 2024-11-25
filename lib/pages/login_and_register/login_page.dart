@@ -10,7 +10,9 @@ import 'package:flutter/gestures.dart';
 import 'package:dima_project/pages/login_and_register/register_page.dart';
 import 'package:dima_project/pages/login_and_register/reset_password_page.dart';
 import 'package:dima_project/widgets/custom_submit_button.dart';
+import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
+import 'package:dima_project/widget_tree.dart'; // Add this line
 
 class LoginPage extends StatefulWidget {
   const LoginPage({
@@ -24,6 +26,8 @@ class LoginPage extends StatefulWidget {
 class LoginPageState extends State<LoginPage> {
   String? errorMessage = '';
   bool isLogin = true;
+  bool isProcessingAuth = false;
+  final Logger logger = Logger();
 
   final TextEditingController _controllerEmail = TextEditingController();
   final TextEditingController _controllerPassword = TextEditingController();
@@ -33,10 +37,20 @@ class LoginPageState extends State<LoginPage> {
   }
 
   Future<void> signInWithEmailAndPassword() async {
+    if (isProcessingAuth) return; // Prevent multiple simultaneous attempts
+
+    setState(() {
+      isProcessingAuth = true;
+      errorMessage = '';
+    });
+
     final auth = Provider.of<FirebaseAuth>(context, listen: false);
+    final fcm = Provider.of<FCMService>(context, listen: false);
+    final messaging = Provider.of<FirebaseMessaging>(context, listen: false);
 
     if (_controllerEmail.text.isEmpty || _controllerPassword.text.isEmpty) {
       setState(() {
+        isProcessingAuth = false;
         errorMessage = 'Please fill in all fields';
       });
       return;
@@ -44,15 +58,17 @@ class LoginPageState extends State<LoginPage> {
 
     if (!isEmailValid(_controllerEmail.text.trim())) {
       setState(() {
+        isProcessingAuth = false;
         errorMessage = 'Please enter a valid email address.';
       });
       return;
     }
 
-    BuildContext dialogContext = context;
+    late BuildContext dialogContext;
     //show loading circle
     showDialog(
         context: context,
+        barrierDismissible: false,
         builder: (BuildContext context) {
           dialogContext = context;
           return const Center(
@@ -61,27 +77,35 @@ class LoginPageState extends State<LoginPage> {
         });
 
     try {
-      _cleanErrorMessage();
       await CustomAuth(firebaseAuth: auth).signInWithEmailAndPassword(
           email: _controllerEmail.text, password: _controllerPassword.text);
 
-      FirebaseMessaging messaging = FirebaseMessaging.instance;
       String? token = await messaging.getToken();
       if (token != null) {
-        await FCMService.storeFCMToken(token);
-        await FCMService.storeFCMTokenToFirestore(token);
+        await fcm.storeFCMToken(token);
+        await fcm.storeFCMTokenToFirestore(token);
       }
 
-      FCMService.setupTokenRefreshListener();
-    } catch (e) {
-      setState(() {
-        // Set a more specific error message if possible
-        errorMessage = e.toString();
-      });
-    } finally {
+      fcm.setupTokenRefreshListener();
+
       if (dialogContext.mounted) {
-        Navigator.pop(dialogContext);
+        Navigator.of(dialogContext).pop();
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const WidgetTree()),
+            (route) => false,
+          );
+        }
       }
+    } catch (e) {
+      if (dialogContext.mounted) {
+        Navigator.of(dialogContext).pop(); // Dismiss loading dialog
+        setState(() {
+          errorMessage = e.toString();
+          isProcessingAuth = false;
+        });
+      }
+      logger.e('Error signing in: $e');
     }
   }
 
@@ -90,12 +114,6 @@ class LoginPageState extends State<LoginPage> {
       context,
       MaterialPageRoute(builder: (context) => const ResetPasswordPage()),
     );
-  }
-
-  void _cleanErrorMessage() {
-    setState(() {
-      errorMessage = '';
-    });
   }
 
   Widget _buildTitle() {
@@ -255,9 +273,79 @@ class LoginPageState extends State<LoginPage> {
                         ),
                         child: GestureDetector(
                           key: const Key('google_sign_in_button'),
-                          onTap: () => Provider.of<CustomGoogleAuth>(context,
-                                  listen: false)
-                              .signInWithGoogle(),
+                          onTap: () async {
+                            if (isProcessingAuth) return;
+                            setState(() {
+                              isProcessingAuth = true;
+                            });
+                            BuildContext dialogContext = context;
+                            showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (BuildContext context) {
+                                  dialogContext = context;
+                                  return const Center(
+                                    child: CircularProgressIndicator(),
+                                  );
+                                });
+
+                            try {
+                              final customGoogleAuth =
+                                  Provider.of<CustomGoogleAuth>(context,
+                                      listen: false);
+
+                              final result =
+                                  await customGoogleAuth.signInWithGoogle();
+
+                              if (dialogContext.mounted) {
+                                Navigator.pop(dialogContext);
+                              }
+
+                              if (result != null) {
+                                // Force a rebuild of the widget tree
+                                if (mounted) {
+                                  setState(() {
+                                    isProcessingAuth = false;
+                                  });
+                                  if (context.mounted) {
+                                    Navigator.of(context).pushAndRemoveUntil(
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              const WidgetTree()),
+                                      (route) => false,
+                                    );
+                                  }
+                                }
+                              } else if (context.mounted) {
+                                setState(() {
+                                  isProcessingAuth = false;
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                        'Failed to sign in with Google. Please try again.'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              setState(() {
+                                isProcessingAuth = false;
+                              });
+                              if (dialogContext.mounted) {
+                                Navigator.pop(dialogContext);
+                              }
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                        'An error occurred. Please try again.'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            }
+                          },
                           child: Image.asset(
                             'lib/assets/google.png',
                             fit: BoxFit.cover,

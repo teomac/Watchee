@@ -1,3 +1,4 @@
+import 'package:dima_project/services/fcm_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:integration_test/integration_test.dart';
@@ -31,6 +32,7 @@ void main() {
   late CustomAuth customAuth;
   late CustomGoogleAuth customGoogleAuth;
   late FirebaseMessaging messaging;
+  late FCMService fcmService;
 
   setUpAll(() async {
     // Initialize Firebase before running tests
@@ -45,13 +47,15 @@ void main() {
     messaging = FirebaseMessaging.instance;
     watchlistService =
         WatchlistService(firestore: firestore, userService: userService);
-    customAuth = CustomAuth(firebaseAuth: auth);
+    customAuth = CustomAuth(firebaseAuth: auth, googleSignIn: googleSignIn);
     customGoogleAuth = CustomGoogleAuth(
       auth: auth,
       firestore: firestore,
       googleSignIn: googleSignIn,
       userService: userService,
     );
+    fcmService =
+        FCMService(messaging: messaging, firestore: firestore, auth: auth);
     await auth.signOut();
   });
 
@@ -70,6 +74,7 @@ void main() {
           Provider<CustomAuth>.value(value: customAuth),
           Provider<CustomGoogleAuth>.value(value: customGoogleAuth),
           Provider<WatchlistService>.value(value: watchlistService),
+          Provider<FCMService>.value(value: fcmService),
         ],
         child: const MyApp(initialUri: null),
       ),

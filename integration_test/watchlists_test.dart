@@ -1,3 +1,4 @@
+import 'package:dima_project/services/fcm_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:integration_test/integration_test.dart';
@@ -43,13 +44,16 @@ void main() {
       firestore: firestore,
       userService: userService,
     );
-    final customAuth = CustomAuth(firebaseAuth: auth);
+    final customAuth =
+        CustomAuth(firebaseAuth: auth, googleSignIn: googleSignIn);
     final customGoogleAuth = CustomGoogleAuth(
       auth: auth,
       firestore: firestore,
       googleSignIn: googleSignIn,
       userService: userService,
     );
+    final fcm =
+        FCMService(messaging: messaging, auth: auth, firestore: firestore);
 
     return MaterialApp(
       home: MultiProvider(
@@ -65,6 +69,7 @@ void main() {
           Provider<CustomAuth>.value(value: customAuth),
           Provider<CustomGoogleAuth>.value(value: customGoogleAuth),
           Provider<WatchlistService>.value(value: watchlistService),
+          Provider<FCMService>.value(value: fcm),
         ],
         child: const MyApp(initialUri: null),
       ),

@@ -5,23 +5,34 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:logger/logger.dart';
 
 class FCMService {
-  static final Logger logger = Logger();
-  static const _storageKey = 'fcm_token';
-  static const storage = FlutterSecureStorage();
+  final Logger logger = Logger();
+  final _storageKey = 'fcm_token';
+  final storage = const FlutterSecureStorage();
+  final FirebaseFirestore firestore;
+  final FirebaseAuth auth;
+  final FirebaseMessaging messaging;
 
-  static Future<void> storeFCMToken(String token) async {
+  FCMService(
+      {FirebaseFirestore? firestore,
+      FirebaseAuth? auth,
+      FirebaseMessaging? messaging})
+      : firestore = firestore ?? FirebaseFirestore.instance,
+        auth = auth ?? FirebaseAuth.instance,
+        messaging = messaging ?? FirebaseMessaging.instance;
+
+  Future<void> storeFCMToken(String token) async {
     await storage.write(key: _storageKey, value: token);
   }
 
-  static Future<String?> getFCMToken() async {
+  Future<String?> getFCMToken() async {
     return await storage.read(key: _storageKey);
   }
 
-  static Future<void> storeFCMTokenToFirestore(String token) async {
-    User? user = FirebaseAuth.instance.currentUser;
+  Future<void> storeFCMTokenToFirestore(String token) async {
+    User? user = auth.currentUser;
     if (user != null) {
       try {
-        await FirebaseFirestore.instance
+        await firestore
             .collection('users')
             .doc(user.uid)
             .set({'fcmToken': token}, SetOptions(merge: true));
@@ -34,27 +45,34 @@ class FCMService {
     }
   }
 
-  static void setupTokenRefreshListener() {
-    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+  void setupTokenRefreshListener() {
+    messaging.onTokenRefresh.listen((newToken) async {
       await storeFCMToken(newToken);
       await storeFCMTokenToFirestore(newToken);
     });
   }
 
-  static Future<void> clearFCMToken() async {
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      try {
-        await FirebaseFirestore.instance
+  Future<void> clearFCMToken() async {
+    try {
+      User? user = auth.currentUser;
+      if (user != null) {
+        // Remove token from Firestore
+        await firestore
             .collection('users')
             .doc(user.uid)
             .update({'fcmToken': FieldValue.delete()});
-        logger.i("FCM token removed from Firestore for user: ${user.uid}");
-      } catch (e) {
-        logger.e("Error removing FCM token from Firestore: $e");
+
+        // Delete the FCM token
+        await messaging.deleteToken();
+
+        // Clear from local storage
+        await storage.delete(key: _storageKey);
+
+        logger.i("FCM token cleared successfully");
       }
+    } catch (e) {
+      logger.e("Error clearing FCM token: $e");
+      // Don't throw - we want the logout process to continue
     }
-    await storage.delete(key: _storageKey);
-    logger.i("FCM token cleared from local storage");
   }
 }

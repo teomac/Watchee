@@ -1,13 +1,21 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dima_project/services/fcm_service.dart';
 import 'package:logger/logger.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class CustomAuth {
   final FirebaseAuth _firebaseAuth;
+  final GoogleSignIn _googleSignIn;
   final Logger logger = Logger();
+  final FCMService _fcmService;
 
-  CustomAuth({FirebaseAuth? firebaseAuth})
-      : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
+  CustomAuth(
+      {FirebaseAuth? firebaseAuth,
+      GoogleSignIn? googleSignIn,
+      FCMService? fcmService})
+      : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,
+        _googleSignIn = googleSignIn ?? GoogleSignIn(),
+        _fcmService = fcmService ?? FCMService();
 
   User? get currentUser => _firebaseAuth.currentUser;
 
@@ -21,10 +29,20 @@ class CustomAuth {
       throw 'Please fill in all fields';
     }
     try {
+      // Clear any existing auth state
+      await _firebaseAuth.signOut();
+
+      // Perform new sign in
       await _firebaseAuth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+
+      // Verify the auth state
+      final user = _firebaseAuth.currentUser;
+      if (user == null) {
+        throw 'Authentication failed';
+      }
     } on FirebaseAuthException catch (e) {
       switch (e.code) {
         case 'invalid-credential':
@@ -61,7 +79,13 @@ class CustomAuth {
   Future<bool> signOut() async {
     try {
       logger.d('Starting sign out process');
-      await FCMService.clearFCMToken();
+      await _fcmService.clearFCMToken();
+      // Sign out from Google if it was used
+      if (await _googleSignIn.isSignedIn()) {
+        await _googleSignIn.signOut();
+      }
+
+      // Finally sign out from Firebase
       await _firebaseAuth.signOut();
       logger.d('User signed out and FCM token cleared');
       return true;

@@ -26,6 +26,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:auto_orientation/auto_orientation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 
 enum ThemeOptions { light, dark, system }
 
@@ -39,6 +40,7 @@ class AppDependencies {
   final CustomGoogleAuth customGoogleAuth;
   final AppLinks appLinks;
   final WatchlistService watchlistService;
+  final FCMService fcmService;
 
   AppDependencies({
     required this.auth,
@@ -50,6 +52,7 @@ class AppDependencies {
     required this.customGoogleAuth,
     required this.appLinks,
     required this.watchlistService,
+    required this.fcmService,
   });
 
   factory AppDependencies.production() {
@@ -57,16 +60,17 @@ class AppDependencies {
     final firestore = FirebaseFirestore.instance;
     final googleSignIn = GoogleSignIn();
     final userService = UserService(auth: auth, firestore: firestore);
+    final messaging = FirebaseMessaging.instance;
 
     return AppDependencies(
       auth: auth,
       firestore: firestore,
       googleSignIn: googleSignIn,
-      messaging: FirebaseMessaging.instance,
-      customAuth: CustomAuth(firebaseAuth: auth),
+      messaging: messaging,
+      customAuth: CustomAuth(firebaseAuth: auth, googleSignIn: googleSignIn),
       userService: UserService(
-        auth: FirebaseAuth.instance,
-        firestore: FirebaseFirestore.instance,
+        auth: auth,
+        firestore: firestore,
       ),
       customGoogleAuth: CustomGoogleAuth(
         auth: auth,
@@ -77,6 +81,8 @@ class AppDependencies {
       appLinks: AppLinks(),
       watchlistService:
           WatchlistService(firestore: firestore, userService: userService),
+      fcmService:
+          FCMService(firestore: firestore, auth: auth, messaging: messaging),
     );
   }
 }
@@ -103,16 +109,23 @@ Future<void> initializeApp({AppDependencies? dependencies}) async {
 
   final deps = dependencies ?? AppDependencies.production();
 
+  // Add these lines after Firebase initialization
+  await FirebaseAppCheck.instance.activate(
+    androidProvider: AndroidProvider
+        .debug, // Use AndroidProvider.playIntegrity for production
+    appleProvider: AppleProvider.deviceCheck,
+  );
+
   final settings = await deps.messaging.requestPermission();
   if (settings.authorizationStatus == AuthorizationStatus.authorized) {
     String? token = await deps.messaging.getToken();
     if (token != null) {
-      await FCMService.storeFCMToken(token);
-      await FCMService.storeFCMTokenToFirestore(token);
+      await deps.fcmService.storeFCMToken(token);
+      await deps.fcmService.storeFCMTokenToFirestore(token);
     }
   }
 
-  FCMService.setupTokenRefreshListener();
+  deps.fcmService.setupTokenRefreshListener();
 
   ///////////////////////////////////////
   final initialUri = await deps.appLinks.getInitialLink();
@@ -164,7 +177,7 @@ Widget _createApp(AppDependencies deps, Uri? initialUri) {
         create: (_) => deps.watchlistService,
       ),
       Provider<FCMService>(
-        create: (_) => FCMService(),
+        create: (_) => deps.fcmService,
       ),
       Provider<NotificationsService>(
         create: (_) => NotificationsService(),
