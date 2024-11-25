@@ -2,7 +2,6 @@ import 'package:dima_project/services/user_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dima_project/models/watchlist.dart';
-import 'package:dima_project/models/movie.dart';
 import 'package:dima_project/services/watchlist_service.dart';
 import 'package:dima_project/api/constants.dart';
 import 'package:dima_project/api/tmdb_api.dart';
@@ -16,6 +15,7 @@ import 'package:dima_project/pages/watchlists/invite_collaborators_page.dart';
 import 'package:dima_project/pages/watchlists/collaborators_list_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
+import 'package:dima_project/models/tiny_movie.dart';
 
 // Events
 abstract class ManageWatchlistEvent {}
@@ -28,12 +28,12 @@ class LoadWatchlist extends ManageWatchlistEvent {
 }
 
 class AddMovieToWatchlist extends ManageWatchlistEvent {
-  final Movie movie;
+  final Tinymovie movie;
   AddMovieToWatchlist(this.movie);
 }
 
 class RemoveMovieFromWatchlist extends ManageWatchlistEvent {
-  final Movie movie;
+  final Tinymovie movie;
   RemoveMovieFromWatchlist(this.movie);
 }
 
@@ -54,10 +54,14 @@ class ManageWatchlistLoading extends ManageWatchlistState {}
 
 class ManageWatchlistLoaded extends ManageWatchlistState {
   final WatchList watchlist;
-  final List<Movie> movies;
-  final List<Movie> sortedMovies;
+  final List<Tinymovie> movies;
+  final List<Tinymovie> sortedMovies;
 
-  ManageWatchlistLoaded(this.watchlist, this.movies, this.sortedMovies);
+  ManageWatchlistLoaded(
+    this.watchlist,
+    this.movies,
+    this.sortedMovies,
+  );
 }
 
 class ManageWatchlistError extends ManageWatchlistState {
@@ -86,7 +90,8 @@ class ManageWatchlistBloc
           await _watchlistService.getWatchList(event.userId, event.watchlistId);
       if (watchlist != null) {
         final movies = await _fetchMoviesForWatchlist(watchlist);
-        List<Movie> sortedMovies = movies;
+        List<Tinymovie> sortedMovies = movies;
+
         switch (event.sortOption) {
           case 'Latest Added':
             sortedMovies = movies.reversed.toList();
@@ -103,7 +108,12 @@ class ManageWatchlistBloc
             sortedMovies = movies;
             break;
         }
-        emit(ManageWatchlistLoaded(watchlist, movies, sortedMovies));
+
+        emit(ManageWatchlistLoaded(
+          watchlist,
+          movies,
+          sortedMovies,
+        ));
       } else {
         emit(ManageWatchlistError('Watchlist not found'));
       }
@@ -117,11 +127,20 @@ class ManageWatchlistBloc
     final currentState = state;
     if (currentState is ManageWatchlistLoaded) {
       try {
-        final updatedMovies = List<int>.from(currentState.watchlist.movies);
-        updatedMovies.remove(event.movie.id);
+        List<Tinymovie> updatedMovies = [];
+        for (String movie in currentState.watchlist.movies) {
+          updatedMovies.add(fromString(movie));
+        }
+
+        updatedMovies.remove(event.movie);
+        final updatedStringMovies =
+            updatedMovies.map((m) => m.toString()).toList();
         final updatedWatchlist =
-            currentState.watchlist.copyWith(movies: updatedMovies);
-        await _watchlistService.updateWatchList(updatedWatchlist);
+            currentState.watchlist.copyWith(movies: updatedStringMovies);
+        await _watchlistService.removeMovieFromWatchlist(
+            currentState.watchlist.userID,
+            currentState.watchlist.id,
+            event.movie);
         final updatedMovieList =
             currentState.movies.where((m) => m.id != event.movie.id).toList();
 
@@ -129,21 +148,33 @@ class ManageWatchlistBloc
         final updatedSortedMovies = currentState.sortedMovies
             .where((m) => m.id != event.movie.id)
             .toList();
+
         emit(ManageWatchlistLoaded(
-            updatedWatchlist, updatedMovieList, updatedSortedMovies));
+          updatedWatchlist,
+          updatedMovieList,
+          updatedSortedMovies,
+        ));
       } catch (e) {
         emit(ManageWatchlistError('Failed to remove movie: ${e.toString()}'));
       }
     }
   }
 
-  Future<List<Movie>> _fetchMoviesForWatchlist(WatchList watchlist) async {
-    List<Movie> movies = [];
-    for (final movieId in watchlist.movies) {
-      final movie = await retrieveFilmInfo(movieId);
-      movie.trailer = await retrieveTrailer(movieId);
-      movie.cast = await retrieveCast(movieId);
-      movies.add(movie);
+  Tinymovie fromString(String string) {
+    final List<String> split = string.split(',,,');
+    return Tinymovie(
+      id: int.parse(split[0]),
+      title: split[1],
+      posterPath: split[2],
+      releaseDate: split[3],
+    );
+  }
+
+  Future<List<Tinymovie>> _fetchMoviesForWatchlist(WatchList watchlist) async {
+    List<Tinymovie> movies = [];
+    for (final tinyMovie in watchlist.movies) {
+      final temp = fromString(tinyMovie);
+      movies.add(temp);
     }
     return movies;
   }
@@ -157,7 +188,10 @@ class ManageWatchlistBloc
             currentState.watchlist.copyWith(name: event.newName);
         await _watchlistService.updateWatchList(updatedWatchlist);
         emit(ManageWatchlistLoaded(
-            updatedWatchlist, currentState.movies, currentState.sortedMovies));
+          updatedWatchlist,
+          currentState.movies,
+          currentState.sortedMovies,
+        ));
       } catch (e) {
         emit(ManageWatchlistError(
             'Failed to update watchlist name: ${e.toString()}'));
@@ -175,7 +209,10 @@ class ManageWatchlistBloc
         );
         await _watchlistService.updateWatchList(updatedWatchlist);
         emit(ManageWatchlistLoaded(
-            updatedWatchlist, currentState.movies, currentState.sortedMovies));
+          updatedWatchlist,
+          currentState.movies,
+          currentState.sortedMovies,
+        ));
       } catch (e) {
         emit(ManageWatchlistError(
             'Failed to toggle watchlist privacy: ${e.toString()}'));
@@ -208,7 +245,7 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
   String currentSortOption = 'Default';
   final prefs = SharedPreferences.getInstance();
   bool needsRefresh = true;
-  List<Movie> sortedMovies = [];
+  List<Tinymovie> sortedMovies = [];
   late ScrollController _scrollController;
   bool showName = false;
 
@@ -754,20 +791,23 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
     );
   }
 
-  void _navigateToFilmDetails(BuildContext context, Movie movie) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => FilmDetailsPage(movie: movie),
-      ),
-    ).then((_) {
-      // Refresh the watchlist when returning from FilmDetailsPage
-      _loadBasics();
-    });
+  void _navigateToFilmDetails(BuildContext context, Tinymovie movie) async {
+    final tempMovie = await retrieveFilmInfo(movie.id);
+    if (context.mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FilmDetailsPage(movie: tempMovie),
+        ),
+      ).then((_) {
+        // Refresh the watchlist when returning from FilmDetailsPage
+        _loadBasics();
+      });
+    }
   }
 
   void _showRemoveMovieMenu(
-      BuildContext context, Movie movie, String watchlistName) {
+      BuildContext context, Tinymovie movie, String watchlistName) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
 

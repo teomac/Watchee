@@ -162,6 +162,30 @@ void main() {
       expect(movie1 == movie1, true); // Should be equal (identical)
     });
 
+    test('to TinyMovie', () {
+      final movie = Movie(
+          id: 1,
+          title: 'Test Movie',
+          overview: 'Test Overview',
+          posterPath: '/test.jpg',
+          releaseDate: '2024-01-01',
+          genres: ['Action'],
+          cast: [
+            {'name': 'Actor'}
+          ],
+          trailer: 'trailer_url',
+          runtime: 120,
+          tagline: 'Test Tagline',
+          voteAverage: 7.5);
+
+      final tinyMovie = movie.toTinyMovie();
+
+      expect(tinyMovie.id, 1);
+      expect(tinyMovie.title, 'Test Movie');
+      expect(tinyMovie.posterPath, '/test.jpg');
+      expect(tinyMovie.releaseDate, '2024-01-01');
+    });
+
     test('should test hashCode consistency', () {
       final movie = Movie(
           id: 1,

@@ -2,6 +2,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:dima_project/models/user.dart';
 
 void main() {
+  const String movie1 = '1,,, Movie1,,, poster1.jpg,,, 2023-01-01';
+  const String movie2 = '2,,, Movie2,,, poster2.jpg,,, 2023-01-02';
+  const String movie3 = '3,,, Movie3,,, poster3.jpg,,, 2023-01-03';
+  const String movie4 = '4,,, Movie4,,, poster4.jpg,,, 2023-01-04';
+  const String movie5 = '5,,, Movie5,,, poster5.jpg,,, 2023-01-05';
+  const String movie6 = '6,,, Movie6,,, poster6.jpg,,, 2023-01-06';
   group('MyUser', () {
     test('should create a MyUser instance from a complete map', () {
       final map = {
@@ -14,8 +20,8 @@ void main() {
         'favoriteGenres': ['Action', 'Comedy'],
         'following': ['456', '789'],
         'followers': ['321', '654'],
-        'likedMovies': [1, 2, 3],
-        'seenMovies': [4, 5, 6],
+        'likedMovies': [movie1, movie2, movie3],
+        'seenMovies': [movie4, movie5, movie6],
         'followedWatchlists': {
           'user1': ['list1', 'list2']
         },
@@ -38,8 +44,8 @@ void main() {
       expect(user.favoriteGenres, ['Action', 'Comedy']);
       expect(user.following, ['456', '789']);
       expect(user.followers, ['321', '654']);
-      expect(user.likedMovies, [1, 2, 3]);
-      expect(user.seenMovies, [4, 5, 6]);
+      expect(user.likedMovies, [movie1, movie2, movie3]);
+      expect(user.seenMovies, [movie4, movie5, movie6]);
       expect(user.followedWatchlists, {
         'user1': ['list1', 'list2']
       });
@@ -87,8 +93,8 @@ void main() {
         favoriteGenres: ['Action', 'Comedy'],
         following: ['456', '789'],
         followers: ['321', '654'],
-        likedMovies: [1, 2, 3],
-        seenMovies: [4, 5, 6],
+        likedMovies: [movie1, movie2, movie3],
+        seenMovies: [movie4, movie5, movie6],
         followedWatchlists: {
           'user1': ['list1', 'list2']
         },
@@ -111,8 +117,8 @@ void main() {
       expect(map['favoriteGenres'], ['Action', 'Comedy']);
       expect(map['following'], ['456', '789']);
       expect(map['followers'], ['321', '654']);
-      expect(map['likedMovies'], [1, 2, 3]);
-      expect(map['seenMovies'], [4, 5, 6]);
+      expect(map['likedMovies'], [movie1, movie2, movie3]);
+      expect(map['seenMovies'], [movie4, movie5, movie6]);
       expect(map['followedWatchlists'], {
         'user1': ['list1', 'list2']
       });

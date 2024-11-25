@@ -451,14 +451,14 @@ class MockUserService extends _i1.Mock implements _i6.UserService {
   @override
   _i7.Future<void> addToLikedMovies(
     String? userId,
-    int? movieId,
+    String? movie,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
           #addToLikedMovies,
           [
             userId,
-            movieId,
+            movie,
           ],
         ),
         returnValue: _i7.Future<void>.value(),
@@ -468,14 +468,14 @@ class MockUserService extends _i1.Mock implements _i6.UserService {
   @override
   _i7.Future<void> removeFromLikedMovies(
     String? userId,
-    int? movieId,
+    String? movie,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
           #removeFromLikedMovies,
           [
             userId,
-            movieId,
+            movie,
           ],
         ),
         returnValue: _i7.Future<void>.value(),
@@ -483,25 +483,26 @@ class MockUserService extends _i1.Mock implements _i6.UserService {
       ) as _i7.Future<void>);
 
   @override
-  _i7.Future<List<int>> getLikedMovieIds(String? userId) => (super.noSuchMethod(
+  _i7.Future<List<String>> getLikedMovieIds(String? userId) =>
+      (super.noSuchMethod(
         Invocation.method(
           #getLikedMovieIds,
           [userId],
         ),
-        returnValue: _i7.Future<List<int>>.value(<int>[]),
-      ) as _i7.Future<List<int>>);
+        returnValue: _i7.Future<List<String>>.value(<String>[]),
+      ) as _i7.Future<List<String>>);
 
   @override
   _i7.Future<void> addToSeenMovies(
     String? userId,
-    int? movieId,
+    String? movie,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
           #addToSeenMovies,
           [
             userId,
-            movieId,
+            movie,
           ],
         ),
         returnValue: _i7.Future<void>.value(),
@@ -511,14 +512,14 @@ class MockUserService extends _i1.Mock implements _i6.UserService {
   @override
   _i7.Future<void> removeFromSeenMovies(
     String? userId,
-    int? movieId,
+    String? movie,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
           #removeFromSeenMovies,
           [
             userId,
-            movieId,
+            movie,
           ],
         ),
         returnValue: _i7.Future<void>.value(),
@@ -526,25 +527,26 @@ class MockUserService extends _i1.Mock implements _i6.UserService {
       ) as _i7.Future<void>);
 
   @override
-  _i7.Future<List<int>> getSeenMovieIds(String? userId) => (super.noSuchMethod(
+  _i7.Future<List<String>> getSeenMovieIds(String? userId) =>
+      (super.noSuchMethod(
         Invocation.method(
           #getSeenMovieIds,
           [userId],
         ),
-        returnValue: _i7.Future<List<int>>.value(<int>[]),
-      ) as _i7.Future<List<int>>);
+        returnValue: _i7.Future<List<String>>.value(<String>[]),
+      ) as _i7.Future<List<String>>);
 
   @override
   _i7.Future<bool> checkLikedMovies(
     String? userId,
-    int? movieId,
+    String? movie,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
           #checkLikedMovies,
           [
             userId,
-            movieId,
+            movie,
           ],
         ),
         returnValue: _i7.Future<bool>.value(false),
@@ -553,14 +555,14 @@ class MockUserService extends _i1.Mock implements _i6.UserService {
   @override
   _i7.Future<bool> checkSeenMovies(
     String? userId,
-    int? movieId,
+    String? movie,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
           #checkSeenMovies,
           [
             userId,
-            movieId,
+            movie,
           ],
         ),
         returnValue: _i7.Future<bool>.value(false),

@@ -21,7 +21,7 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   // Test account credentials - use a dedicated test account
-  const String testEmail = 'piergrulli@gmail.com';
+  const String testEmail = 'fritziano@gmail.com';
   const String testPassword = 'Ciao123\$';
 
   late FirebaseAuth auth;
@@ -119,6 +119,11 @@ void main() {
       await tester.pumpAndSettle();
 
       await performLogin(tester, testEmail, testPassword);
+
+      await Future.delayed(const Duration(seconds: 2));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump();
+      }
 
       expect(find.text('Home'), findsOneWidget);
       expect(auth.currentUser, isNotNull);

@@ -17,6 +17,7 @@ import 'package:dima_project/pages/movies/person_details_page.dart';
 import 'package:dima_project/models/person.dart';
 import 'package:dima_project/widgets/squared_header.dart';
 import 'package:provider/provider.dart';
+import 'package:dima_project/models/tiny_movie.dart';
 
 class FilmDetailsBloc extends Bloc<FilmDetailsEvent, FilmDetailsState> {
   FilmDetailsBloc() : super(FilmDetailsInitial()) {
@@ -87,8 +88,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   MyUser? _currentUser;
   List<MovieReview> _friendsReviews = [];
   List<WatchList> _userWatchlists = [];
-  List<int> _likedMovies = [];
-  List<int> _seenMovies = [];
+  List<String> _likedMovies = [];
+  List<String> _seenMovies = [];
   bool _isSubmitButtonEnabled = false;
   YoutubePlayerController? _youtubePlayerController;
   bool _showAllReviews = false;
@@ -132,6 +133,16 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     });
   }
 
+  Tinymovie fromString(String string) {
+    final List<String> split = string.split(',,,');
+    return Tinymovie(
+      id: int.parse(split[0]),
+      title: split[1],
+      posterPath: split[2],
+      releaseDate: split[3],
+    );
+  }
+
   Future<void> _initializeData() async {
     try {
       final currentUser = await Provider.of<UserService>(context, listen: false)
@@ -153,7 +164,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
 
   Future<void> _fetchLikedMovies() async {
     if (_currentUser == null) return;
-    List<int> likedMovies =
+    List<String> likedMovies =
         await Provider.of<UserService>(context, listen: false)
             .getLikedMovieIds(_currentUser!.id);
     if (mounted) {
@@ -165,7 +176,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
 
   Future<void> _fetchSeenMovies() async {
     if (_currentUser == null) return;
-    List<int> seenMovies =
+    List<String> seenMovies =
         await Provider.of<UserService>(context, listen: false)
             .getSeenMovieIds(_currentUser!.id);
     if (mounted) {
@@ -1405,8 +1416,10 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
       builder: (context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter modalsetState) {
-            final bool isLiked = _likedMovies.contains(widget.movie.id);
-            final bool isSeen = _seenMovies.contains(widget.movie.id);
+            final bool isLiked =
+                _likedMovies.contains(widget.movie.toTinyMovie().toString());
+            final bool isSeen =
+                _seenMovies.contains(widget.movie.toTinyMovie().toString());
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1456,8 +1469,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                   itemCount: _userWatchlists.length,
                   itemBuilder: (context, index) {
                     final watchlist = _userWatchlists[index];
-                    final bool isInWatchlist =
-                        watchlist.movies.contains(widget.movie.id);
+                    final bool isInWatchlist = watchlist.movies
+                        .contains(widget.movie.toTinyMovie().toString());
 
                     return ListTile(
                         title: Text(watchlist.name),
@@ -1486,14 +1499,14 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   }
 
   Future<void> _addToLiked(
-      List<int> likedMovies, StateSetter modalSetState) async {
+      List<String> likedMovies, StateSetter modalSetState) async {
     if (_currentUser == null) return;
     try {
-      await Provider.of<UserService>(context, listen: false)
-          .addToLikedMovies(_currentUser!.id, widget.movie.id);
+      await Provider.of<UserService>(context, listen: false).addToLikedMovies(
+          _currentUser!.id, widget.movie.toTinyMovie().toString());
       setState(() {});
       modalSetState(() {
-        likedMovies.add(widget.movie.id);
+        likedMovies.add(widget.movie.toTinyMovie().toString());
       });
     } catch (e) {
       if (mounted) {
@@ -1505,14 +1518,15 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   }
 
   Future<void> _removeFromLiked(
-      List<int> likedMovies, StateSetter modalSetState) async {
+      List<String> likedMovies, StateSetter modalSetState) async {
     if (_currentUser == null) return;
     try {
       await Provider.of<UserService>(context, listen: false)
-          .removeFromLikedMovies(_currentUser!.id, widget.movie.id);
+          .removeFromLikedMovies(
+              _currentUser!.id, widget.movie.toTinyMovie().toString());
       setState(() {});
       modalSetState(() {
-        likedMovies.remove(widget.movie.id);
+        likedMovies.remove(widget.movie.toTinyMovie().toString());
       });
     } catch (e) {
       if (mounted) {
@@ -1524,14 +1538,14 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   }
 
   Future<void> _addToSeen(
-      List<int> seenMovies, StateSetter modalSetState) async {
+      List<String> seenMovies, StateSetter modalSetState) async {
     if (_currentUser == null) return;
     try {
-      await Provider.of<UserService>(context, listen: false)
-          .addToSeenMovies(_currentUser!.id, widget.movie.id);
+      await Provider.of<UserService>(context, listen: false).addToSeenMovies(
+          _currentUser!.id, widget.movie.toTinyMovie().toString());
       setState(() {});
       modalSetState(() {
-        seenMovies.add(widget.movie.id);
+        seenMovies.add(widget.movie.toTinyMovie().toString());
       });
     } catch (e) {
       if (mounted) {
@@ -1543,14 +1557,15 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   }
 
   Future<void> _removeFromSeen(
-      List<int> seenMovies, StateSetter modalSetState) async {
+      List<String> seenMovies, StateSetter modalSetState) async {
     if (_currentUser == null) return;
     try {
       await Provider.of<UserService>(context, listen: false)
-          .removeFromSeenMovies(_currentUser!.id, widget.movie.id);
+          .removeFromSeenMovies(
+              _currentUser!.id, widget.movie.toTinyMovie().toString());
       setState(() {});
       modalSetState(() {
-        seenMovies.remove(widget.movie.id);
+        seenMovies.remove(widget.movie.toTinyMovie().toString());
       });
     } catch (e) {
       if (mounted) {
@@ -1565,10 +1580,11 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
       WatchList watchlist, StateSetter modalSetState) async {
     try {
       await Provider.of<WatchlistService>(context, listen: false)
-          .addMovieToWatchlist(watchlist.userID, watchlist.id, widget.movie.id);
+          .addMovieToWatchlist(
+              watchlist.userID, watchlist.id, widget.movie.toTinyMovie());
       setState(() {});
       modalSetState(() {
-        watchlist.movies.add(widget.movie.id);
+        watchlist.movies.add(widget.movie.toTinyMovie().toString());
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1589,10 +1605,10 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     try {
       await Provider.of<WatchlistService>(context, listen: false)
           .removeMovieFromWatchlist(
-              watchlist.userID, watchlist.id, widget.movie.id);
+              watchlist.userID, watchlist.id, widget.movie.toTinyMovie());
       setState(() {});
       modalSetState(() {
-        watchlist.movies.remove(widget.movie.id);
+        watchlist.movies.remove(widget.movie.toTinyMovie().toString());
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -12,6 +12,10 @@ import 'package:dima_project/pages/watchlists/my_lists.dart';
 import 'my_lists_test.mocks.dart';
 
 void main() {
+  const String movie1 = '1,,, Movie1,,, poster1.jpg,,, 2023-01-01';
+  const String movie2 = '2,,, Movie2,,, poster2.jpg,,, 2023-01-02';
+  const String movie3 = '3,,, Movie3,,, poster3.jpg,,, 2023-01-03';
+
   late MyListsBloc myListsBloc;
   late MockUserService mockUserService;
   late MockWatchlistService mockWatchlistService;
@@ -41,7 +45,7 @@ void main() {
       isPrivate: false,
       createdAt: DateTime.now().toString(),
       updatedAt: DateTime.now().toString(),
-      movies: [1, 2, 3],
+      movies: [movie1, movie2, movie3],
       followers: ['follower1'],
       collaborators: ['collab1'],
     );

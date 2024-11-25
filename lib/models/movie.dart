@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:dima_project/models/tiny_movie.dart';
 
 class Movie {
   final int id;
@@ -53,6 +54,15 @@ class Movie {
       trailer: json['trailer'],
       runtime: json['runtime'],
       tagline: json['tagline'],
+    );
+  }
+
+  Tinymovie toTinyMovie() {
+    return Tinymovie(
+      id: id,
+      title: title,
+      posterPath: posterPath,
+      releaseDate: releaseDate,
     );
   }
 

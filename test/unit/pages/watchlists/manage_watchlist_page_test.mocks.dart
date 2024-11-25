@@ -5,6 +5,7 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i4;
 
+import 'package:dima_project/models/tiny_movie.dart' as _i7;
 import 'package:dima_project/models/user.dart' as _i5;
 import 'package:dima_project/models/watchlist.dart' as _i6;
 import 'package:dima_project/services/watchlist_service.dart' as _i3;
@@ -190,7 +191,7 @@ class MockWatchlistService extends _i1.Mock implements _i3.WatchlistService {
   _i4.Future<void> addMovieToWatchlist(
     String? userId,
     String? watchlistId,
-    int? movieId,
+    _i7.Tinymovie? movie,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -198,7 +199,7 @@ class MockWatchlistService extends _i1.Mock implements _i3.WatchlistService {
           [
             userId,
             watchlistId,
-            movieId,
+            movie,
           ],
         ),
         returnValue: _i4.Future<void>.value(),
@@ -209,7 +210,7 @@ class MockWatchlistService extends _i1.Mock implements _i3.WatchlistService {
   _i4.Future<void> removeMovieFromWatchlist(
     String? userId,
     String? watchlistId,
-    int? movieId,
+    _i7.Tinymovie? movie,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -217,7 +218,7 @@ class MockWatchlistService extends _i1.Mock implements _i3.WatchlistService {
           [
             userId,
             watchlistId,
-            movieId,
+            movie,
           ],
         ),
         returnValue: _i4.Future<void>.value(),

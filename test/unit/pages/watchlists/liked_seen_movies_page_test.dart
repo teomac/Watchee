@@ -32,6 +32,21 @@ class MockTMDBAPI {
 
 @GenerateMocks([UserService])
 void main() {
+  final testMovie = Movie(
+    id: 1,
+    title: 'Test Movie',
+    overview: 'Test Overview',
+    voteAverage: 7.5,
+    genres: ['Action', 'Adventure'],
+  );
+
+  final testMovie2 = Movie(
+    id: 2,
+    title: 'Test Movie 2',
+    overview: 'Test Overview 2',
+    voteAverage: 8.0,
+    genres: ['Action', 'Adventure'],
+  );
   late LikedSeenMoviesBloc likedSeenMoviesBloc;
   late MockUserService mockUserService;
 
@@ -50,23 +65,11 @@ void main() {
       username: 'matlai2300',
       name: 'matteo',
       email: 'test@gmail.com',
-      likedMovies: [1, 2],
-      seenMovies: [1],
-    );
-    final testMovie = Movie(
-      id: 1,
-      title: 'Test Movie',
-      overview: 'Test Overview',
-      voteAverage: 7.5,
-      genres: ['Action', 'Adventure'],
-    );
-
-    final testMovie2 = Movie(
-      id: 2,
-      title: 'Test Movie 2',
-      overview: 'Test Overview 2',
-      voteAverage: 8.0,
-      genres: ['Action', 'Adventure'],
+      likedMovies: [
+        testMovie.toTinyMovie().toString(),
+        testMovie2.toTinyMovie().toString()
+      ],
+      seenMovies: [testMovie.toTinyMovie().toString()],
     );
 
     final List<Movie> testMovies = [testMovie, testMovie2];
@@ -139,17 +142,16 @@ void main() {
       setUp: () {
         reset(mockUserService);
 
-        when(mockUserService.removeFromLikedMovies('test-user-id', 1))
+        when(mockUserService.removeFromLikedMovies(
+                'test-user-id', testMovie.toTinyMovie().toString()))
             .thenAnswer((_) async => {});
         when(mockUserService.getUser('test-user-id'))
             .thenAnswer((_) async => testUser);
       },
       seed: () => LikedSeenMoviesLoaded([testMovie, testMovie2]),
       build: () => likedSeenMoviesBloc,
-      act: (bloc) => bloc.add(RemoveMovie('test-user-id', 1, true)),
-      //expect: () => [
-      //isA<LikedSeenMoviesLoaded>(),
-      //],
+      act: (bloc) => bloc.add(RemoveMovie(
+          'test-user-id', testMovie.toTinyMovie().toString(), true)),
       verify: (bloc) {
         verify(mockUserService.removeFromLikedMovies(any, any)).called(1);
         LikedSeenMoviesLoaded([testMovie2]).movies.contains(testMovie2);
@@ -162,17 +164,16 @@ void main() {
       setUp: () {
         reset(mockUserService);
 
-        when(mockUserService.removeFromSeenMovies('test-user-id', 1))
+        when(mockUserService.removeFromSeenMovies(
+                'test-user-id', testMovie.toTinyMovie().toString()))
             .thenAnswer((_) async => {});
         when(mockUserService.getUser('test-user-id'))
             .thenAnswer((_) async => testUser);
       },
       seed: () => LikedSeenMoviesLoaded([testMovie]),
       build: () => likedSeenMoviesBloc,
-      act: (bloc) => bloc.add(RemoveMovie('test-user-id', 1, false)),
-      //expect: () => [
-      //isA<LikedSeenMoviesLoaded>(),
-      //],
+      act: (bloc) => bloc.add(RemoveMovie(
+          'test-user-id', testMovie.toTinyMovie().toString(), false)),
       verify: (bloc) {
         verify(mockUserService.removeFromSeenMovies(any, any)).called(1);
         (LikedSeenMoviesLoaded([]).movies.isEmpty);
@@ -184,12 +185,14 @@ void main() {
       setUp: () {
         reset(mockUserService);
 
-        when(mockUserService.removeFromLikedMovies('test-user-id', 1))
+        when(mockUserService.removeFromLikedMovies(
+                'test-user-id', testMovie.toTinyMovie().toString()))
             .thenThrow(Exception('Failed to remove movie'));
       },
       seed: () => LikedSeenMoviesLoaded([testMovie, testMovie2]),
       build: () => likedSeenMoviesBloc,
-      act: (bloc) => bloc.add(RemoveMovie('test-user-id', 1, true)),
+      act: (bloc) => bloc.add(RemoveMovie(
+          'test-user-id', testMovie.toTinyMovie().toString(), true)),
       expect: () => [
         isA<LikedSeenMoviesError>(),
       ],
@@ -204,17 +207,19 @@ void main() {
       setUp: () {
         reset(mockUserService);
 
-        when(mockUserService.removeFromLikedMovies('test-user-id', 1))
+        when(mockUserService.removeFromLikedMovies(
+                'test-user-id', testMovie.toTinyMovie().toString()))
             .thenThrow(Exception('Failed to remove movie'));
         when(mockUserService.getUser('test-user-id'))
             .thenAnswer((_) async => testUser);
       },
       seed: () => LikedSeenMoviesLoaded([testMovie, testMovie2]),
       build: () => likedSeenMoviesBloc,
-      act: (bloc) => bloc.add(RemoveMovie('test-user-id', 1, true)),
-      //expect: () => [
-      //isA<LikedSeenMoviesError>(),
-      //],
+      act: (bloc) => bloc.add(RemoveMovie(
+          'test-user-id', testMovie.toTinyMovie().toString(), true)),
+      expect: () => [
+        isA<LikedSeenMoviesError>(),
+      ],
       verify: (bloc) {
         verify(mockUserService.removeFromLikedMovies(any, any)).called(1);
         expect(bloc.state, isA<LikedSeenMoviesError>());
@@ -226,17 +231,19 @@ void main() {
       setUp: () {
         reset(mockUserService);
 
-        when(mockUserService.removeFromSeenMovies('test-user-id', 1))
+        when(mockUserService.removeFromSeenMovies(
+                'test-user-id', testMovie.toTinyMovie().toString()))
             .thenThrow(Exception('Failed to remove movie'));
         when(mockUserService.getUser('test-user-id'))
             .thenAnswer((_) async => testUser);
       },
       seed: () => LikedSeenMoviesLoaded([testMovie]),
       build: () => likedSeenMoviesBloc,
-      act: (bloc) => bloc.add(RemoveMovie('test-user-id', 1, false)),
-      //expect: () => [
-      //isA<LikedSeenMoviesError>(),
-      //],
+      act: (bloc) => bloc.add(RemoveMovie(
+          'test-user-id', testMovie.toTinyMovie().toString(), false)),
+      expect: () => [
+        isA<LikedSeenMoviesError>(),
+      ],
       verify: (bloc) {
         verify(mockUserService.removeFromSeenMovies(any, any)).called(1);
         expect(bloc.state, isA<LikedSeenMoviesError>());
@@ -263,13 +270,14 @@ void main() {
           voteAverage: 7.5,
           genres: ['Action'],
         );
-        final event = RemoveMovie(userId, movie.id, true);
-        final event2 = RemoveMovie(userId, movie.id, false);
+        final event = RemoveMovie(userId, movie.toTinyMovie().toString(), true);
+        final event2 =
+            RemoveMovie(userId, movie.toTinyMovie().toString(), false);
 
         expect(event.userId, equals(userId));
-        expect(event.movieId, equals(movie.id));
+        expect(event.movie, equals(movie.toTinyMovie().toString()));
         expect(event2.userId, equals(userId));
-        expect(event2.movieId, equals(movie.id));
+        expect(event2.movie, equals(movie.toTinyMovie().toString()));
       });
     });
 

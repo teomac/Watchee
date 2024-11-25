@@ -3,6 +3,7 @@ import 'package:dima_project/models/user.dart';
 import 'package:dima_project/models/watchlist.dart';
 import 'package:logger/logger.dart';
 import 'package:dima_project/services/user_service.dart';
+import 'package:dima_project/models/tiny_movie.dart';
 
 class WatchlistService {
   final FirebaseFirestore _firestore;
@@ -227,7 +228,8 @@ class WatchlistService {
   }
 
   Future<void> addMovieToWatchlist(
-      String userId, String watchlistId, int movieId) async {
+      String userId, String watchlistId, Tinymovie movie) async {
+    final movieString = movie.toString();
     try {
       DocumentSnapshot doc = await _firestore
           .collection('users')
@@ -237,10 +239,10 @@ class WatchlistService {
           .get();
       //add movie id to the watchlist
       WatchList watchlist = WatchList.fromFirestore(doc);
-      if (watchlist.movies.contains(movieId)) {
+      if (watchlist.movies.contains(movieString)) {
         return;
       }
-      watchlist.movies.add(movieId);
+      watchlist.movies.add(movieString);
       watchlist = watchlist.copyWith(updatedAt: DateTime.now().toString());
       await updateWatchList(watchlist);
     } catch (e) {
@@ -249,7 +251,8 @@ class WatchlistService {
   }
 
   Future<void> removeMovieFromWatchlist(
-      String userId, String watchlistId, int movieId) async {
+      String userId, String watchlistId, Tinymovie movie) async {
+    final movieString = movie.toString();
     try {
       DocumentSnapshot doc = await _firestore
           .collection('users')
@@ -259,7 +262,7 @@ class WatchlistService {
           .get();
       //add movie id to the watchlist
       WatchList watchlist = WatchList.fromFirestore(doc);
-      watchlist.movies.remove(movieId);
+      watchlist.movies.remove(movieString);
       watchlist = watchlist.copyWith(updatedAt: DateTime.now().toString());
       await updateWatchList(watchlist);
     } catch (e) {

@@ -7,6 +7,7 @@ import 'package:dima_project/services/watchlist_service.dart';
 import 'package:logger/logger.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:provider/provider.dart';
+import 'package:dima_project/models/tiny_movie.dart';
 
 class SearchPage extends StatefulWidget {
   final WatchList? watchlist;
@@ -29,23 +30,38 @@ class SearchPage extends StatefulWidget {
 class _SearchPageState extends State<SearchPage> {
   List<Movie> _searchResults = [];
   final Logger logger = Logger();
-  final Set<int> _addedMovies = {};
-  List<int> _moviesIds = [];
+  final Set<Tinymovie> _addedMovies = {};
+  List<Tinymovie> _tinyMovies = [];
 
   @override
   void initState() {
     super.initState();
     if (widget.movieList != null) {
-      _moviesIds = generateList(widget.movieList!);
-      _addedMovies.addAll(_moviesIds);
+      _tinyMovies = generateList(widget.movieList!);
+      _addedMovies.addAll(_tinyMovies);
     } else if (widget.watchlist != null) {
-      _addedMovies.addAll(widget.watchlist!.movies);
+      for (int i = 0; i < widget.watchlist!.movies.length; i++) {
+        _addedMovies.add(fromString(widget.watchlist!.movies[i]));
+      }
     }
   }
 
-  List<int> generateList(List<Movie> movies) {
-    List<int> moviesIds = movies.map((e) => e.id).toList();
-    return moviesIds;
+  Tinymovie fromString(String string) {
+    final List<String> split = string.split(',,,');
+    return Tinymovie(
+      id: int.parse(split[0]),
+      title: split[1],
+      posterPath: split[2],
+      releaseDate: split[3],
+    );
+  }
+
+  List<Tinymovie> generateList(List<Movie> movies) {
+    List<Tinymovie> tinyMovies = [];
+    for (int i = 0; i < movies.length; i++) {
+      tinyMovies.add(movies[i].toTinyMovie());
+    }
+    return tinyMovies;
   }
 
   @override
@@ -78,7 +94,8 @@ class _SearchPageState extends State<SearchPage> {
               itemCount: _searchResults.length,
               itemBuilder: (context, index) {
                 final movie = _searchResults[index];
-                final bool movieAlreadyAdded = _addedMovies.contains(movie.id);
+                final bool movieAlreadyAdded =
+                    _addedMovies.contains(movie.toTinyMovie());
                 return ListTile(
                   leading: movie.posterPath != null
                       ? Image.network(
@@ -90,13 +107,13 @@ class _SearchPageState extends State<SearchPage> {
                       ? IconButton(
                           icon: const Icon(Icons.check),
                           onPressed: () {
-                            _removeMovie(movie.id);
+                            _removeMovie(movie);
                           },
                         )
                       : IconButton(
                           icon: const Icon(Icons.add),
                           onPressed: () {
-                            _addMovie(movie.id);
+                            _addMovie(movie);
                           },
                         ),
                   onTap: () {
@@ -116,19 +133,22 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  void _addMovie(int movieId) async {
+  void _addMovie(Movie movie) async {
     if (widget.watchlist != null) {
       try {
         await Provider.of<WatchlistService>(context, listen: false)
             .addMovieToWatchlist(
           widget.watchlist!.userID,
           widget.watchlist!.id,
-          movieId,
+          movie.toTinyMovie(),
         );
         setState(() {
-          _addedMovies.add(movieId);
+          _addedMovies.add(movie.toTinyMovie());
         });
         if (mounted) {
+          //if there is already a snackbar showing, it will be replaced by the new one
+          ScaffoldMessenger.of(context).removeCurrentSnackBar();
+          //show new snackbar
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Successfully added to watchlist'),
@@ -149,11 +169,13 @@ class _SearchPageState extends State<SearchPage> {
       if (widget.isLiked!) {
         try {
           await Provider.of<UserService>(context, listen: false)
-              .addToLikedMovies(widget.userId!, movieId);
+              .addToLikedMovies(widget.userId!, movie.toTinyMovie().toString());
           setState(() {
-            _addedMovies.add(movieId);
+            _addedMovies.add(movie.toTinyMovie());
           });
           if (mounted) {
+            //if there is already a snackbar showing, it will be replaced by the new one
+            ScaffoldMessenger.of(context).removeCurrentSnackBar();
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Successfully added to liked movies'),
@@ -173,11 +195,13 @@ class _SearchPageState extends State<SearchPage> {
       } else if (widget.isLiked == false) {
         try {
           await Provider.of<UserService>(context, listen: false)
-              .addToSeenMovies(widget.userId!, movieId);
+              .addToSeenMovies(widget.userId!, movie.toTinyMovie().toString());
           setState(() {
-            _addedMovies.add(movieId);
+            _addedMovies.add(movie.toTinyMovie());
           });
           if (mounted) {
+            //if there is already a snackbar showing, it will be replaced by the new one
+            ScaffoldMessenger.of(context).removeCurrentSnackBar();
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Successfully added to seen movies'),
@@ -198,17 +222,17 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
-  void _removeMovie(int movieId) async {
+  void _removeMovie(Movie movie) async {
     if (widget.watchlist != null) {
       try {
         await Provider.of<WatchlistService>(context, listen: false)
             .removeMovieFromWatchlist(
           widget.watchlist!.userID,
           widget.watchlist!.id,
-          movieId,
+          movie.toTinyMovie(),
         );
         setState(() {
-          _addedMovies.remove(movieId);
+          _addedMovies.remove(movie.toTinyMovie());
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -231,9 +255,10 @@ class _SearchPageState extends State<SearchPage> {
       if (widget.isLiked!) {
         try {
           await Provider.of<UserService>(context, listen: false)
-              .removeFromLikedMovies(widget.userId!, movieId);
+              .removeFromLikedMovies(
+                  widget.userId!, movie.toTinyMovie().toString());
           setState(() {
-            _addedMovies.remove(movieId);
+            _addedMovies.remove(movie.toTinyMovie());
           });
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -255,9 +280,10 @@ class _SearchPageState extends State<SearchPage> {
       } else if (widget.isLiked == false) {
         try {
           await Provider.of<UserService>(context, listen: false)
-              .removeFromSeenMovies(widget.userId!, movieId);
+              .removeFromSeenMovies(
+                  widget.userId!, movie.toTinyMovie().toString());
           setState(() {
-            _addedMovies.remove(movieId);
+            _addedMovies.remove(movie.toTinyMovie());
           });
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(

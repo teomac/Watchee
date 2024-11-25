@@ -7,6 +7,7 @@ import 'dart:async' as _i4;
 import 'dart:io' as _i7;
 
 import 'package:dima_project/models/movie_review.dart' as _i8;
+import 'package:dima_project/models/tiny_movie.dart' as _i11;
 import 'package:dima_project/models/user.dart' as _i5;
 import 'package:dima_project/models/watchlist.dart' as _i10;
 import 'package:dima_project/services/user_service.dart' as _i3;
@@ -354,14 +355,14 @@ class MockUserService extends _i1.Mock implements _i3.UserService {
   @override
   _i4.Future<void> addToLikedMovies(
     String? userId,
-    int? movieId,
+    String? movie,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
           #addToLikedMovies,
           [
             userId,
-            movieId,
+            movie,
           ],
         ),
         returnValue: _i4.Future<void>.value(),
@@ -371,14 +372,14 @@ class MockUserService extends _i1.Mock implements _i3.UserService {
   @override
   _i4.Future<void> removeFromLikedMovies(
     String? userId,
-    int? movieId,
+    String? movie,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
           #removeFromLikedMovies,
           [
             userId,
-            movieId,
+            movie,
           ],
         ),
         returnValue: _i4.Future<void>.value(),
@@ -386,25 +387,26 @@ class MockUserService extends _i1.Mock implements _i3.UserService {
       ) as _i4.Future<void>);
 
   @override
-  _i4.Future<List<int>> getLikedMovieIds(String? userId) => (super.noSuchMethod(
+  _i4.Future<List<String>> getLikedMovieIds(String? userId) =>
+      (super.noSuchMethod(
         Invocation.method(
           #getLikedMovieIds,
           [userId],
         ),
-        returnValue: _i4.Future<List<int>>.value(<int>[]),
-      ) as _i4.Future<List<int>>);
+        returnValue: _i4.Future<List<String>>.value(<String>[]),
+      ) as _i4.Future<List<String>>);
 
   @override
   _i4.Future<void> addToSeenMovies(
     String? userId,
-    int? movieId,
+    String? movie,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
           #addToSeenMovies,
           [
             userId,
-            movieId,
+            movie,
           ],
         ),
         returnValue: _i4.Future<void>.value(),
@@ -414,14 +416,14 @@ class MockUserService extends _i1.Mock implements _i3.UserService {
   @override
   _i4.Future<void> removeFromSeenMovies(
     String? userId,
-    int? movieId,
+    String? movie,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
           #removeFromSeenMovies,
           [
             userId,
-            movieId,
+            movie,
           ],
         ),
         returnValue: _i4.Future<void>.value(),
@@ -429,25 +431,26 @@ class MockUserService extends _i1.Mock implements _i3.UserService {
       ) as _i4.Future<void>);
 
   @override
-  _i4.Future<List<int>> getSeenMovieIds(String? userId) => (super.noSuchMethod(
+  _i4.Future<List<String>> getSeenMovieIds(String? userId) =>
+      (super.noSuchMethod(
         Invocation.method(
           #getSeenMovieIds,
           [userId],
         ),
-        returnValue: _i4.Future<List<int>>.value(<int>[]),
-      ) as _i4.Future<List<int>>);
+        returnValue: _i4.Future<List<String>>.value(<String>[]),
+      ) as _i4.Future<List<String>>);
 
   @override
   _i4.Future<bool> checkLikedMovies(
     String? userId,
-    int? movieId,
+    String? movie,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
           #checkLikedMovies,
           [
             userId,
-            movieId,
+            movie,
           ],
         ),
         returnValue: _i4.Future<bool>.value(false),
@@ -456,14 +459,14 @@ class MockUserService extends _i1.Mock implements _i3.UserService {
   @override
   _i4.Future<bool> checkSeenMovies(
     String? userId,
-    int? movieId,
+    String? movie,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
           #checkSeenMovies,
           [
             userId,
-            movieId,
+            movie,
           ],
         ),
         returnValue: _i4.Future<bool>.value(false),
@@ -698,7 +701,7 @@ class MockWatchlistService extends _i1.Mock implements _i9.WatchlistService {
   _i4.Future<void> addMovieToWatchlist(
     String? userId,
     String? watchlistId,
-    int? movieId,
+    _i11.Tinymovie? movie,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -706,7 +709,7 @@ class MockWatchlistService extends _i1.Mock implements _i9.WatchlistService {
           [
             userId,
             watchlistId,
-            movieId,
+            movie,
           ],
         ),
         returnValue: _i4.Future<void>.value(),
@@ -717,7 +720,7 @@ class MockWatchlistService extends _i1.Mock implements _i9.WatchlistService {
   _i4.Future<void> removeMovieFromWatchlist(
     String? userId,
     String? watchlistId,
-    int? movieId,
+    _i11.Tinymovie? movie,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -725,7 +728,7 @@ class MockWatchlistService extends _i1.Mock implements _i9.WatchlistService {
           [
             userId,
             watchlistId,
-            movieId,
+            movie,
           ],
         ),
         returnValue: _i4.Future<void>.value(),

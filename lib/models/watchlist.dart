@@ -5,7 +5,7 @@ class WatchList {
   final String userID;
   final String name;
   final bool isPrivate;
-  final List<int> movies;
+  final List<String> movies;
   final List<String> followers;
   final List<String> collaborators;
   final String createdAt;
@@ -46,7 +46,7 @@ class WatchList {
       userID: data['userID'] ?? '',
       name: data['name'] ?? '',
       isPrivate: data['isPrivate'] ?? true,
-      movies: List<int>.from(data['movies'] ?? []),
+      movies: List<String>.from(data['movies'] ?? []),
       followers: List<String>.from(data['followers'] ?? []),
       collaborators: List<String>.from(data['collaborators'] ?? []),
       createdAt: data['createdAt'] ?? DateTime.now().toString(),
@@ -65,7 +65,7 @@ class WatchList {
     String? userID,
     String? name,
     bool? isPrivate,
-    List<int>? movies,
+    List<String>? movies,
     List<String>? followers,
     List<String>? collaborators,
     String? createdAt,

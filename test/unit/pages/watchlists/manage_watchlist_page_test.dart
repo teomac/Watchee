@@ -1,3 +1,4 @@
+import 'package:dima_project/models/tiny_movie.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:mockito/mockito.dart';
@@ -31,6 +32,17 @@ class MockTMDBAPI {
 
 @GenerateMocks([WatchlistService])
 void main() {
+  final testMovie = Movie(
+    id: 1,
+    title: 'Test Movie',
+    overview: 'Test Overview',
+    voteAverage: 7.5,
+    genres: ['Action', 'Adventure'],
+  );
+
+  final String movie1 = testMovie.toTinyMovie().toString();
+  const String movie2 = '2,,, Movie2,,, poster2.jpg,,, 2023-01-02';
+  const String movie3 = '3,,, Movie3,,, poster3.jpg,,, 2023-01-03';
   late ManageWatchlistBloc manageWatchlistBloc;
   late MockWatchlistService mockWatchlistService;
 
@@ -51,17 +63,9 @@ void main() {
       isPrivate: false,
       createdAt: DateTime.now().toString(),
       updatedAt: DateTime.now().toString(),
-      movies: [1, 2, 3],
+      movies: [movie1, movie2, movie3],
       followers: ['follower1'],
       collaborators: ['collab1'],
-    );
-
-    final testMovie = Movie(
-      id: 1,
-      title: 'Test Movie',
-      overview: 'Test Overview',
-      voteAverage: 7.5,
-      genres: ['Action', 'Adventure'],
     );
 
     test('initial state is ManageWatchlistInitial', () {
@@ -84,6 +88,7 @@ void main() {
           .add(LoadWatchlist('test-user-id', 'test-watchlist-id', 'Default')),
       expect: () => [
         isA<ManageWatchlistLoading>(),
+        isA<ManageWatchlistLoaded>(),
       ],
       verify: (bloc) {
         verify(mockWatchlistService.getWatchList(
@@ -115,23 +120,27 @@ void main() {
       setUp: () {
         reset(mockWatchlistService);
 
-        final updatedWatchlist = testWatchlist.copyWith(
-          movies: [2, 3],
-          updatedAt: DateTime.now().toString(),
-        );
+        Tinymovie mmovie = Tinymovie(
+            id: 2,
+            title: 'Movie2',
+            posterPath: 'poster2.jpg',
+            releaseDate: '2023-01-02');
 
-        when(mockWatchlistService.updateWatchList(updatedWatchlist))
+        when(mockWatchlistService.removeMovieFromWatchlist(
+                testWatchlist.userID, testWatchlist.id, mmovie))
             .thenAnswer((_) async => {});
       },
-      seed: () =>
-          ManageWatchlistLoaded(testWatchlist, [testMovie], [testMovie]),
+      seed: () => ManageWatchlistLoaded(
+          testWatchlist, [testMovie.toTinyMovie()], [testMovie.toTinyMovie()]),
       build: () => manageWatchlistBloc,
-      act: (bloc) => bloc.add(RemoveMovieFromWatchlist(testMovie)),
+      act: (bloc) =>
+          bloc.add(RemoveMovieFromWatchlist(testMovie.toTinyMovie())),
       expect: () => [
         isA<ManageWatchlistLoaded>(),
       ],
       verify: (bloc) {
-        verify(mockWatchlistService.updateWatchList(any)).called(1);
+        verify(mockWatchlistService.removeMovieFromWatchlist(any, any, any))
+            .called(1);
       },
     );
 
@@ -143,8 +152,8 @@ void main() {
         when(mockWatchlistService.updateWatchList(any))
             .thenAnswer((_) async => {});
       },
-      seed: () =>
-          ManageWatchlistLoaded(testWatchlist, [testMovie], [testMovie]),
+      seed: () => ManageWatchlistLoaded(
+          testWatchlist, [testMovie.toTinyMovie()], [testMovie.toTinyMovie()]),
       build: () => manageWatchlistBloc,
       act: (bloc) => bloc.add(UpdateWatchlistName('New Name')),
       expect: () => [
@@ -168,8 +177,8 @@ void main() {
 
         return manageWatchlistBloc;
       },
-      seed: () =>
-          ManageWatchlistLoaded(testWatchlist, [testMovie], [testMovie]),
+      seed: () => ManageWatchlistLoaded(
+          testWatchlist, [testMovie.toTinyMovie()], [testMovie.toTinyMovie()]),
       act: (bloc) => bloc.add(ToggleWatchlistPrivacy()),
       expect: () => [
         isA<ManageWatchlistLoaded>(),
@@ -197,9 +206,9 @@ void main() {
         voteAverage: 7.5,
         genres: ['Action'],
       );
-      final event = AddMovieToWatchlist(movie);
+      final event = AddMovieToWatchlist(movie.toTinyMovie());
 
-      expect(event.movie, equals(movie));
+      expect(event.movie, equals(movie.toTinyMovie()));
     });
 
     test('RemoveMovieFromWatchlist event properties', () {
@@ -210,9 +219,9 @@ void main() {
         voteAverage: 7.5,
         genres: ['Action'],
       );
-      final event = RemoveMovieFromWatchlist(movie);
+      final event = RemoveMovieFromWatchlist(movie.toTinyMovie());
 
-      expect(event.movie, equals(movie));
+      expect(event.movie, equals(movie.toTinyMovie()));
     });
 
     test('UpdateWatchlistName event properties', () {
@@ -245,19 +254,18 @@ void main() {
         updatedAt: DateTime.now().toString(),
       );
 
-      final movies = [
-        Movie(
-          id: 1,
-          title: 'Test Movie',
-          overview: 'Test Overview',
-          voteAverage: 7.5,
-          genres: ['Action'],
-        ),
-      ];
+      final movie = Movie(
+        id: 1,
+        title: 'Test Movie',
+        overview: 'Test Overview',
+        voteAverage: 7.5,
+        genres: ['Action'],
+      );
 
-      final sortedMovies = List.from(movies);
-      final state =
-          ManageWatchlistLoaded(watchlist, movies, sortedMovies.cast<Movie>());
+      final movies = [movie.toTinyMovie()];
+
+      final sortedMovies = List<Tinymovie>.from(movies);
+      final state = ManageWatchlistLoaded(watchlist, movies, sortedMovies);
 
       expect(state.watchlist, equals(watchlist));
       expect(state.movies, equals(movies));

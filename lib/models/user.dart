@@ -11,8 +11,8 @@ class MyUser {
   final List<String> favoriteGenres;
   final List<String> following; // Changed from friendList
   final List<String> followers; // New field
-  final List<int> likedMovies;
-  final List<int> seenMovies;
+  final List<String> likedMovies;
+  final List<String> seenMovies;
   final Map<String, List<dynamic>> followedWatchlists;
   final Map<String, List<dynamic>> pendingInvites;
   final Map<String, List<dynamic>> collabWatchlists;
@@ -79,8 +79,8 @@ class MyUser {
       favoriteGenres: List<String>.from(data['favoriteGenres'] ?? []),
       following: List<String>.from(data['following'] ?? []),
       followers: List<String>.from(data['followers'] ?? []),
-      likedMovies: List<int>.from(data['likedMovies'] ?? []),
-      seenMovies: List<int>.from(data['seenMovies'] ?? []),
+      likedMovies: List<String>.from(data['likedMovies'] ?? []),
+      seenMovies: List<String>.from(data['seenMovies'] ?? []),
       followedWatchlists:
           Map<String, List<dynamic>>.from(data['followedWatchlists'] ?? {}),
       pendingInvites:

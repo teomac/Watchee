@@ -9,6 +9,7 @@ import 'package:dima_project/pages/watchlists/search_page.dart'; // Add this imp
 import 'package:dima_project/pages/account/user_profile_page.dart'; // Import UserProfilePage class
 import 'package:dima_project/models/user.dart';
 import 'package:provider/provider.dart';
+import 'package:dima_project/models/tiny_movie.dart';
 
 // Events
 abstract class LikedSeenMoviesEvent {}
@@ -21,16 +22,16 @@ class LoadMovies extends LikedSeenMoviesEvent {
 
 class AddMovie extends LikedSeenMoviesEvent {
   final String userId;
-  final int movieId;
+  final String movie;
   final bool isLiked; // true for liked movies, false for seen movies
-  AddMovie(this.userId, this.movieId, this.isLiked);
+  AddMovie(this.userId, this.movie, this.isLiked);
 }
 
 class RemoveMovie extends LikedSeenMoviesEvent {
   final String userId;
-  final int movieId;
+  final String movie;
   final bool isLiked; // true for liked movies, false for seen movies
-  RemoveMovie(this.userId, this.movieId, this.isLiked);
+  RemoveMovie(this.userId, this.movie, this.isLiked);
 }
 
 // States
@@ -60,15 +61,25 @@ class LikedSeenMoviesBloc
     on<RemoveMovie>(_onRemoveMovie);
   }
 
+  Tinymovie fromString(String string) {
+    final List<String> split = string.split(',,,');
+    return Tinymovie(
+      id: int.parse(split[0]),
+      title: split[1],
+      posterPath: split[2],
+      releaseDate: split[3],
+    );
+  }
+
   Future<void> _onLoadMovies(
       LoadMovies event, Emitter<LikedSeenMoviesState> emit) async {
     emit(LikedSeenMoviesLoading());
     try {
       final user = await _userService.getUser(event.userId);
       if (user != null) {
-        final movieIds = event.isLiked ? user.likedMovies : user.seenMovies;
-        final movies =
-            await Future.wait(movieIds.map((id) => retrieveFilmInfo(id)));
+        final movieStrings = event.isLiked ? user.likedMovies : user.seenMovies;
+        final movies = await Future.wait(movieStrings
+            .map((movie) => retrieveFilmInfo(fromString(movie).id)));
         emit(LikedSeenMoviesLoaded(movies));
       } else {
         emit(LikedSeenMoviesError("User not found"));
@@ -82,11 +93,11 @@ class LikedSeenMoviesBloc
       RemoveMovie event, Emitter<LikedSeenMoviesState> emit) async {
     if (event.isLiked) {
       try {
-        _userService.removeFromLikedMovies(event.userId, event.movieId);
+        _userService.removeFromLikedMovies(event.userId, event.movie);
         final user = await _userService.getUser(event.userId);
         if (user != null) {
-          final movies = await Future.wait(
-              user.likedMovies.map((id) => retrieveFilmInfo(id)));
+          final movies = await Future.wait(user.likedMovies
+              .map((movie) => retrieveFilmInfo(fromString(movie).id)));
           emit(LikedSeenMoviesLoaded(movies));
         }
       } catch (e) {
@@ -94,11 +105,11 @@ class LikedSeenMoviesBloc
       }
     } else {
       try {
-        _userService.removeFromSeenMovies(event.userId, event.movieId);
+        _userService.removeFromSeenMovies(event.userId, event.movie);
         final user = await _userService.getUser(event.userId);
         if (user != null) {
-          final movies = await Future.wait(
-              user.seenMovies.map((id) => retrieveFilmInfo(id)));
+          final movies = await Future.wait(user.seenMovies
+              .map((movie) => retrieveFilmInfo(fromString(movie).id)));
           emit(LikedSeenMoviesLoaded(movies));
         }
       } catch (e) {
@@ -349,8 +360,8 @@ class _LikedSeenMoviesPageState extends State<LikedSeenMoviesPage> {
                     style: TextStyle(color: theme.colorScheme.error),
                   ),
                   onTap: () {
-                    _likedSeenMoviesBloc.add(
-                        RemoveMovie(widget.userId, movie.id, widget.isLiked));
+                    _likedSeenMoviesBloc.add(RemoveMovie(widget.userId,
+                        movie.toTinyMovie().toString(), widget.isLiked));
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
