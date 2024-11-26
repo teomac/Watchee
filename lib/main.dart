@@ -27,6 +27,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:auto_orientation/auto_orientation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:dima_project/services/version_control.dart';
+import 'package:dima_project/pages/force_update_screen.dart';
 
 enum ThemeOptions { light, dark, system }
 
@@ -106,6 +108,19 @@ Future<void> initializeApp({AppDependencies? dependencies}) async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Check version
+  final versionControl = VersionControl();
+  final versionStatus = await versionControl.checkVersion();
+
+  if (versionStatus['requiresUpdate']) {
+    runApp(ForceUpdateScreen(
+      currentVersion: versionStatus['currentVersion'],
+      requiredVersion: versionStatus['minimumVersion'],
+      updateMessage: versionStatus['updateMessage'],
+    ));
+    return;
+  }
 
   final deps = dependencies ?? AppDependencies.production();
 
