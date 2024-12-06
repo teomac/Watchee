@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:dima_project/main.dart';
 import 'package:dima_project/theme/theme_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:restart_app/restart_app.dart';
 
 class NoInternetApp extends StatelessWidget {
   const NoInternetApp({super.key});
@@ -49,7 +49,8 @@ class NoInternetPage extends StatelessWidget {
   Future<void> _retryConnection(BuildContext context) async {
     var connectivityResult = await Connectivity().checkConnectivity();
     if (connectivityResult != ConnectivityResult.none) {
-      await initializeApp();
+      //destroy prevoius app and initialize new app
+      Restart.restartApp();
     } else {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

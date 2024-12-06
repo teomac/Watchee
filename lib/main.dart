@@ -269,8 +269,15 @@ class _MyAppState extends State<MyApp> {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
+                //drop everything and show no internet page
+                navigatorKey.currentState?.pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (context) => const NoInternetPage(),
+                  ),
+                  (route) => false,
+                );
               },
-              child: const Text('OK'),
+              child: const Text('Ok'),
             ),
           ],
         );
