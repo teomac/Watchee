@@ -118,12 +118,7 @@ class ProfileHeaderWidget extends StatelessWidget {
               ),
 
               // Action button
-              if (actionButton != null)
-                Positioned(
-                  bottom: 16,
-                  right: 16,
-                  child: actionButton!,
-                ),
+              if (actionButton != null) actionButton!,
             ],
           ),
         ),

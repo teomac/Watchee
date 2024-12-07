@@ -69,7 +69,7 @@ Future<List<Movie>> fetchTopRatedMovies() async {
   List<Movie> movies = [];
   List<Movie> topRatedMovies = [];
 
-  for (int i = 1; i < 3; i++) {
+  for (int i = 1; i < 2; i++) {
     final response = await http.get(Uri.parse('${Constants.topRated}&page=$i'));
     if (response.statusCode == 200) {
       // If the call to the server was successful, parse the JSON
@@ -95,7 +95,7 @@ Future<List<Movie>> fetchUpcomingMovies() async {
   List<Movie> movies = [];
   List<Movie> upcomingMovies = [];
 
-  for (int i = 1; i < 8; i++) {
+  for (int i = 1; i < 3; i++) {
     final response = await http.get(Uri.parse('${Constants.upcoming}&page=$i'));
     if (response.statusCode == 200) {
       // If the call to the server was successful, parse the JSON
@@ -245,7 +245,7 @@ Future<List<Movie>> fetchMoviesByGenres(List<int> genreIds) async {
   List<Movie> allMovies = [];
 
   for (int genreId in genreIds) {
-    for (int i = 1; i < 3; i++) {
+    for (int i = 1; i < 2; i++) {
       final response = await http.get(Uri.parse(
           'https://api.themoviedb.org/3/discover/movie?api_key=${Key.apiKey}&with_genres=$genreId&page=$i'));
 

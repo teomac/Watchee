@@ -35,11 +35,15 @@ class HomeMoviesState extends State<HomeMovies>
   MyUser? _currentUser;
   final MovieGenres movieGenres = MovieGenres();
   late TabController _tabController;
+  bool _firstTime = true;
 
   @override
   void initState() {
     super.initState();
-    _initializeData();
+    if (_firstTime) {
+      _initializeData();
+      _firstTime = false;
+    }
     _tabController = TabController(length: 2, vsync: this);
   }
 
@@ -86,6 +90,12 @@ class HomeMoviesState extends State<HomeMovies>
       }
 
       final recommended = await fetchMoviesByGenres(genreIds);
+      final animation = await fetchMoviesByGenres([16]);
+      final family = await fetchMoviesByGenres([10751]);
+      final documentary = await fetchMoviesByGenres([99]);
+      final drama = await fetchMoviesByGenres([18]);
+      final comedy = await fetchMoviesByGenres([35]);
+      final horror = await fetchMoviesByGenres([27]);
 
       if (mounted) {
         setState(() {
@@ -95,6 +105,12 @@ class HomeMoviesState extends State<HomeMovies>
             upcomingMovies: upcoming,
             nowPlayingMovies: nowPlaying,
             recommendedMovies: recommended,
+            animationMovies: animation,
+            familyMovies: family,
+            documentaryMovies: documentary,
+            dramaMovies: drama,
+            comedyMovies: comedy,
+            horrorMovies: horror,
           );
         });
       }
@@ -341,6 +357,36 @@ class HomeMoviesState extends State<HomeMovies>
                     _data.nowPlayingMovies,
                     (movies) => MoviesSlider(movies: movies),
                     Theme.of(context)),
+                _buildMovieSection(
+                    'Family Movies',
+                    _data.familyMovies,
+                    (movies) => MoviesSlider(movies: movies),
+                    Theme.of(context)),
+                _buildMovieSection(
+                    'Documentary Movies',
+                    _data.documentaryMovies,
+                    (movies) => MoviesSlider(movies: movies),
+                    Theme.of(context)),
+                _buildMovieSection(
+                    'Animation Movies',
+                    _data.animationMovies,
+                    (movies) => MoviesSlider(movies: movies),
+                    Theme.of(context)),
+                _buildMovieSection(
+                    'Comedy Movies',
+                    _data.comedyMovies,
+                    (movies) => MoviesSlider(movies: movies),
+                    Theme.of(context)),
+                _buildMovieSection(
+                    'Horror Movies',
+                    _data.horrorMovies,
+                    (movies) => MoviesSlider(movies: movies),
+                    Theme.of(context)),
+                _buildMovieSection(
+                    'Drama Movies',
+                    _data.dramaMovies,
+                    (movies) => MoviesSlider(movies: movies),
+                    Theme.of(context)),
               ],
             )
           : //landscape tablet mode
@@ -366,6 +412,36 @@ class HomeMoviesState extends State<HomeMovies>
                 _buildMovieSection(
                     'Now Playing',
                     _data.nowPlayingMovies,
+                    (movies) => MoviesSlider(movies: movies),
+                    Theme.of(context)),
+                _buildMovieSection(
+                    'Family Movies',
+                    _data.familyMovies,
+                    (movies) => MoviesSlider(movies: movies),
+                    Theme.of(context)),
+                _buildMovieSection(
+                    'Documentary Movies',
+                    _data.documentaryMovies,
+                    (movies) => MoviesSlider(movies: movies),
+                    Theme.of(context)),
+                _buildMovieSection(
+                    'Animation Movies',
+                    _data.animationMovies,
+                    (movies) => MoviesSlider(movies: movies),
+                    Theme.of(context)),
+                _buildMovieSection(
+                    'Comedy Movies',
+                    _data.comedyMovies,
+                    (movies) => MoviesSlider(movies: movies),
+                    Theme.of(context)),
+                _buildMovieSection(
+                    'Horror Movies',
+                    _data.horrorMovies,
+                    (movies) => MoviesSlider(movies: movies),
+                    Theme.of(context)),
+                _buildMovieSection(
+                    'Drama Movies',
+                    _data.dramaMovies,
                     (movies) => MoviesSlider(movies: movies),
                     Theme.of(context)),
               ],

@@ -758,12 +758,12 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
 
   Widget _buildAddButton(Movie movie, bool isTablet) {
     return Positioned(
-        right: 16,
-        bottom: 16,
+        right: 8,
+        bottom: 8,
         child: IconButton(
           color: Colors.white,
           icon: const Icon(Icons.add),
-          iconSize: isTablet ? 45 : 35,
+          iconSize: isTablet ? 50 : 40,
           onPressed: () {
             _showWatchlistModal();
           },
