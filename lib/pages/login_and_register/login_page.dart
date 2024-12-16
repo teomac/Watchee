@@ -116,7 +116,7 @@ class LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildTitle() {
+  Widget _buildTitle(bool isTablet) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -127,14 +127,14 @@ class LoginPageState extends State<LoginPage> {
           color: isDarkMode ? Colors.white : Theme.of(context).primaryColor,
         ),
         const SizedBox(width: 10),
-        Text(
-          'Watchee',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color:
-                    isDarkMode ? Colors.white : Theme.of(context).primaryColor,
-              ),
-        ),
+        Text('Watchee',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode
+                      ? Colors.white
+                      : Theme.of(context).primaryColor,
+                  fontSize: isTablet ? 45 : 35,
+                )),
       ],
     );
   }
@@ -166,215 +166,220 @@ class LoginPageState extends State<LoginPage> {
     }
   }
 
+  Future<void> _handleGoogleSignIn() async {
+    if (isProcessingAuth) return;
+    setState(() {
+      isProcessingAuth = true;
+    });
+    BuildContext dialogContext = context;
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          dialogContext = context;
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        });
+
+    try {
+      final customGoogleAuth =
+          Provider.of<CustomGoogleAuth>(context, listen: false);
+      final result = await customGoogleAuth.signInWithGoogle();
+
+      if (dialogContext.mounted) {
+        Navigator.pop(dialogContext);
+      }
+
+      if (result != null) {
+        // Force a rebuild of the widget tree
+        if (mounted) {
+          setState(() {
+            isProcessingAuth = false;
+          });
+          if (context.mounted) {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const WidgetTree()),
+              (route) => false,
+            );
+          }
+        }
+      } else if (context.mounted) {
+        setState(() {
+          isProcessingAuth = false;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to sign in with Google. Please try again.'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() {
+        isProcessingAuth = false;
+      });
+      if (dialogContext.mounted) {
+        Navigator.pop(dialogContext);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('An error occurred. Please try again.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildLoginContent(ColorScheme colorScheme, bool isDarkMode) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        MyTextField(
+            controller: _controllerEmail, title: 'Email', obscureText: false),
+        const SizedBox(height: 25),
+        MyTextField(
+            controller: _controllerPassword,
+            title: 'Password',
+            obscureText: true),
+        const SizedBox(height: 10),
+        _buildForgotPassword(),
+        const SizedBox(height: 25),
+        _errorMessage(),
+        const SizedBox(height: 20),
+        CustomSubmitButton(
+            backgroundColor: colorScheme.primary,
+            foregroundColor: colorScheme.onPrimary,
+            text: 'Sign In',
+            onPressed: signInWithEmailAndPassword),
+        const SizedBox(height: 35),
+        _buildDivider(),
+        const SizedBox(height: 20),
+        _buildGoogleSignIn(),
+        const SizedBox(height: 35),
+        _buildRegisterButton(),
+      ],
+    );
+  }
+
+  Widget _buildForgotPassword() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 25.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          const Spacer(),
+          RichText(
+            text: TextSpan(
+              text: 'Forgot password?',
+              style: TextStyle(color: Colors.grey[600], fontSize: 15),
+              recognizer: TapGestureRecognizer()..onTap = _forgotPassword,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 25.0),
+      child: Row(
+        children: [
+          const Expanded(child: Divider(thickness: 0.5)),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 10.0),
+            child: Text('Or continue with', style: TextStyle(fontSize: 18)),
+          ),
+          Expanded(child: Divider(thickness: 0.5, color: Colors.grey[400])),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGoogleSignIn() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey),
+        borderRadius: BorderRadius.circular(16),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color.fromARGB(255, 27, 27, 27)
+            : Colors.white,
+      ),
+      child: GestureDetector(
+        key: const Key('google_sign_in_button'),
+        onTap: () => _handleGoogleSignIn(),
+        child: Image.asset(
+          'lib/assets/google.png',
+          fit: BoxFit.cover,
+          height: 50,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRegisterButton() {
+    return TextButton(
+        onPressed: navigateToRegisterPage,
+        child: const Text(
+          'Not a member? Register now',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final bool isTablet = MediaQuery.of(context).size.shortestSide >= 500;
+    final bool isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-        resizeToAvoidBottomInset: false,
-        body: SafeArea(
-            child: Center(
-                child: SingleChildScrollView(
-          child: Padding(
+      resizeToAvoidBottomInset: false,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  _buildTitle(),
-                  const SizedBox(height: 50),
-                  MyTextField(
-                      controller: _controllerEmail,
-                      title: 'Email',
-                      obscureText: false),
-                  const SizedBox(height: 25),
-                  MyTextField(
-                      controller: _controllerPassword,
-                      title: 'Password',
-                      obscureText: true),
-
-                  const SizedBox(height: 10),
-
-                  // forgot password?
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: <Widget>[
-                        const Spacer(),
-                        RichText(
-                          text: TextSpan(
-                            text: 'Forgot password?',
-                            style: TextStyle(
-                                color: Colors.grey[600], fontSize: 15),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = _forgotPassword,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 25),
-
-                  _errorMessage(),
-                  const SizedBox(height: 20),
-
-                  CustomSubmitButton(
-                      backgroundColor: colorScheme.primary,
-                      foregroundColor: colorScheme.onPrimary,
-                      text: 'Sign In',
-                      onPressed: signInWithEmailAndPassword),
-
-                  const SizedBox(height: 35),
-
-                  // or continue with
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                    child: Row(
-                      children: [
-                        const Expanded(
-                          child: Divider(
-                            thickness: 0.5,
-                          ),
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 10.0),
-                          child: Text(
-                            'Or continue with',
-                            style: TextStyle(
-                              fontSize: 18,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Divider(
-                            thickness: 0.5,
-                            color: Colors.grey[400],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // google sign in button
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+            child: (isTablet && isLandscape)
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(16),
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? const Color.fromARGB(255, 27, 27, 27)
-                              : Colors.white,
-                        ),
-                        child: GestureDetector(
-                          key: const Key('google_sign_in_button'),
-                          onTap: () async {
-                            if (isProcessingAuth) return;
-                            setState(() {
-                              isProcessingAuth = true;
-                            });
-                            BuildContext dialogContext = context;
-                            showDialog(
-                                context: context,
-                                barrierDismissible: false,
-                                builder: (BuildContext context) {
-                                  dialogContext = context;
-                                  return const Center(
-                                    child: CircularProgressIndicator(),
-                                  );
-                                });
-
-                            try {
-                              final customGoogleAuth =
-                                  Provider.of<CustomGoogleAuth>(context,
-                                      listen: false);
-
-                              final result =
-                                  await customGoogleAuth.signInWithGoogle();
-
-                              if (dialogContext.mounted) {
-                                Navigator.pop(dialogContext);
-                              }
-
-                              if (result != null) {
-                                // Force a rebuild of the widget tree
-                                if (mounted) {
-                                  setState(() {
-                                    isProcessingAuth = false;
-                                  });
-                                  if (context.mounted) {
-                                    Navigator.of(context).pushAndRemoveUntil(
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              const WidgetTree()),
-                                      (route) => false,
-                                    );
-                                  }
-                                }
-                              } else if (context.mounted) {
-                                setState(() {
-                                  isProcessingAuth = false;
-                                });
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                        'Failed to sign in with Google. Please try again.'),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              setState(() {
-                                isProcessingAuth = false;
-                              });
-                              if (dialogContext.mounted) {
-                                Navigator.pop(dialogContext);
-                              }
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                        'An error occurred. Please try again.'),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-                            }
-                          },
-                          child: Image.asset(
-                            'lib/assets/google.png',
-                            fit: BoxFit.cover,
-                            height: 50,
-                          ),
+                      // Left side with title
+                      Expanded(
+                          flex: 2,
+                          child: Center(
+                              child: _buildTitle(isTablet && isLandscape))),
+                      // Right side with login content
+                      Expanded(
+                        flex: 3,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                          child: _buildLoginContent(colorScheme, isDarkMode),
                         ),
                       ),
                     ],
-                  ),
-
-                  const SizedBox(height: 35),
-
-                  // not a member? register now
-                  Row(
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      TextButton(
-                          onPressed: navigateToRegisterPage,
-                          child: const Text(
-                            'Not a member? Register now',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
-                          ))
+                      _buildTitle(isTablet && isLandscape),
+                      const SizedBox(height: 50),
+                      _buildLoginContent(colorScheme, isDarkMode),
                     ],
-                  )
-                ]),
+                  ),
           ),
-        ))));
+        ),
+      ),
+    );
   }
 }

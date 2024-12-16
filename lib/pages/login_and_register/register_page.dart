@@ -202,7 +202,7 @@ class RegisterPageState extends State<RegisterPage> {
     }
   }
 
-  Widget _buildTitle() {
+  Widget _buildTitle(bool isTablet) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -213,14 +213,14 @@ class RegisterPageState extends State<RegisterPage> {
           color: isDarkMode ? Colors.white : Theme.of(context).primaryColor,
         ),
         const SizedBox(width: 10),
-        Text(
-          'Watchee',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color:
-                    isDarkMode ? Colors.white : Theme.of(context).primaryColor,
-              ),
-        ),
+        Text('Watchee',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode
+                      ? Colors.white
+                      : Theme.of(context).primaryColor,
+                  fontSize: isTablet ? 45 : 35,
+                )),
       ],
     );
   }
@@ -235,79 +235,119 @@ class RegisterPageState extends State<RegisterPage> {
         MaterialPageRoute(builder: (context) => const PrivacyPolicyPage()));
   }
 
+  Widget _buildRegisterContent(ColorScheme colorScheme) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        MyTextField(
+            controller: _controllerEmail, title: 'Email', obscureText: false),
+        const SizedBox(height: 25),
+        MyTextField(
+            controller: _controllerPassword,
+            title: 'Password',
+            obscureText: !isPasswordVisible,
+            fieldKey: const Key('password_field'),
+            showVisibilityToggle: true,
+            onVisibilityToggle: () {
+              setState(() {
+                isPasswordVisible = !isPasswordVisible;
+              });
+            }),
+        const SizedBox(height: 25),
+        MyTextField(
+            controller: _controllerConfirmPassword,
+            title: 'Confirm password',
+            obscureText: !isConfirmPasswordVisible,
+            fieldKey: const Key('confirm_password_field'),
+            showVisibilityToggle: true,
+            onVisibilityToggle: () {
+              setState(() {
+                isConfirmPasswordVisible = !isConfirmPasswordVisible;
+              });
+            }),
+        const SizedBox(height: 25),
+        _errorMessage(),
+        const SizedBox(height: 20),
+        CustomSubmitButton(
+          key: const Key('register_button'),
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
+          text: 'Register',
+          onPressed: createUserWithEmailAndPassword,
+        ),
+        const SizedBox(height: 35),
+        TextButton(
+            onPressed: widget.showLoginPage,
+            child: const Text('Already have an account? Login now',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+        const SizedBox(height: 50),
+        const Text('By registering, you agree to our:'),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextButton(
+                onPressed: () => showTos(),
+                child: const Text('Terms of Service')),
+            TextButton(
+                onPressed: () => showPrivacyPolicy(),
+                child: const Text('Privacy Policy')),
+          ],
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final bool isTablet = MediaQuery.of(context).size.shortestSide >= 500;
+    final bool isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+
     return Scaffold(
-        resizeToAvoidBottomInset: false,
-        body: SafeArea(
-            child: Container(
+      resizeToAvoidBottomInset: false,
+      body: SafeArea(
+        child: Container(
           height: double.infinity,
           width: double.infinity,
           padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              _buildTitle(),
-              const SizedBox(height: 50),
-              MyTextField(
-                  controller: _controllerEmail,
-                  title: 'Email',
-                  obscureText: false),
-              const SizedBox(height: 25),
-              MyTextField(
-                  controller: _controllerPassword,
-                  title: 'Password',
-                  obscureText: !isPasswordVisible,
-                  fieldKey: const Key('password_field'),
-                  showVisibilityToggle: true,
-                  onVisibilityToggle: () {
-                    setState(() {
-                      isPasswordVisible = !isPasswordVisible;
-                    });
-                  }),
-              const SizedBox(height: 25),
-              MyTextField(
-                  controller: _controllerConfirmPassword,
-                  title: 'Confirm password',
-                  obscureText: !isConfirmPasswordVisible,
-                  fieldKey: const Key('confirm_password_field'),
-                  showVisibilityToggle: true,
-                  onVisibilityToggle: () {
-                    setState(() {
-                      isConfirmPasswordVisible = !isConfirmPasswordVisible;
-                    });
-                  }),
-              const SizedBox(height: 25),
-              _errorMessage(),
-              const SizedBox(height: 20),
-              CustomSubmitButton(
-                key: const Key('register_button'),
-                backgroundColor: colorScheme.primary,
-                foregroundColor: colorScheme.onPrimary,
-                text: 'Register',
-                onPressed: createUserWithEmailAndPassword,
-              ),
-              const SizedBox(height: 35),
-              TextButton(
-                  onPressed: widget.showLoginPage,
-                  child: const Text('Already have an account? Login now',
-                      style: TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold))),
-              const SizedBox(height: 150),
-              const Text('By registering, you agree to our:'),
-              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                TextButton(
-                    onPressed: () => showTos(),
-                    child: const Text('Terms of Service')),
-                TextButton(
-                    onPressed: () => showPrivacyPolicy(),
-                    child: const Text('Privacy Policy')),
-              ])
-            ],
+          child: Center(
+            child: SingleChildScrollView(
+              child: (isTablet && isLandscape)
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Left side with title
+                        Expanded(
+                          flex: 2,
+                          child: Center(
+                              child: _buildTitle(isTablet && isLandscape)),
+                        ),
+                        // Right side with register content
+                        Expanded(
+                          flex: 3,
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 24.0),
+                            child: _buildRegisterContent(colorScheme),
+                          ),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildTitle(isTablet && isLandscape),
+                        const SizedBox(height: 50),
+                        _buildRegisterContent(colorScheme),
+                      ],
+                    ),
+            ),
           ),
-        )));
+        ),
+      ),
+    );
   }
 
   @override
