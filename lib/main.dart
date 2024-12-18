@@ -201,6 +201,9 @@ Widget _createApp(AppDependencies deps, Uri? initialUri) {
       Provider<NotificationsService>(
         create: (_) => NotificationsService(),
       ),
+      Provider<FCMSettingsService>(
+        create: (_) => deps.fcmSettingsService,
+      ),
     ],
     child: MyApp(initialUri: initialUri),
   );
