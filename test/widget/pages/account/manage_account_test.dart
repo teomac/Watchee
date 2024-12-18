@@ -294,6 +294,7 @@ void main() {
 
 // Mock class for User
 class MockUser extends Mock implements User {
+  @override
   final String uid;
   MockUser({required this.uid});
 }
