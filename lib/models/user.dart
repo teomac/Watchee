@@ -9,8 +9,8 @@ class MyUser {
   final String? profilePicture;
   final List<String>? nameLowerCase;
   final List<String> favoriteGenres;
-  final List<String> following; // Changed from friendList
-  final List<String> followers; // New field
+  final List<String> following;
+  final List<String> followers;
   final List<String> likedMovies;
   final List<String> seenMovies;
   final Map<String, List<dynamic>> followedWatchlists;
@@ -25,14 +25,48 @@ class MyUser {
     this.nameLowerCase,
     this.profilePicture,
     this.favoriteGenres = const [],
-    this.following = const [], // Changed from friendList
-    this.followers = const [], // New field
+    this.following = const [],
+    this.followers = const [],
     this.likedMovies = const [],
     this.seenMovies = const [],
     this.followedWatchlists = const {},
     this.pendingInvites = const {},
     this.collabWatchlists = const {},
   });
+
+  MyUser copyWith({
+    String? id,
+    String? username,
+    String? name,
+    String? email,
+    String? profilePicture,
+    List<String>? nameLowerCase,
+    List<String>? favoriteGenres,
+    List<String>? following,
+    List<String>? followers,
+    List<String>? likedMovies,
+    List<String>? seenMovies,
+    Map<String, List<dynamic>>? followedWatchlists,
+    Map<String, List<dynamic>>? pendingInvites,
+    Map<String, List<dynamic>>? collabWatchlists,
+  }) {
+    return MyUser(
+      id: id ?? this.id,
+      username: username ?? this.username,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      profilePicture: profilePicture ?? this.profilePicture,
+      nameLowerCase: nameLowerCase ?? this.nameLowerCase,
+      favoriteGenres: favoriteGenres ?? this.favoriteGenres,
+      following: following ?? this.following,
+      followers: followers ?? this.followers,
+      likedMovies: likedMovies ?? this.likedMovies,
+      seenMovies: seenMovies ?? this.seenMovies,
+      followedWatchlists: followedWatchlists ?? this.followedWatchlists,
+      pendingInvites: pendingInvites ?? this.pendingInvites,
+      collabWatchlists: collabWatchlists ?? this.collabWatchlists,
+    );
+  }
 
   // Convert User object to a map for Firestore
   Map<String, dynamic> toMap() {
@@ -44,8 +78,8 @@ class MyUser {
       'nameLowerCase': nameLowerCase,
       'profilePicture': profilePicture,
       'favoriteGenres': favoriteGenres,
-      'following': following, // Changed from friendList
-      'followers': followers, // New field
+      'following': following,
+      'followers': followers,
       'likedMovies': likedMovies,
       'seenMovies': seenMovies,
       'followedWatchlists': followedWatchlists,
