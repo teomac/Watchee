@@ -122,6 +122,7 @@ Future<void> initializeApp({AppDependencies? dependencies}) async {
       currentVersion: versionStatus['currentVersion'],
       requiredVersion: versionStatus['minimumVersion'],
       updateMessage: versionStatus['updateMessage'],
+      themeProvider: ThemeProvider(),
     ));
     return;
   }

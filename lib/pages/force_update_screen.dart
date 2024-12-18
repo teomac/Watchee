@@ -9,12 +9,14 @@ class ForceUpdateScreen extends StatelessWidget {
   final String currentVersion;
   final String requiredVersion;
   final String updateMessage;
+  final ThemeProvider themeProvider;
 
   const ForceUpdateScreen({
     super.key,
     required this.currentVersion,
     required this.requiredVersion,
     required this.updateMessage,
+    required this.themeProvider,
   });
 
   Future<void> _openStore() async {
@@ -36,7 +38,7 @@ class ForceUpdateScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => ThemeProvider()..loadThemeMode(),
+      create: (_) => themeProvider..loadThemeMode(),
       child: DynamicColorBuilder(
         builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
           return Consumer<ThemeProvider>(
