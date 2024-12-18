@@ -5,12 +5,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class FCMSettingsService {
-  static const String _pushNotificationsKey = 'push_notifications_enabled';
-  static final Logger _logger = Logger();
-  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  static final FirebaseAuth _auth = FirebaseAuth.instance;
+  final String _pushNotificationsKey = 'push_notifications_enabled';
+  final Logger _logger = Logger();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  static Future<bool> isPushNotificationsEnabled() async {
+  Future<bool> isPushNotificationsEnabled() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getBool(_pushNotificationsKey) ?? true;
@@ -20,7 +20,7 @@ class FCMSettingsService {
     }
   }
 
-  static Future<void> setPushNotificationsEnabled(bool enabled) async {
+  Future<void> setPushNotificationsEnabled(bool enabled) async {
     try {
       final user = _auth.currentUser;
       if (user == null) {

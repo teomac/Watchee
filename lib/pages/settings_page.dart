@@ -86,8 +86,9 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildPushNotificationToggle() {
+    final FCMSettingsService fcm = Provider.of<FCMSettingsService>(context);
     return FutureBuilder<bool>(
-      future: FCMSettingsService.isPushNotificationsEnabled(),
+      future: fcm.isPushNotificationsEnabled(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const ListTile(
@@ -109,7 +110,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 });
 
                 try {
-                  await FCMSettingsService.setPushNotificationsEnabled(value);
+                  await fcm.setPushNotificationsEnabled(value);
                   _showSuccessSnackBar(value
                       ? 'Push notifications enabled'
                       : 'Push notifications disabled');
