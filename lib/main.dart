@@ -1,6 +1,7 @@
 import 'package:dima_project/pages/account/notifications_page.dart';
 import 'package:dima_project/pages/no_internet_page.dart';
 import 'package:dima_project/services/fcm_service.dart';
+import 'package:dima_project/services/fcm_settings_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -43,6 +44,7 @@ class AppDependencies {
   final AppLinks appLinks;
   final WatchlistService watchlistService;
   final FCMService fcmService;
+  final FCMSettingsService fcmSettingsService;
 
   AppDependencies({
     required this.auth,
@@ -55,6 +57,7 @@ class AppDependencies {
     required this.appLinks,
     required this.watchlistService,
     required this.fcmService,
+    required this.fcmSettingsService,
   });
 
   factory AppDependencies.production() {
@@ -85,6 +88,7 @@ class AppDependencies {
           WatchlistService(firestore: firestore, userService: userService),
       fcmService:
           FCMService(firestore: firestore, auth: auth, messaging: messaging),
+      fcmSettingsService: FCMSettingsService(firestore: firestore, auth: auth),
     );
   }
 }
