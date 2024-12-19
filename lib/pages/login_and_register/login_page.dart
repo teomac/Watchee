@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:dima_project/services/custom_auth.dart';
 import 'package:dima_project/services/fcm_service.dart';
 import 'package:dima_project/services/custom_google_auth.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:dima_project/widgets/my_textfield.dart';
@@ -44,7 +43,6 @@ class LoginPageState extends State<LoginPage> {
       errorMessage = '';
     });
 
-    final auth = Provider.of<FirebaseAuth>(context, listen: false);
     final fcm = Provider.of<FCMService>(context, listen: false);
     final messaging = Provider.of<FirebaseMessaging>(context, listen: false);
 
@@ -64,21 +62,21 @@ class LoginPageState extends State<LoginPage> {
       return;
     }
 
-    late BuildContext dialogContext;
-    //show loading circle
+    // Show loading indicator
     showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          dialogContext = context;
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        });
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      },
+    );
 
     try {
-      await CustomAuth(firebaseAuth: auth).signInWithEmailAndPassword(
-          email: _controllerEmail.text, password: _controllerPassword.text);
+      await Provider.of<CustomAuth>(context, listen: false)
+          .signInWithEmailAndPassword(
+              email: _controllerEmail.text, password: _controllerPassword.text);
 
       String? token = await messaging.getToken();
       if (token != null) {
@@ -88,23 +86,22 @@ class LoginPageState extends State<LoginPage> {
 
       fcm.setupTokenRefreshListener();
 
-      if (dialogContext.mounted) {
-        Navigator.of(dialogContext).pop();
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const WidgetTree()),
-            (route) => false,
-          );
-        }
-      }
+      if (!mounted) return;
+
+      Navigator.of(context).pop(); // Dismiss loading dialog
+      if (!mounted) return;
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const WidgetTree()),
+        (route) => false,
+      );
     } catch (e) {
-      if (dialogContext.mounted) {
-        Navigator.of(dialogContext).pop(); // Dismiss loading dialog
-        setState(() {
-          errorMessage = e.toString();
-          isProcessingAuth = false;
-        });
-      }
+      if (!mounted) return;
+      Navigator.of(context).pop(); // Dismiss loading dialog
+      setState(() {
+        errorMessage = e.toString();
+        isProcessingAuth = false;
+      });
       logger.e('Error signing in: $e');
     }
   }
@@ -274,6 +271,7 @@ class LoginPageState extends State<LoginPage> {
         children: [
           const Spacer(),
           RichText(
+            key: const Key('forgot_password'),
             text: TextSpan(
               text: 'Forgot password?',
               style: TextStyle(color: Colors.grey[600], fontSize: 15),
