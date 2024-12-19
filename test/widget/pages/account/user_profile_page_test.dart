@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:dima_project/models/movie_review.dart';
 import 'package:dima_project/models/user.dart';
 import 'package:dima_project/models/watchlist.dart';

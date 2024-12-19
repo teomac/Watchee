@@ -11,11 +11,20 @@ import 'package:dima_project/pages/settings_page.dart';
 import 'package:dima_project/widgets/profile_widget.dart';
 import 'package:logger/logger.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:provider/provider.dart';
 
 class UserInfo extends StatefulWidget {
   final VoidCallback? onFavoriteGenresUpdated;
+  final UserService? userService;
+  final CustomAuth? auth;
+  final NotificationsService? notificationsService;
 
-  const UserInfo({super.key, this.onFavoriteGenresUpdated});
+  const UserInfo(
+      {super.key,
+      this.onFavoriteGenresUpdated,
+      this.userService,
+      this.auth,
+      this.notificationsService});
 
   @override
   State<UserInfo> createState() => _UserInfoState();
@@ -24,13 +33,18 @@ class UserInfo extends StatefulWidget {
 class _UserInfoState extends State<UserInfo> {
   MyUser? _currentUser;
   final Logger logger = Logger();
-  final UserService _userService = UserService();
-  final CustomAuth _auth = CustomAuth();
-  final NotificationsService _notificationsService = NotificationsService();
+  late UserService _userService;
+  late CustomAuth _auth;
+  late NotificationsService _notificationsService;
 
   @override
   void initState() {
     super.initState();
+    _userService =
+        widget.userService ?? Provider.of<UserService>(context, listen: false);
+    _auth = widget.auth ?? Provider.of<CustomAuth>(context, listen: false);
+    _notificationsService = widget.notificationsService ??
+        Provider.of<NotificationsService>(context, listen: false);
     _initializeData();
     _initFCM();
   }

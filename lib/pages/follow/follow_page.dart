@@ -147,7 +147,12 @@ class FollowBloc extends Bloc<FollowEvent, FollowState> {
 }
 
 class FollowView extends StatefulWidget {
-  const FollowView({super.key});
+  final FollowBloc? followBloc;
+
+  const FollowView({
+    super.key,
+    this.followBloc, // Make it optional to maintain backward compatibility
+  });
 
   @override
   State<FollowView> createState() => _FollowViewState();
@@ -161,7 +166,8 @@ class _FollowViewState extends State<FollowView> {
   @override
   void initState() {
     super.initState();
-    _followBloc = FollowBloc(Provider.of<UserService>(context, listen: false));
+    _followBloc = widget.followBloc ??
+        FollowBloc(Provider.of<UserService>(context, listen: false));
     if (isLoadingNecessary) {
       _followBloc.add(LoadFollowData());
     }
@@ -296,12 +302,19 @@ class _FollowViewState extends State<FollowView> {
       itemCount: users.length,
       itemBuilder: (context, index) {
         final user = users[index];
+        NetworkImage? proPic;
+        try {
+          if (user.profilePicture?.isNotEmpty == true) {
+            proPic = NetworkImage(user.profilePicture!);
+          }
+          proPic = null;
+        } catch (e) {
+          proPic = null;
+        }
         return ListTile(
           leading: CircleAvatar(
-            backgroundImage: user.profilePicture?.isNotEmpty == true
-                ? NetworkImage(user.profilePicture!)
-                : null,
-            child: user.profilePicture == null
+            backgroundImage: proPic,
+            child: proPic == null
                 ? Icon(Icons.person,
                     color: Theme.of(context).brightness == Brightness.dark
                         ? Colors.white
@@ -382,6 +395,7 @@ class _FollowViewState extends State<FollowView> {
           ),
           const SizedBox(height: 20),
           Text(
+            key: const Key('empty_state_text'),
             isFollowing
                 ? 'You are not following anyone yet'
                 : 'No followers yet',
@@ -396,12 +410,20 @@ class _FollowViewState extends State<FollowView> {
       BuildContext context, MyUser user, bool isFollowing) {
     final theme = Theme.of(context).colorScheme;
 
+    NetworkImage? proPic;
+    try {
+      if (user.profilePicture?.isNotEmpty == true) {
+        proPic = NetworkImage(user.profilePicture!);
+      }
+      proPic = null;
+    } catch (e) {
+      proPic = null;
+    }
+
     return ListTile(
       leading: CircleAvatar(
-        backgroundImage: user.profilePicture?.isNotEmpty == true
-            ? NetworkImage(user.profilePicture!)
-            : null,
-        child: user.profilePicture == null
+        backgroundImage: proPic,
+        child: proPic == null
             ? Icon(Icons.person,
                 color: Theme.of(context).brightness == Brightness.dark
                     ? Colors.white

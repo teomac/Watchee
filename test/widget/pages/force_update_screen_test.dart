@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:dima_project/pages/force_update_screen.dart';
 import 'package:dima_project/theme/theme_provider.dart';
 import 'package:flutter/material.dart';
