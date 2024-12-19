@@ -45,6 +45,7 @@ class AppDependencies {
   final WatchlistService watchlistService;
   final FCMService fcmService;
   final FCMSettingsService fcmSettingsService;
+  final NotificationsService notificationsService;
 
   AppDependencies({
     required this.auth,
@@ -58,6 +59,7 @@ class AppDependencies {
     required this.watchlistService,
     required this.fcmService,
     required this.fcmSettingsService,
+    required this.notificationsService,
   });
 
   factory AppDependencies.production() {
@@ -89,6 +91,7 @@ class AppDependencies {
       fcmService:
           FCMService(firestore: firestore, auth: auth, messaging: messaging),
       fcmSettingsService: FCMSettingsService(firestore: firestore, auth: auth),
+      notificationsService: NotificationsService(),
     );
   }
 }
@@ -200,7 +203,7 @@ Widget _createApp(AppDependencies deps, Uri? initialUri) {
         create: (_) => deps.fcmService,
       ),
       Provider<NotificationsService>(
-        create: (_) => NotificationsService(),
+        create: (_) => deps.notificationsService,
       ),
       Provider<FCMSettingsService>(
         create: (_) => deps.fcmSettingsService,
