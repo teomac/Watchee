@@ -86,6 +86,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : CustomScrollView(
+                key: const PageStorageKey('person_details_page'),
                 controller: _scrollController,
                 slivers: [
                   _buildSilverAppBar(),
@@ -189,6 +190,22 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     final colorScheme = Theme.of(context).colorScheme;
     final bool isTablet = MediaQuery.of(context).size.shortestSide >= 500;
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    Image? profileImage;
+    try {
+      if (_person.profilePath != null) {
+        profileImage = Image.network(
+          '${Constants.imageOriginalPath}${_person.profilePath}',
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(color: Colors.grey);
+          },
+        );
+      } else {
+        profileImage = null;
+      }
+    } catch (e) {
+      profileImage = null;
+    }
     return SliverAppBar(
       expandedHeight: isTablet ? 425 : 325.0,
       pinned: true,
@@ -206,15 +223,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
           fit: StackFit.expand,
           children: [
             // Profile image
-            _person.profilePath != null
-                ? Image.network(
-                    '${Constants.imageOriginalPath}${_person.profilePath}',
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(color: Colors.grey);
-                    },
-                  )
-                : Container(color: colorScheme.surface),
+            profileImage ?? Container(color: colorScheme.surface),
             // Gradient overlay for fade effect
             DecoratedBox(
               decoration: BoxDecoration(
@@ -380,6 +389,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     bool isHorizontal =
         MediaQuery.of(context).orientation == Orientation.landscape;
     return Card(
+      key: const Key('known_for_card'),
       elevation: 4,
       child: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -409,6 +419,22 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
               itemCount: _person.knownFor.length,
               itemBuilder: (context, index) {
                 final movie = _person.knownFor[index];
+                Image? movieImage;
+                try {
+                  if (movie.posterPath != null) {
+                    movieImage = Image.network(
+                      '${Constants.imagePath}${movie.posterPath}',
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return _buildPlaceholderPoster();
+                      },
+                    );
+                  } else {
+                    movieImage = null;
+                  }
+                } catch (e) {
+                  movieImage = null;
+                }
                 return GestureDetector(
                   onTap: () {
                     Navigator.push(
@@ -426,15 +452,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
                               2 / 3, // Standard movie poster aspect ratio
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(16),
-                            child: movie.posterPath != null
-                                ? Image.network(
-                                    '${Constants.imagePath}${movie.posterPath}',
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return _buildPlaceholderPoster();
-                                    },
-                                  )
-                                : _buildPlaceholderPoster(),
+                            child: movieImage ?? _buildPlaceholderPoster(),
                           ),
                         ),
                       ),
