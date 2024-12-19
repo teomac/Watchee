@@ -1,4 +1,4 @@
-import 'package:dima_project/api/tmdb_api.dart';
+import 'package:dima_project/services/tmdb_api_service.dart';
 import 'package:dima_project/models/movie_review.dart';
 import 'package:dima_project/models/user.dart';
 import 'package:dima_project/models/watchlist.dart';
@@ -20,7 +20,9 @@ import 'package:provider/provider.dart';
 import 'package:dima_project/models/tiny_movie.dart';
 
 class FilmDetailsBloc extends Bloc<FilmDetailsEvent, FilmDetailsState> {
-  FilmDetailsBloc() : super(FilmDetailsInitial()) {
+  final TmdbApiService _apiService;
+
+  FilmDetailsBloc(this._apiService) : super(FilmDetailsInitial()) {
     on<LoadFilmDetails>(_onLoadFilmDetails);
   }
 
@@ -30,9 +32,9 @@ class FilmDetailsBloc extends Bloc<FilmDetailsEvent, FilmDetailsState> {
   ) async {
     emit(FilmDetailsLoading());
     try {
-      final movie = await retrieveFilmInfo(event.movieId);
-      final trailerKey = await retrieveTrailer(event.movieId);
-      final cast = await retrieveCast(event.movieId);
+      final movie = await _apiService.retrieveFilmInfo(event.movieId);
+      final trailerKey = await _apiService.retrieveTrailer(event.movieId);
+      final cast = await _apiService.retrieveCast(event.movieId);
 
       emit(FilmDetailsLoaded(movie, trailerKey: trailerKey, cast: cast));
     } catch (e) {
@@ -220,7 +222,9 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
 
   Future<void> _fetchAllProviders() async {
     try {
-      final providers = await fetchAllProviders(widget.movie.id);
+      final providers =
+          await Provider.of<TmdbApiService>(context, listen: false)
+              .fetchAllProviders(widget.movie.id);
       setState(() {
         _allProviders = providers;
       });
@@ -235,7 +239,9 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
 
   Future<void> _fetchRecommendedMovies() async {
     try {
-      final recommendations = await fetchRecommendedMovies(widget.movie.id);
+      final recommendations =
+          await Provider.of<TmdbApiService>(context, listen: false)
+              .fetchRecommendedMovies(widget.movie.id);
       setState(() {
         _recommendedMovies = recommendations;
       });
@@ -272,7 +278,8 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
 
     return BlocProvider(
       create: (context) =>
-          FilmDetailsBloc()..add(LoadFilmDetails(widget.movie.id)),
+          FilmDetailsBloc(Provider.of<TmdbApiService>(context, listen: false))
+            ..add(LoadFilmDetails(widget.movie.id)),
       child: BlocBuilder<FilmDetailsBloc, FilmDetailsState>(
         builder: (context, state) {
           return PopScope(

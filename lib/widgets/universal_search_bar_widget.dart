@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:dima_project/models/movie.dart';
 import 'package:dima_project/models/person.dart';
-import 'package:dima_project/api/tmdb_api.dart';
+import 'package:dima_project/services/tmdb_api_service.dart';
 import 'package:logger/logger.dart';
+import 'package:provider/provider.dart';
 
 class UniversalSearchBarWidget extends StatefulWidget {
   final ThemeData theme;
@@ -31,10 +32,12 @@ class _UniversalSearchBarWidgetState extends State<UniversalSearchBarWidget>
   late AnimationController _animationController;
   late Animation<double> _animation;
   final Logger logger = Logger();
+  late TmdbApiService _api;
 
   @override
   void initState() {
     super.initState();
+    _api = Provider.of<TmdbApiService>(context, listen: false);
     _searchController.addListener(_onSearchChanged);
     _focusNode.addListener(_onFocusChanged);
     _animationController = AnimationController(
@@ -93,8 +96,8 @@ class _UniversalSearchBarWidgetState extends State<UniversalSearchBarWidget>
   Future<void> _performSearch(String query) async {
     if (query.isNotEmpty) {
       try {
-        final movieResults = await searchMovie(query);
-        final peopleResults = await searchPeople(query);
+        final movieResults = await _api.searchMovie(query);
+        final peopleResults = await _api.searchPeople(query);
         widget.onSearchResults(movieResults, peopleResults);
       } catch (e) {
         // Handle error (e.g., show a snackbar)

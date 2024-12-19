@@ -2,29 +2,18 @@ import 'package:dima_project/models/person.dart';
 import 'package:dima_project/models/movie.dart';
 import 'package:dima_project/pages/movies/person_details_page.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
-import 'package:dima_project/api/tmdb_api.dart' as tmdb_api;
+import 'package:dima_project/services/tmdb_api_service.dart';
+import 'package:mockito/mockito.dart';
+import 'package:mockito/annotations.dart';
 
-// Mock classes for testing
-class MockPerson extends Mock implements Person {}
+import '../watchlists/liked_seen_movies_page_test.mocks.dart';
 
-class MockMovie extends Mock implements Movie {}
-
-// Create a class to wrap the static methods for testing
-class TMDBApiWrapper {
-  Future<Person> fetchPersonDetails(int personId) =>
-      tmdb_api.fetchPersonDetails(personId);
-  Future<List<Movie>> fetchPersonMovies(int personId) =>
-      tmdb_api.fetchPersonMovies(personId);
-}
-
-class MockTMDBApiWrapper extends Mock implements TMDBApiWrapper {}
-
+@GenerateMocks([TmdbApiService])
 void main() {
   late Person testPerson;
   late List<Movie> testMovies;
   late PersonDetailsPageState pageState;
-  late MockTMDBApiWrapper mockApiWrapper;
+  late MockTmdbApiService api;
 
   setUp(() {
     testPerson = Person(
@@ -64,7 +53,7 @@ void main() {
     ];
 
     pageState = PersonDetailsPageState();
-    mockApiWrapper = MockTMDBApiWrapper();
+    api = MockTmdbApiService();
   });
 
   group('Date Formatting Tests', () {
@@ -137,41 +126,37 @@ void main() {
 
   group('TMDB API Integration Tests', () {
     test('fetchPersonDetails returns valid person data', () async {
-      when(() => mockApiWrapper.fetchPersonDetails(any()))
-          .thenAnswer((_) async => testPerson);
+      when(api.fetchPersonDetails(1)).thenAnswer((_) async => testPerson);
 
-      final result = await mockApiWrapper.fetchPersonDetails(1);
+      final result = await api.fetchPersonDetails(1);
 
-      verify(() => mockApiWrapper.fetchPersonDetails(1)).called(1);
+      verify(api.fetchPersonDetails(1)).called(1);
       expect(result, equals(testPerson));
       expect(result.name, equals('Test Person'));
       expect(result.biography, equals('Test biography'));
     });
 
     test('fetchPersonMovies returns valid movie list', () async {
-      when(() => mockApiWrapper.fetchPersonMovies(any()))
-          .thenAnswer((_) async => testMovies);
+      when(api.fetchPersonMovies(1)).thenAnswer((_) async => testMovies);
 
-      final result = await mockApiWrapper.fetchPersonMovies(1);
+      final result = await api.fetchPersonMovies(1);
 
-      verify(() => mockApiWrapper.fetchPersonMovies(1)).called(1);
+      verify(api.fetchPersonMovies(1)).called(1);
       expect(result, equals(testMovies));
       expect(result.length, equals(2));
       expect(result.first.title, equals('Test Movie 1'));
     });
 
-    test('handles API error for fetchPersonDetails', () async {
-      when(() => mockApiWrapper.fetchPersonDetails(any()))
-          .thenThrow(Exception('API Error'));
+    test('handles API error for fetchPersonDetails', () {
+      when(api.fetchPersonDetails(1)).thenThrow(Exception('API Error'));
 
-      expect(() => mockApiWrapper.fetchPersonDetails(1), throwsException);
+      expect(() => api.fetchPersonDetails(1), throwsException);
     });
 
-    test('handles API error for fetchPersonMovies', () async {
-      when(() => mockApiWrapper.fetchPersonMovies(any()))
-          .thenThrow(Exception('API Error'));
+    test('handles API error for fetchPersonMovies', () {
+      when(api.fetchPersonMovies(1)).thenThrow(Exception('API Error'));
 
-      expect(() => mockApiWrapper.fetchPersonMovies(1), throwsException);
+      expect(() => api.fetchPersonMovies(1), throwsException);
     });
   });
 

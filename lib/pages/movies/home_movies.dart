@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:dima_project/models/genres.dart';
 import 'package:provider/provider.dart';
 import 'package:dima_project/models/movie.dart';
@@ -5,7 +7,7 @@ import 'package:dima_project/models/user.dart';
 import 'package:dima_project/pages/movies/film_details_page.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:flutter/material.dart';
-import 'package:dima_project/api/tmdb_api.dart';
+import 'package:dima_project/services/tmdb_api_service.dart';
 import 'package:dima_project/widgets/movies_slider.dart';
 import 'package:dima_project/widgets/trending_slider.dart';
 import 'package:dima_project/models/home_movies_data.dart';
@@ -36,6 +38,7 @@ class HomeMoviesState extends State<HomeMovies>
   final MovieGenres movieGenres = MovieGenres();
   late TabController _tabController;
   bool _firstTime = true;
+  late TmdbApiService tmdbApi;
 
   @override
   void initState() {
@@ -48,16 +51,17 @@ class HomeMoviesState extends State<HomeMovies>
   }
 
   Future<void> _initializeData() async {
+    tmdbApi = Provider.of<TmdbApiService>(context, listen: false);
     final currentUser =
         await Provider.of<UserService>(context, listen: false).getCurrentUser();
     if (currentUser != null) {
       _currentUser = currentUser;
     }
     try {
-      final trending = await fetchTrendingMovies();
-      final topRated = await fetchTopRatedMovies();
-      final upcoming = await fetchUpcomingMovies();
-      final nowPlaying = await fetchNowPlayingMovies();
+      final trending = tmdbApi.fetchTrendingMovies();
+      final topRated = tmdbApi.fetchTopRatedMovies();
+      final upcoming = tmdbApi.fetchUpcomingMovies();
+      final nowPlaying = tmdbApi.fetchNowPlayingMovies();
 
       List<int> genreIds = _currentUser?.favoriteGenres
               .map((genreName) => movieGenres.getIdFromName(genreName))
@@ -89,13 +93,13 @@ class HomeMoviesState extends State<HomeMovies>
         ];
       }
 
-      final recommended = await fetchMoviesByGenres(genreIds);
-      final animation = await fetchMoviesByGenres([16]);
-      final family = await fetchMoviesByGenres([10751]);
-      final documentary = await fetchMoviesByGenres([99]);
-      final drama = await fetchMoviesByGenres([18]);
-      final comedy = await fetchMoviesByGenres([35]);
-      final horror = await fetchMoviesByGenres([27]);
+      final recommended = await tmdbApi.fetchMoviesByGenres(genreIds);
+      final animation = await tmdbApi.fetchMoviesByGenres([16]);
+      final family = await tmdbApi.fetchMoviesByGenres([10751]);
+      final documentary = await tmdbApi.fetchMoviesByGenres([99]);
+      final drama = await tmdbApi.fetchMoviesByGenres([18]);
+      final comedy = await tmdbApi.fetchMoviesByGenres([35]);
+      final horror = await tmdbApi.fetchMoviesByGenres([27]);
 
       if (mounted) {
         setState(() {
@@ -129,7 +133,7 @@ class HomeMoviesState extends State<HomeMovies>
             .cast<int>()
             .toList();
 
-        final recommended = await fetchMoviesByGenres(genreIds);
+        final recommended = await tmdbApi.fetchMoviesByGenres(genreIds);
 
         if (mounted) {
           setState(() {
@@ -504,9 +508,9 @@ class HomeMoviesState extends State<HomeMovies>
 
   void _retrieveAllMovieInfo(Movie movie) async {
     try {
-      final fullMovie = await retrieveFilmInfo(movie.id);
-      final cast = await retrieveCast(movie.id);
-      final trailer = await retrieveTrailer(movie.id);
+      final fullMovie = await tmdbApi.retrieveFilmInfo(movie.id);
+      final cast = await tmdbApi.retrieveCast(movie.id);
+      final trailer = await tmdbApi.retrieveTrailer(movie.id);
 
       movie = fullMovie;
       movie.cast = cast;

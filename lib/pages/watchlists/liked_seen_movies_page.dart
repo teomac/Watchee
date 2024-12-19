@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dima_project/models/movie.dart';
 import 'package:dima_project/services/user_service.dart';
-import 'package:dima_project/api/tmdb_api.dart';
+import 'package:dima_project/services/tmdb_api_service.dart';
 import 'package:dima_project/pages/movies/film_details_page.dart';
 import 'package:dima_project/api/constants.dart';
 import 'package:dima_project/pages/watchlists/search_page.dart'; // Add this import
@@ -55,8 +55,10 @@ class LikedSeenMoviesError extends LikedSeenMoviesState {
 class LikedSeenMoviesBloc
     extends Bloc<LikedSeenMoviesEvent, LikedSeenMoviesState> {
   final UserService _userService;
+  final TmdbApiService _tmdbApiService;
 
-  LikedSeenMoviesBloc(this._userService) : super(LikedSeenMoviesInitial()) {
+  LikedSeenMoviesBloc(this._userService, this._tmdbApiService)
+      : super(LikedSeenMoviesInitial()) {
     on<LoadMovies>(_onLoadMovies);
     on<RemoveMovie>(_onRemoveMovie);
   }
@@ -78,8 +80,8 @@ class LikedSeenMoviesBloc
       final user = await _userService.getUser(event.userId);
       if (user != null) {
         final movieStrings = event.isLiked ? user.likedMovies : user.seenMovies;
-        final movies = await Future.wait(movieStrings
-            .map((movie) => retrieveFilmInfo(fromString(movie).id)));
+        final movies = await Future.wait(movieStrings.map(
+            (movie) => _tmdbApiService.retrieveFilmInfo(fromString(movie).id)));
         emit(LikedSeenMoviesLoaded(movies));
       } else {
         emit(LikedSeenMoviesError("User not found"));
@@ -96,8 +98,8 @@ class LikedSeenMoviesBloc
         _userService.removeFromLikedMovies(event.userId, event.movie);
         final user = await _userService.getUser(event.userId);
         if (user != null) {
-          final movies = await Future.wait(user.likedMovies
-              .map((movie) => retrieveFilmInfo(fromString(movie).id)));
+          final movies = await Future.wait(user.likedMovies.map((movie) =>
+              _tmdbApiService.retrieveFilmInfo(fromString(movie).id)));
           emit(LikedSeenMoviesLoaded(movies));
         }
       } catch (e) {
@@ -108,8 +110,8 @@ class LikedSeenMoviesBloc
         _userService.removeFromSeenMovies(event.userId, event.movie);
         final user = await _userService.getUser(event.userId);
         if (user != null) {
-          final movies = await Future.wait(user.seenMovies
-              .map((movie) => retrieveFilmInfo(fromString(movie).id)));
+          final movies = await Future.wait(user.seenMovies.map((movie) =>
+              _tmdbApiService.retrieveFilmInfo(fromString(movie).id)));
           emit(LikedSeenMoviesLoaded(movies));
         }
       } catch (e) {
@@ -140,8 +142,9 @@ class _LikedSeenMoviesPageState extends State<LikedSeenMoviesPage> {
   @override
   void initState() {
     super.initState();
-    _likedSeenMoviesBloc =
-        LikedSeenMoviesBloc(Provider.of<UserService>(context, listen: false));
+    _likedSeenMoviesBloc = LikedSeenMoviesBloc(
+        Provider.of<UserService>(context, listen: false),
+        Provider.of<TmdbApiService>(context, listen: false));
     loadBasics();
   }
 
@@ -305,10 +308,19 @@ class _LikedSeenMoviesPageState extends State<LikedSeenMoviesPage> {
       delegate: SliverChildBuilderDelegate(
         (context, index) {
           final movie = state.movies[index];
+          Image? image;
+          try {
+            if (movie.posterPath != null) {
+              image =
+                  Image.network('${Constants.imagePath}${movie.posterPath}');
+            } else {
+              image = null;
+            }
+          } catch (e) {
+            image = null;
+          }
           return ListTile(
-            leading: movie.posterPath != null
-                ? Image.network('${Constants.imagePath}${movie.posterPath}')
-                : const Icon(Icons.movie),
+            leading: image ?? const Icon(Icons.movie),
             title: Text(movie.title),
             subtitle: Text(movie.releaseDate ?? 'Release date unknown'),
             onTap: () => _navigateToFilmDetails(context, movie),

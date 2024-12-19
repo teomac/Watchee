@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dima_project/models/watchlist.dart';
 import 'package:dima_project/services/watchlist_service.dart';
 import 'package:dima_project/api/constants.dart';
-import 'package:dima_project/api/tmdb_api.dart';
+import 'package:dima_project/services/tmdb_api_service.dart';
 import 'package:dima_project/pages/movies/film_details_page.dart';
 import 'package:dima_project/pages/watchlists/search_page.dart';
 import 'package:dima_project/pages/account/user_profile_page.dart';
@@ -248,10 +248,12 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
   List<Tinymovie> sortedMovies = [];
   late ScrollController _scrollController;
   bool showName = false;
+  late TmdbApiService _tmdbApiService;
 
   @override
   void initState() {
     super.initState();
+    _tmdbApiService = Provider.of<TmdbApiService>(context, listen: false);
     _scrollController = ScrollController()
       ..addListener(() {
         setState(() {
@@ -792,7 +794,7 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
   }
 
   void _navigateToFilmDetails(BuildContext context, Tinymovie movie) async {
-    final tempMovie = await retrieveFilmInfo(movie.id);
+    final tempMovie = await _tmdbApiService.retrieveFilmInfo(movie.id);
     if (context.mounted) {
       Navigator.push(
         context,

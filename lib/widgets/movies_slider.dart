@@ -1,10 +1,11 @@
 import 'package:dima_project/api/constants.dart';
-import 'package:dima_project/api/tmdb_api.dart';
+import 'package:dima_project/services/tmdb_api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:dima_project/models/movie.dart';
 import 'package:dima_project/pages/movies/film_details_page.dart';
 import 'package:logger/logger.dart';
 import 'dart:math';
+import 'package:provider/provider.dart';
 
 class MoviesSlider extends StatelessWidget {
   final List<Movie> movies;
@@ -36,7 +37,8 @@ class MoviesSlider extends StatelessWidget {
             padding: const EdgeInsets.all(8.0),
             child: GestureDetector(
               onTap: () {
-                _retrieveAllMovieInfo(movie);
+                _retrieveAllMovieInfo(
+                    movie, Provider.of<TmdbApiService>(context, listen: false));
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -98,11 +100,11 @@ class MoviesSlider extends StatelessWidget {
     );
   }
 
-  void _retrieveAllMovieInfo(Movie movie) async {
+  void _retrieveAllMovieInfo(Movie movie, TmdbApiService api) async {
     try {
-      final fullMovie = await retrieveFilmInfo(movie.id);
-      final cast = await retrieveCast(movie.id);
-      final trailer = await retrieveTrailer(movie.id);
+      final fullMovie = await api.retrieveFilmInfo(movie.id);
+      final cast = await api.retrieveCast(movie.id);
+      final trailer = await api.retrieveTrailer(movie.id);
 
       movie = fullMovie;
       movie.cast = cast;

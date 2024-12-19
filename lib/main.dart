@@ -2,6 +2,7 @@ import 'package:dima_project/pages/account/notifications_page.dart';
 import 'package:dima_project/pages/no_internet_page.dart';
 import 'package:dima_project/services/fcm_service.dart';
 import 'package:dima_project/services/fcm_settings_service.dart';
+import 'package:dima_project/services/tmdb_api_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -46,6 +47,7 @@ class AppDependencies {
   final FCMService fcmService;
   final FCMSettingsService fcmSettingsService;
   final NotificationsService notificationsService;
+  final TmdbApiService tmdbApiService;
 
   AppDependencies({
     required this.auth,
@@ -60,6 +62,7 @@ class AppDependencies {
     required this.fcmService,
     required this.fcmSettingsService,
     required this.notificationsService,
+    required this.tmdbApiService,
   });
 
   factory AppDependencies.production() {
@@ -92,6 +95,7 @@ class AppDependencies {
           FCMService(firestore: firestore, auth: auth, messaging: messaging),
       fcmSettingsService: FCMSettingsService(firestore: firestore, auth: auth),
       notificationsService: NotificationsService(),
+      tmdbApiService: TmdbApiService(),
     );
   }
 }
@@ -207,6 +211,9 @@ Widget _createApp(AppDependencies deps, Uri? initialUri) {
       ),
       Provider<FCMSettingsService>(
         create: (_) => deps.fcmSettingsService,
+      ),
+      Provider<TmdbApiService>(
+        create: (_) => deps.tmdbApiService,
       ),
     ],
     child: MyApp(initialUri: initialUri),

@@ -4,7 +4,8 @@ import 'package:dima_project/models/person.dart';
 import 'package:dima_project/pages/movies/film_details_page.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
-import 'package:dima_project/api/tmdb_api.dart';
+import 'package:dima_project/services/tmdb_api_service.dart';
+import 'package:provider/provider.dart';
 import 'package:dima_project/widgets/squared_header.dart';
 
 class PersonDetailsPage extends StatefulWidget {
@@ -35,6 +36,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
   bool _showFullBiography = false;
   late ScrollController _scrollController;
   bool _showName = false;
+  late TmdbApiService _apiService;
 
   final Logger logger = Logger();
 
@@ -47,6 +49,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
   @override
   void initState() {
     super.initState();
+    _apiService = Provider.of<TmdbApiService>(context, listen: false);
     _scrollController = ScrollController()
       ..addListener(() {
         setState(() {
@@ -59,7 +62,8 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
 
   Future<void> _loadPersonDetails() async {
     try {
-      final updatedPerson = await fetchPersonDetails(widget.person.id);
+      final updatedPerson =
+          await _apiService.fetchPersonDetails(widget.person.id);
       setState(() {
         _person = updatedPerson;
         _isLoading = false;

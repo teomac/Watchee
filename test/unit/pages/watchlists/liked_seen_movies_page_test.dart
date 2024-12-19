@@ -1,4 +1,5 @@
 import 'package:dima_project/models/user.dart';
+import 'package:dima_project/services/tmdb_api_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:mockito/mockito.dart';
@@ -9,28 +10,7 @@ import 'package:dima_project/pages/watchlists/liked_seen_movies_page.dart';
 
 import 'liked_seen_movies_page_test.mocks.dart';
 
-// Create a mock class for TMDB API functions
-class MockTMDBAPI {
-  Future<Movie> retrieveFilmInfo(int movieId) async {
-    return Movie(
-      id: movieId,
-      title: 'Test Movie',
-      overview: 'Test Overview',
-      voteAverage: 7.5,
-      genres: ['Action'],
-    );
-  }
-
-  Future<String> retrieveTrailer(int movieId) async {
-    return 'test-trailer-key';
-  }
-
-  Future<List<Map<String, dynamic>>> retrieveCast(int movieId) async {
-    return [];
-  }
-}
-
-@GenerateMocks([UserService])
+@GenerateMocks([UserService, TmdbApiService])
 void main() {
   final testMovie = Movie(
     id: 1,
@@ -49,10 +29,13 @@ void main() {
   );
   late LikedSeenMoviesBloc likedSeenMoviesBloc;
   late MockUserService mockUserService;
+  late MockTmdbApiService mockTmdbApiService;
 
   setUp(() {
     mockUserService = MockUserService();
-    likedSeenMoviesBloc = LikedSeenMoviesBloc(mockUserService);
+    mockTmdbApiService = MockTmdbApiService();
+    likedSeenMoviesBloc =
+        LikedSeenMoviesBloc(mockUserService, mockTmdbApiService);
   });
 
   tearDown(() {
@@ -87,11 +70,20 @@ void main() {
         // Setup the mock response for getWatchList
         when(mockUserService.getUser('test-user-id'))
             .thenAnswer((_) async => testUser);
+        when(mockTmdbApiService.retrieveFilmInfo(testMovie.id))
+            .thenAnswer((_) async => testMovie);
+        when(mockTmdbApiService.retrieveFilmInfo(testMovie2.id))
+            .thenAnswer((_) async => testMovie2);
+        when(mockTmdbApiService.retrieveTrailer(testMovie.id))
+            .thenAnswer((_) async => 'test-trailer-key');
+        when(mockTmdbApiService.retrieveTrailer(testMovie2.id))
+            .thenAnswer((_) async => 'test-trailer-key');
       },
       build: () => likedSeenMoviesBloc,
       act: (bloc) => bloc.add(LoadMovies('test-user-id', true)),
       expect: () => [
         isA<LikedSeenMoviesLoading>(),
+        isA<LikedSeenMoviesLoaded>(),
       ],
       verify: (bloc) {
         verify(mockUserService.getUser('test-user-id')).called(1);
@@ -109,10 +101,21 @@ void main() {
         // Setup the mock response for getWatchList
         when(mockUserService.getUser('test-user-id'))
             .thenAnswer((_) async => testUser);
+        when(mockTmdbApiService.retrieveFilmInfo(testMovie.id))
+            .thenAnswer((_) async => testMovie);
+        when(mockTmdbApiService.retrieveFilmInfo(testMovie2.id))
+            .thenAnswer((_) async => testMovie2);
+        when(mockTmdbApiService.retrieveTrailer(testMovie.id))
+            .thenAnswer((_) async => 'test-trailer-key');
+        when(mockTmdbApiService.retrieveTrailer(testMovie2.id))
+            .thenAnswer((_) async => 'test-trailer-key');
       },
       build: () => likedSeenMoviesBloc,
       act: (bloc) => bloc.add(LoadMovies('test-user-id', false)),
-      expect: () => [isA<LikedSeenMoviesLoading>()],
+      expect: () => [
+        isA<LikedSeenMoviesLoading>(),
+        isA<LikedSeenMoviesLoaded>(),
+      ],
       verify: (bloc) {
         verify(mockUserService.getUser('test-user-id')).called(1);
 
