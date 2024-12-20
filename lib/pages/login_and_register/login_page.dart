@@ -62,11 +62,14 @@ class LoginPageState extends State<LoginPage> {
       return;
     }
 
+    late BuildContext dialogContext;
+
     // Show loading indicator
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext dialogContext) {
+      builder: (BuildContext context) {
+        dialogContext = context;
         return const Center(
           child: CircularProgressIndicator(),
         );
@@ -86,18 +89,19 @@ class LoginPageState extends State<LoginPage> {
 
       fcm.setupTokenRefreshListener();
 
-      if (!mounted) return;
-
-      Navigator.of(context).pop(); // Dismiss loading dialog
-      if (!mounted) return;
-
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const WidgetTree()),
-        (route) => false,
-      );
+      if (dialogContext.mounted) {
+        Navigator.of(dialogContext).pop(); // Dismiss loading dialog
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const WidgetTree()),
+            (route) => false,
+          );
+        }
+      }
     } catch (e) {
-      if (!mounted) return;
-      Navigator.of(context).pop(); // Dismiss loading dialog
+      if (dialogContext.mounted) {
+        Navigator.of(dialogContext).pop();
+      }
       setState(() {
         errorMessage = e.toString();
         isProcessingAuth = false;

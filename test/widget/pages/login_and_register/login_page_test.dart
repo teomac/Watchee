@@ -215,27 +215,41 @@ void main() {
 
   testWidgets('Should show error message on login failure',
       (WidgetTester tester) async {
+    // Set up mock auth to throw an error
     when(mockCustomAuth.signInWithEmailAndPassword(
       email: anyNamed('email'),
       password: anyNamed('password'),
-    )).thenThrow('Invalid email or password');
+    )).thenAnswer((_) async {
+      await Future.delayed(
+          const Duration(milliseconds: 100)); // Simulate network delay
+      throw 'Invalid email or password';
+    });
 
     tester.binding.window.physicalSizeTestValue = const Size(1280, 800);
     tester.binding.window.devicePixelRatioTestValue = 1.0;
 
     await tester.pumpWidget(createLoginPage());
 
+    // Enter credentials
     await tester.enterText(
         find.widgetWithText(TextField, 'Email'), 'test@example.com');
     await tester.enterText(
         find.widgetWithText(TextField, 'Password'), 'password');
 
+    // Tap sign in button
     await tester.tap(find.text('Sign In'));
-    await tester.pump();
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 3));
 
+    // Wait for the loading dialog to appear
+    await tester.pump();
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+    // Wait for the error to be thrown and dialog to be dismissed
+    await tester.pumpAndSettle();
+
+    // Verify error message
     expect(find.text('Invalid email or password'), findsOneWidget);
+
+    addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
   });
 }
 

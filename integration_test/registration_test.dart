@@ -1,4 +1,6 @@
 import 'package:dima_project/services/fcm_service.dart';
+import 'package:dima_project/services/notifications_service.dart';
+import 'package:dima_project/services/tmdb_api_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:integration_test/integration_test.dart';
@@ -73,6 +75,8 @@ void main() {
     );
     final fcm =
         FCMService(messaging: messaging, auth: auth, firestore: firestore);
+    final notificationsService = NotificationsService();
+    final tmdbApi = TmdbApiService();
 
     return MaterialApp(
       home: MultiProvider(
@@ -89,6 +93,8 @@ void main() {
           Provider<CustomGoogleAuth>.value(value: customGoogleAuth),
           Provider<WatchlistService>.value(value: watchlistService),
           Provider<FCMService>.value(value: fcm),
+          Provider<NotificationsService>.value(value: notificationsService),
+          Provider<TmdbApiService>.value(value: tmdbApi),
         ],
         child: const MyApp(initialUri: null),
       ),

@@ -2,12 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dima_project/widgets/movie_search_bar_widget.dart';
 import 'package:dima_project/models/movie.dart';
+import 'package:dima_project/services/tmdb_api_service.dart';
+import 'package:provider/provider.dart';
+import 'package:mockito/mockito.dart';
+import 'package:mockito/annotations.dart';
+import 'movie_search_bar_widget_test.mocks.dart';
 
+@GenerateNiceMocks([MockSpec<TmdbApiService>()])
 void main() {
   late ThemeData mockTheme;
+  late MockTmdbApiService mockTmdbApiService;
 
   setUp(() {
     mockTheme = ThemeData.light();
+    mockTmdbApiService = MockTmdbApiService();
+
+    // Setup default behavior for the mock
+    when(mockTmdbApiService.searchMovie(any))
+        .thenAnswer((_) async => []); // Return empty list by default
   });
 
   Widget createWidgetUnderTest({
@@ -16,12 +28,19 @@ void main() {
     required Function(List<Movie>) onSearchResults,
   }) {
     return MaterialApp(
-      home: Scaffold(
-        body: MovieSearchBarWidget(
-          theme: mockTheme,
-          isDarkMode: isDarkMode,
-          onExpandChanged: onExpandChanged,
-          onSearchResults: onSearchResults,
+      home: MultiProvider(
+        providers: [
+          Provider<TmdbApiService>(
+            create: (_) => mockTmdbApiService,
+          ),
+        ],
+        child: Scaffold(
+          body: MovieSearchBarWidget(
+            theme: mockTheme,
+            isDarkMode: isDarkMode,
+            onExpandChanged: onExpandChanged,
+            onSearchResults: onSearchResults,
+          ),
         ),
       ),
     );
@@ -110,6 +129,19 @@ void main() {
     testWidgets('should trigger search when text is entered',
         (WidgetTester tester) async {
       List<Movie> searchResults = [];
+      const String searchQuery = 'test';
+
+      // Setup mock to return specific results for this test
+      final mockMovies = [
+        Movie(
+            id: 1,
+            title: 'Test Movie',
+            overview: '',
+            voteAverage: 0.0,
+            genres: []),
+      ];
+      when(mockTmdbApiService.searchMovie(searchQuery))
+          .thenAnswer((_) async => mockMovies);
 
       await tester.pumpWidget(createWidgetUnderTest(
         isDarkMode: false,
@@ -118,13 +150,18 @@ void main() {
       ));
 
       // Enter search text
-      await tester.enterText(find.byType(TextField), 'test');
+      await tester.enterText(find.byType(TextField), searchQuery);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
-      // Verify that search was triggered
-      // Note: Actual search results will be empty in test environment
-      expect(searchResults, isEmpty);
+      // Verify that the search method was called with correct parameters
+      verify(mockTmdbApiService.searchMovie(searchQuery)).called(1);
+
+      // Wait for the async operation to complete
+      await tester.pumpAndSettle();
+
+      // Verify that search results were updated
+      expect(searchResults, equals(mockMovies));
     });
 
     testWidgets('should stay expanded when focus is lost with non-empty text',

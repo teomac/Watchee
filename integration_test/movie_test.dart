@@ -1,4 +1,5 @@
 import 'package:dima_project/services/fcm_service.dart';
+import 'package:dima_project/services/tmdb_api_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:integration_test/integration_test.dart';
@@ -14,6 +15,7 @@ import 'package:dima_project/services/watchlist_service.dart';
 import 'package:dima_project/services/custom_auth.dart';
 import 'package:dima_project/services/custom_google_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:dima_project/services/notifications_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 void main() {
@@ -51,6 +53,8 @@ void main() {
     );
     final fcm =
         FCMService(messaging: messaging, auth: auth, firestore: firestore);
+    final notificationsService = NotificationsService();
+    final tmdbApiService = TmdbApiService();
 
     return MaterialApp(
       home: MultiProvider(
@@ -67,6 +71,8 @@ void main() {
           Provider<CustomGoogleAuth>.value(value: customGoogleAuth),
           Provider<WatchlistService>.value(value: watchlistService),
           Provider<FCMService>.value(value: fcm),
+          Provider<NotificationsService>.value(value: notificationsService),
+          Provider<TmdbApiService>.value(value: tmdbApiService),
         ],
         child: const MyApp(initialUri: null),
       ),
@@ -92,7 +98,7 @@ void main() {
 
       // Step 2: Verify we're on HomePage and find first movie
       expect(find.text('Home'), findsOneWidget);
-      expect(find.text('Trending movies'), findsOneWidget);
+      expect(find.text('Trending Movies'), findsOneWidget);
 
       // Wait for movies to load
       await Future.delayed(const Duration(seconds: 2));

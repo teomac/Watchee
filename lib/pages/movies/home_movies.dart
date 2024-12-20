@@ -43,6 +43,7 @@ class HomeMoviesState extends State<HomeMovies>
   @override
   void initState() {
     super.initState();
+    tmdbApi = Provider.of<TmdbApiService>(context, listen: false);
     if (_firstTime) {
       _initializeData();
       _firstTime = false;
@@ -51,17 +52,16 @@ class HomeMoviesState extends State<HomeMovies>
   }
 
   Future<void> _initializeData() async {
-    tmdbApi = Provider.of<TmdbApiService>(context, listen: false);
     final currentUser =
         await Provider.of<UserService>(context, listen: false).getCurrentUser();
     if (currentUser != null) {
       _currentUser = currentUser;
     }
     try {
-      final trending = tmdbApi.fetchTrendingMovies();
-      final topRated = tmdbApi.fetchTopRatedMovies();
-      final upcoming = tmdbApi.fetchUpcomingMovies();
-      final nowPlaying = tmdbApi.fetchNowPlayingMovies();
+      final trending = await tmdbApi.fetchTrendingMovies();
+      final topRated = await tmdbApi.fetchTopRatedMovies();
+      final upcoming = await tmdbApi.fetchUpcomingMovies();
+      final nowPlaying = await tmdbApi.fetchNowPlayingMovies();
 
       List<int> genreIds = _currentUser?.favoriteGenres
               .map((genreName) => movieGenres.getIdFromName(genreName))

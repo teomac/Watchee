@@ -1,4 +1,6 @@
 import 'package:dima_project/services/fcm_service.dart';
+import 'package:dima_project/services/notifications_service.dart';
+import 'package:dima_project/services/tmdb_api_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:integration_test/integration_test.dart';
@@ -33,6 +35,8 @@ void main() {
   late CustomGoogleAuth customGoogleAuth;
   late FirebaseMessaging messaging;
   late FCMService fcmService;
+  late NotificationsService notificationsService;
+  late TmdbApiService tmdbApiService;
 
   setUpAll(() async {
     // Initialize Firebase before running tests
@@ -56,6 +60,8 @@ void main() {
     );
     fcmService =
         FCMService(messaging: messaging, firestore: firestore, auth: auth);
+    notificationsService = NotificationsService();
+    tmdbApiService = TmdbApiService();
     await auth.signOut();
   });
 
@@ -75,6 +81,8 @@ void main() {
           Provider<CustomGoogleAuth>.value(value: customGoogleAuth),
           Provider<WatchlistService>.value(value: watchlistService),
           Provider<FCMService>.value(value: fcmService),
+          Provider<NotificationsService>.value(value: notificationsService),
+          Provider<TmdbApiService>.value(value: tmdbApiService),
         ],
         child: const MyApp(initialUri: null),
       ),
