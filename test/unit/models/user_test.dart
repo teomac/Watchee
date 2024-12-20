@@ -219,4 +219,121 @@ void main() {
       expect(user.collabWatchlists, isEmpty);
     });
   });
+
+  test('fromFirestore should handle empty map values', () {
+    final map = {
+      'id': '123',
+      'username': '',
+      'name': '',
+      'email': '',
+      'favoriteGenres': [],
+      'following': [],
+      'followers': [],
+      'likedMovies': [],
+      'seenMovies': [],
+      'followedWatchlists': {},
+      'pendingInvites': {},
+      'collabWatchlists': {},
+    };
+
+    final user = MyUser.fromFirestore(map);
+    expect(user.username, '');
+    expect(user.name, '');
+    expect(user.email, '');
+    expect(user.favoriteGenres, isEmpty);
+    expect(user.following, isEmpty);
+    expect(user.followers, isEmpty);
+    expect(user.likedMovies, isEmpty);
+    expect(user.seenMovies, isEmpty);
+    expect(user.followedWatchlists, isEmpty);
+    expect(user.pendingInvites, isEmpty);
+    expect(user.collabWatchlists, isEmpty);
+  });
+
+  test('equality operator should handle different list and map contents', () {
+    final user1 = MyUser(
+      id: '123',
+      username: 'testuser',
+      name: 'Test User',
+      email: 'test@example.com',
+      favoriteGenres: ['Action', 'Comedy'],
+      following: ['456', '789'],
+    );
+
+    final user2 = MyUser(
+      id: '123',
+      username: 'testuser',
+      name: 'Test User',
+      email: 'test@example.com',
+      favoriteGenres: ['Comedy', 'Action'], // Same elements, different order
+      following: ['789', '456'], // Same elements, different order
+    );
+
+    final user3 = MyUser(
+      id: '123',
+      username: 'testuser',
+      name: 'Test User',
+      email: 'test@example.com',
+      favoriteGenres: ['Action'], // Different content
+      following: ['456'], // Different content
+    );
+
+    expect(user1 == user2, false); // Different order should make them unequal
+    expect(user1 == user3, false); // Different content should make them unequal
+  });
+
+  test('should handle deeply nested map conversions', () {
+    final complexMap = {
+      'id': '123',
+      'username': 'testuser',
+      'name': 'Test User',
+      'email': 'test@example.com',
+      'followedWatchlists': {
+        'user1': ['list1', 'list2'],
+        'user2': ['list3', 'list4'],
+      },
+      'pendingInvites': {
+        'user3': ['list5', 'list6'],
+        'user4': ['list7', 'list8'],
+      },
+    };
+
+    final user = MyUser.fromFirestore(complexMap);
+    final convertedMap = user.toMap();
+
+    expect(convertedMap['followedWatchlists'], {
+      'user1': ['list1', 'list2'],
+      'user2': ['list3', 'list4'],
+    });
+    expect(convertedMap['pendingInvites'], {
+      'user3': ['list5', 'list6'],
+      'user4': ['list7', 'list8'],
+    });
+  });
+
+  test('should handle partial map updates in copyWith', () {
+    final originalUser = MyUser(
+      id: '123',
+      username: 'testuser',
+      name: 'Test User',
+      email: 'test@example.com',
+      followedWatchlists: {
+        'user1': ['list1', 'list2'],
+      },
+    );
+
+    final updatedUser = originalUser.copyWith(
+      followedWatchlists: {
+        'user1': ['list1', 'list2'],
+        'user2': ['list3'],
+      },
+    );
+
+    expect(updatedUser.followedWatchlists, {
+      'user1': ['list1', 'list2'],
+      'user2': ['list3'],
+    });
+    expect(updatedUser.id, originalUser.id);
+    expect(updatedUser.username, originalUser.username);
+  });
 }
