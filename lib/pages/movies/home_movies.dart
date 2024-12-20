@@ -465,7 +465,7 @@ class HomeMoviesState extends State<HomeMovies>
             child: Padding(
           padding: const EdgeInsets.only(top: 8),
           child: _buildMovieSection(
-              'Trending movies',
+              'Trending Movies',
               _data.trendingMovies,
               (movies) => DoubleRowSlider(movies: movies, shuffle: true),
               Theme.of(context)),

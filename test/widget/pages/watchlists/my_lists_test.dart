@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dima_project/pages/watchlists/my_lists.dart';
 import 'package:dima_project/services/watchlist_service.dart';
 import 'package:dima_project/services/user_service.dart';
