@@ -331,13 +331,13 @@ class HomeMoviesState extends State<HomeMovies>
                 const SizedBox(height: 12),
                 if (!isTablet)
                   _buildMovieSection(
-                      'Trending movies',
+                      'Trending Movies',
                       _data.trendingMovies,
                       (movies) => TrendingSlider(trendingMovies: movies),
                       Theme.of(context)),
                 if (isTablet)
                   _buildMovieSection(
-                      'Trending movies',
+                      'Trending Movies',
                       _data.trendingMovies,
                       (movies) => MoviesSlider(movies: movies, shuffle: true),
                       Theme.of(context)),
@@ -347,7 +347,7 @@ class HomeMoviesState extends State<HomeMovies>
                     (movies) => MoviesSlider(movies: movies),
                     Theme.of(context)),
                 _buildMovieSection(
-                    'Top rated movies',
+                    'Top rated Movies',
                     _data.topRatedMovies,
                     (movies) => MoviesSlider(movies: movies),
                     Theme.of(context)),
@@ -404,7 +404,7 @@ class HomeMoviesState extends State<HomeMovies>
                     (movies) => MoviesSlider(movies: movies),
                     Theme.of(context)),
                 _buildMovieSection(
-                    'Top rated movies',
+                    'Top rated Movies',
                     _data.topRatedMovies,
                     (movies) => MoviesSlider(movies: movies),
                     Theme.of(context)),

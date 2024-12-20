@@ -321,7 +321,7 @@ void main() {
 
       // Open sort menu
       await tester.tap(find.byIcon(Icons.sort));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       // Verify sort options are present
       expect(find.text('Name'), findsOneWidget);
