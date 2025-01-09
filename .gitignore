@@ -11,10 +11,10 @@
 migrate_working_dir/
 
 # Mock related
-#**/*_mock.dart
-#**/mock/
-#**/mocks/
-#test/mock_*.dart
+**/*_mock.dart
+**/mock/
+**/mocks/
+test/mock_*.dart
 test/mocks/
 
 # IntelliJ related
