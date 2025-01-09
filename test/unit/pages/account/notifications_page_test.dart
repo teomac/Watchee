@@ -6,9 +6,8 @@ import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-// Generate mock classes
 @GenerateMocks([UserService, WatchlistService])
-import 'notifications_page_test.mocks.dart';
+import '../../../mocks/notifications_page_test.mocks.dart';
 
 void main() {
   late MockUserService mockUserService;
@@ -28,7 +27,6 @@ void main() {
 
   group('Notifications Page Unit Tests', () {
     test('getNotifications returns correct notifications list', () async {
-      // Arrange
       final testNotifications = [
         {
           'notificationId': '1',
@@ -46,14 +44,11 @@ void main() {
         }
       ];
 
-      // Mock behavior
       when(mockUserService.getNotifications(testUser.id))
           .thenAnswer((_) async => testNotifications);
 
-      // Act
       final notifications = await mockUserService.getNotifications(testUser.id);
 
-      // Assert
       expect(notifications.length, 2);
       expect(notifications[0]['type'], 'new_follower');
       expect(notifications[1]['type'], 'new_review');
@@ -61,33 +56,26 @@ void main() {
     });
 
     test('clearNotifications clears all notifications', () async {
-      // Arrange
       when(mockUserService.clearNotifications(testUser.id))
           .thenAnswer((_) async => {});
 
-      // Act
       await mockUserService.clearNotifications(testUser.id);
 
-      // Assert
       verify(mockUserService.clearNotifications(testUser.id)).called(1);
     });
 
     test('removeNotification removes specific notification', () async {
-      // Arrange
       const notificationId = 'test-notification-id';
       when(mockUserService.removeNotification(testUser.id, notificationId))
           .thenAnswer((_) async => {});
 
-      // Act
       await mockUserService.removeNotification(testUser.id, notificationId);
 
-      // Assert
       verify(mockUserService.removeNotification(testUser.id, notificationId))
           .called(1);
     });
 
     test('acceptInvite handles watchlist invitation acceptance', () async {
-      // Arrange
       const watchlistId = 'test-watchlist-id';
       const watchlistOwner = 'test-owner-id';
 
@@ -95,18 +83,15 @@ void main() {
               watchlistId, watchlistOwner, testUser.id))
           .thenAnswer((_) async => {});
 
-      // Act
       await mockWatchlistService.acceptInvite(
           watchlistId, watchlistOwner, testUser.id);
 
-      // Assert
       verify(mockWatchlistService.acceptInvite(
               watchlistId, watchlistOwner, testUser.id))
           .called(1);
     });
 
     test('declineInvite handles watchlist invitation decline', () async {
-      // Arrange
       const watchlistId = 'test-watchlist-id';
       const watchlistOwner = 'test-owner-id';
 
@@ -114,11 +99,9 @@ void main() {
               watchlistId, watchlistOwner, testUser.id))
           .thenAnswer((_) async => {});
 
-      // Act
       await mockWatchlistService.declineInvite(
           watchlistId, watchlistOwner, testUser.id);
 
-      // Assert
       verify(mockWatchlistService.declineInvite(
               watchlistId, watchlistOwner, testUser.id))
           .called(1);

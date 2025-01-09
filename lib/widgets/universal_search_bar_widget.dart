@@ -100,7 +100,6 @@ class _UniversalSearchBarWidgetState extends State<UniversalSearchBarWidget>
         final peopleResults = await _api.searchPeople(query);
         widget.onSearchResults(movieResults, peopleResults);
       } catch (e) {
-        // Handle error (e.g., show a snackbar)
         logger.d('Error searching movies: $e');
       }
     } else {

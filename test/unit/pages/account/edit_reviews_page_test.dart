@@ -8,7 +8,7 @@ import 'package:mockito/annotations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 @GenerateNiceMocks([MockSpec<UserService>()])
-import 'edit_reviews_page_test.mocks.dart';
+import '../../../mocks/edit_reviews_page_test.mocks.dart';
 
 void main() {
   late MockUserService mockUserService;

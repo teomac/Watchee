@@ -80,7 +80,7 @@ void main() {
       // Verify the overall height of the slider
       final sliderBox =
           tester.element(find.byType(SizedBox).first).renderObject as RenderBox;
-      expect(sliderBox.size.height, 390.0); // As specified in the widget
+      expect(sliderBox.size.height, 390.0);
 
       // Verify GridView properties
       final gridView = find.byType(GridView);
@@ -116,7 +116,7 @@ void main() {
         ),
       );
 
-      // Note: We can't directly test the randomization, but we can verify
+      // We can't directly test the randomization, but we can verify
       // that all movies are still present
       expect(find.byType(GestureDetector), findsNWidgets(originalOrder.length));
     });

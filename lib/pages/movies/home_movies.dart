@@ -120,7 +120,6 @@ class HomeMoviesState extends State<HomeMovies>
       }
     } catch (e) {
       logger.e('Error initializing data: $e');
-      // Handle error (e.g., show a snackbar)
     }
   }
 
@@ -517,7 +516,6 @@ class HomeMoviesState extends State<HomeMovies>
       movie.trailer = trailer;
     } catch (e) {
       logger.e('Error retrieving movie info: $e');
-      // Handle error (e.g., show a snackbar)
     }
   }
 }

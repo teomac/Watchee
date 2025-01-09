@@ -243,7 +243,7 @@ class UserService {
         QuerySnapshot usernameQuery = await FirebaseFirestore.instance
             .collection('users')
             .where('username', isEqualTo: username)
-            .limit(1) // Limit to 1 result for efficiency
+            .limit(1)
             .get();
 
         if (usernameQuery.docs.isEmpty) {

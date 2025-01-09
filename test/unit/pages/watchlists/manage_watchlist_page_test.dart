@@ -7,7 +7,7 @@ import 'package:dima_project/models/movie.dart';
 import 'package:dima_project/models/watchlist.dart';
 import 'package:dima_project/services/watchlist_service.dart';
 import 'package:dima_project/pages/watchlists/manage_watchlist_page.dart';
-import 'manage_watchlist_page_test.mocks.dart';
+import '../../../mocks/manage_watchlist_page_test.mocks.dart';
 
 // Create a mock class for TMDB API functions
 class MockTMDBAPI {

@@ -5,7 +5,6 @@ import 'package:url_launcher/url_launcher.dart';
 class TermsOfServicePage extends StatelessWidget {
   const TermsOfServicePage({super.key});
 
-  // The actual terms of service text
   static const String _termsText = '''
 # Terms of Service
 

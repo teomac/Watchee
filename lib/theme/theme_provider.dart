@@ -1,10 +1,10 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
-import 'package:logger/logger.dart'; // Import the logger package
+import 'package:logger/logger.dart';
 
 class ThemeProvider with ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
-  final logger = Logger(); // Define the logger variable
+  final logger = Logger();
 
   ThemeProvider() {
     loadThemeMode();

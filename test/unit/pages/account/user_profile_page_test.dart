@@ -13,7 +13,7 @@ import 'package:mockito/annotations.dart';
   MockSpec<UserService>(),
   MockSpec<WatchlistService>(),
 ])
-import 'user_profile_page_test.mocks.dart';
+import '../../../mocks/user_profile_page_test.mocks.dart';
 
 void main() {
   late MockUserService mockUserService;

@@ -123,7 +123,7 @@ class LikedSeenMoviesBloc
 
 class LikedSeenMoviesPage extends StatefulWidget {
   final String userId;
-  final bool isLiked; // true for liked movies, false for seen movies
+  final bool isLiked;
 
   const LikedSeenMoviesPage({
     super.key,

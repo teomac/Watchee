@@ -72,7 +72,6 @@ class FCMService {
       }
     } catch (e) {
       logger.e("Error clearing FCM token: $e");
-      // Don't throw - we want the logout process to continue
     }
   }
 }

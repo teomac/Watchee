@@ -531,7 +531,6 @@ class _ManageWatchlistPageState extends State<ManageWatchlistPage> {
                         fontWeight: FontWeight.bold,
                       ),
                 ),
-          //add number of movies in the watchlist. If there is only one movie, display "1 movie", otherwise "n movies"
           const SizedBox(width: 4),
           watchlist.movies.length != 1
               ? Text(

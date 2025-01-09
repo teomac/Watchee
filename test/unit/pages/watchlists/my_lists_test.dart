@@ -9,7 +9,7 @@ import 'package:dima_project/services/watchlist_service.dart';
 import 'package:dima_project/pages/watchlists/my_lists.dart';
 
 @GenerateMocks([UserService, WatchlistService])
-import 'my_lists_test.mocks.dart';
+import '../../../mocks/my_lists_test.mocks.dart';
 
 void main() {
   const String movie1 = '1,,, Movie1,,, poster1.jpg,,, 2023-01-01';

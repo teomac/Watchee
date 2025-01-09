@@ -297,8 +297,7 @@ class _MyListsState extends State<MyLists> {
             elevation: 0,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                color: Theme.of(context)
-                    .scaffoldBackgroundColor, // Match scaffold background
+                color: Theme.of(context).scaffoldBackgroundColor,
               ),
               titlePadding: const EdgeInsets.only(left: 12, bottom: 12),
               title: Text(
@@ -376,8 +375,8 @@ class _MyListsState extends State<MyLists> {
           context,
           MaterialPageRoute(
             builder: (context) => LikedSeenMoviesPage(
-              userId: userId, // Make sure to get the current user's ID
-              isLiked: true, // For liked movies
+              userId: userId,
+              isLiked: true,
             ),
           ),
         );
@@ -398,8 +397,8 @@ class _MyListsState extends State<MyLists> {
           context,
           MaterialPageRoute(
             builder: (context) => LikedSeenMoviesPage(
-              userId: userId, // Make sure to get the current user's ID
-              isLiked: false, // For liked movies
+              userId: userId,
+              isLiked: false,
             ),
           ),
         );

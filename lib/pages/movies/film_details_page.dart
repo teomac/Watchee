@@ -322,7 +322,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
-    final horizontalPadding = screenWidth * 0.02; // 3% padding on each side
+    final horizontalPadding = screenWidth * 0.02;
 
     if (state is FilmDetailsLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -400,8 +400,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  _formatRuntime(state.movie
-                                      .runtime), // You'll need to add this property to your Movie model
+                                  _formatRuntime(state.movie.runtime),
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodyMedium
@@ -538,9 +537,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = colorScheme.brightness == Brightness.dark;
     return SliverAppBar(
-      expandedHeight: isTablet
-          ? 450
-          : 350.0, // Increased height to accommodate more content
+      expandedHeight: isTablet ? 450 : 350.0,
       pinned: true,
       //stretch: true,
       title: AnimatedOpacity(
@@ -651,8 +648,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                         const SizedBox(width: 4),
                         isTablet
                             ? Text(
-                                _formatRuntime(movie
-                                    .runtime), // You'll need to add this property to your Movie model
+                                _formatRuntime(movie.runtime),
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodyMedium
@@ -660,8 +656,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
                                         fontSize: 16, color: Colors.white),
                               )
                             : Text(
-                                _formatRuntime(movie
-                                    .runtime), // You'll need to add this property to your Movie model
+                                _formatRuntime(movie.runtime),
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodyMedium
@@ -780,7 +775,7 @@ class _FilmDetailsPageState extends State<FilmDetailsPage> {
   // New method to build the quote card
   Widget _buildQuoteCard(Movie movie) {
     if (movie.tagline == null || movie.tagline!.isEmpty) {
-      return const SizedBox.shrink(); // Don't show card if no tagline
+      return const SizedBox.shrink();
     }
 
     return Card(

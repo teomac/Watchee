@@ -18,8 +18,7 @@ void main() {
     mockTmdbApiService = MockTmdbApiService();
 
     // Setup default behavior for the mock
-    when(mockTmdbApiService.searchMovie(any))
-        .thenAnswer((_) async => []); // Return empty list by default
+    when(mockTmdbApiService.searchMovie(any)).thenAnswer((_) async => []);
   });
 
   Widget createWidgetUnderTest({

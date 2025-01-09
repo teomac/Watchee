@@ -111,7 +111,6 @@ class MoviesSlider extends StatelessWidget {
       movie.trailer = trailer;
     } catch (e) {
       logger.e('Error retrieving movie info: $e');
-      // Handle error (e.g., show a snackbar)
     }
   }
 }

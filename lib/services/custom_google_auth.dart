@@ -67,8 +67,7 @@ class CustomGoogleAuth {
             username: username,
             name: googleUser.displayName ?? "",
             email: googleUser.email,
-            profilePicture:
-                googleUser.photoUrl, // This will be updated in the welcome page
+            profilePicture: googleUser.photoUrl,
             favoriteGenres: [],
             followers: [],
             following: [],
@@ -98,7 +97,7 @@ class CustomGoogleAuth {
         return userCredential;
       } catch (e) {
         logger.e('Error updating user name: $emptyTextSelectionControls');
-        return userCredential; // Still return the credential as the main auth succeeded
+        return userCredential;
       }
     } catch (e) {
       logger.e('Error during Google Sign In: $e');

@@ -32,11 +32,10 @@ class WidgetTree extends StatelessWidget {
         if (snapshot.hasData && snapshot.data != null) {
           // User is signed in
           return StreamBuilder<DocumentSnapshot>(
-            // Changed to StreamBuilder
             stream: firestore
                 .collection('users')
                 .doc(snapshot.data!.uid)
-                .snapshots(), // Using snapshots() instead of get()
+                .snapshots(),
             builder: (context, userSnapshot) {
               debugPrint(
                   'User document state: ${userSnapshot.connectionState}');

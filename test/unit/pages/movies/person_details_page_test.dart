@@ -6,7 +6,7 @@ import 'package:dima_project/services/tmdb_api_service.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 
-import '../watchlists/liked_seen_movies_page_test.mocks.dart';
+import '../../../mocks/liked_seen_movies_page_test.mocks.dart';
 
 @GenerateMocks([TmdbApiService])
 void main() {

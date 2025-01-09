@@ -7,7 +7,7 @@ import 'package:dima_project/services/user_service.dart';
 import 'package:dima_project/pages/follow/follow_page.dart';
 
 @GenerateMocks([UserService])
-import 'follow_page_test.mocks.dart';
+import '../../../mocks/follow_page_test.mocks.dart';
 
 void main() {
   late FollowBloc followBloc;

@@ -97,7 +97,6 @@ class _MovieSearchBarWidgetState extends State<MovieSearchBarWidget>
         final results = await _tmdbApiService.searchMovie(query);
         widget.onSearchResults(results);
       } catch (e) {
-        // Handle error (e.g., show a snackbar)
         logger.d('Error searching movies: $e');
       }
     } else {

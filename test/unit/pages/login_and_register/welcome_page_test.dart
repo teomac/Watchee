@@ -6,7 +6,7 @@ import 'package:dima_project/models/user.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
-import 'welcome_page_test.mocks.dart';
+import '../../../mocks/welcome_page_test.mocks.dart';
 
 @GenerateMocks([
   UserService,

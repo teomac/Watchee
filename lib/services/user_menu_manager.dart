@@ -70,7 +70,6 @@ class _UserInfoState extends State<UserInfo> {
       }
     } catch (e) {
       logger.d('Error initializing data: $e');
-      // Handle error (e.g., show a snackbar or dialog)
     }
   }
 

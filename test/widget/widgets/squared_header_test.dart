@@ -336,7 +336,7 @@ void main() {
       final container = tester.widget<Container>(
         find.descendant(
           of: find.byType(ProfileHeaderWidget),
-          matching: find.byType(Container).at(1), // The gradient container
+          matching: find.byType(Container).at(1),
         ),
       );
 

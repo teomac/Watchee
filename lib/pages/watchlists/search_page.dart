@@ -146,9 +146,7 @@ class _SearchPageState extends State<SearchPage> {
           _addedMovies.add(movie.toTinyMovie());
         });
         if (mounted) {
-          //if there is already a snackbar showing, it will be replaced by the new one
           ScaffoldMessenger.of(context).removeCurrentSnackBar();
-          //show new snackbar
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Successfully added to watchlist'),
@@ -174,7 +172,6 @@ class _SearchPageState extends State<SearchPage> {
             _addedMovies.add(movie.toTinyMovie());
           });
           if (mounted) {
-            //if there is already a snackbar showing, it will be replaced by the new one
             ScaffoldMessenger.of(context).removeCurrentSnackBar();
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -200,7 +197,6 @@ class _SearchPageState extends State<SearchPage> {
             _addedMovies.add(movie.toTinyMovie());
           });
           if (mounted) {
-            //if there is already a snackbar showing, it will be replaced by the new one
             ScaffoldMessenger.of(context).removeCurrentSnackBar();
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(

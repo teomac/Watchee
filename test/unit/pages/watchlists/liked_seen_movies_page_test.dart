@@ -8,7 +8,7 @@ import 'package:dima_project/models/movie.dart';
 import 'package:dima_project/services/user_service.dart';
 import 'package:dima_project/pages/watchlists/liked_seen_movies_page.dart';
 
-import 'liked_seen_movies_page_test.mocks.dart';
+import '../../../mocks/liked_seen_movies_page_test.mocks.dart';
 
 @GenerateMocks([UserService, TmdbApiService])
 void main() {

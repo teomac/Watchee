@@ -15,7 +15,7 @@ import 'package:mockito/annotations.dart';
   MockSpec<CollectionReference>(),
   MockSpec<User>(),
 ])
-import 'manage_account_test.mocks.dart';
+import '../../../mocks/manage_account_test.mocks.dart';
 
 void main() {
   late MockUserService mockUserService;

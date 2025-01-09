@@ -5,7 +5,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
 @GenerateMocks([DocumentSnapshot])
-import 'watchlist_test.mocks.dart';
+import '../../mocks/watchlist_test.mocks.dart';
 
 void main() {
   const String movie1 = '1,,, Movie1,,, poster1.jpg,,, 2023-01-01';

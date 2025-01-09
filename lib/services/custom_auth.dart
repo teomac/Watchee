@@ -29,7 +29,6 @@ class CustomAuth {
       throw 'Please fill in all fields';
     }
     try {
-      // Clear any existing auth state
       await _firebaseAuth.signOut();
 
       // Perform new sign in
@@ -84,8 +83,6 @@ class CustomAuth {
       if (await _googleSignIn.isSignedIn()) {
         await _googleSignIn.signOut();
       }
-
-      // Finally sign out from Firebase
       await _firebaseAuth.signOut();
       logger.d('User signed out and FCM token cleared');
       return true;

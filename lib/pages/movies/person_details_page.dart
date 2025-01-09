@@ -117,7 +117,7 @@ class PersonDetailsPageState extends State<PersonDetailsPage> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
-    final horizontalPadding = screenWidth * 0.02; // 3% padding on each side
+    final horizontalPadding = screenWidth * 0.02;
 
     return Scaffold(
       appBar: AppBar(

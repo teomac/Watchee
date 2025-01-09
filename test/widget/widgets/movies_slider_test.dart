@@ -148,7 +148,6 @@ void main() {
         await tester.tap(find.byType(GestureDetector).first);
 
         // Only verify the API calls that happen during the tap
-        // Don't verify navigation or subsequent initialization
         verify(mockTmdbApiService.retrieveFilmInfo(testMovies[0].id)).called(1);
         verify(mockTmdbApiService.retrieveCast(testMovies[0].id)).called(1);
         verify(mockTmdbApiService.retrieveTrailer(testMovies[0].id)).called(1);
@@ -164,7 +163,7 @@ void main() {
     testWidgets('applies shuffle when enabled', (WidgetTester tester) async {
       await mockNetworkImagesFor(() async {
         await tester.pumpWidget(buildTestWidget(
-          movies: List.from(testMovies), // Create a copy to compare later
+          movies: List.from(testMovies),
           shuffle: true,
         ));
 

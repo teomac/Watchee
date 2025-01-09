@@ -136,10 +136,8 @@ Future<void> initializeApp({AppDependencies? dependencies}) async {
 
   final deps = dependencies ?? AppDependencies.production();
 
-  // Add these lines after Firebase initialization
   await FirebaseAppCheck.instance.activate(
-    androidProvider: AndroidProvider
-        .debug, // Use AndroidProvider.playIntegrity for production
+    androidProvider: AndroidProvider.debug,
     appleProvider: AppleProvider.deviceCheck,
   );
 

@@ -6,7 +6,7 @@ import 'package:mockito/annotations.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 @GenerateMocks([CustomAuth, FirebaseAuth])
-import 'login_page_test.mocks.dart';
+import '../../../mocks/login_page_test.mocks.dart';
 
 void main() {
   group('LoginPage Unit Tests', () {
