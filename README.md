@@ -38,7 +38,7 @@ A modern, feature-rich movie tracking and social networking application built wi
   - Cloud Messaging
 - **APIs**:
   - TMDB API for movie data
-  - JustWatch dats through TMDB API for streaming availability
+  - JustWatch datas through TMDB API for streaming availability
 
 ## Getting Started 🚀
 
