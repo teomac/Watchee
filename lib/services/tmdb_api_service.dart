@@ -97,7 +97,7 @@ class TmdbApiService {
     List<Movie> movies = [];
     List<Movie> upcomingMovies = [];
 
-    for (int i = 1; i < 3; i++) {
+    for (int i = 3; i < 10; i++) {
       final response =
           await http.get(Uri.parse('${Constants.upcoming}&page=$i'));
       if (response.statusCode == 200) {
