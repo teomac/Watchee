@@ -307,7 +307,6 @@ class _FollowViewState extends State<FollowView> {
           if (user.profilePicture?.isNotEmpty == true) {
             proPic = NetworkImage(user.profilePicture!);
           }
-          proPic = null;
         } catch (e) {
           proPic = null;
         }
@@ -415,7 +414,6 @@ class _FollowViewState extends State<FollowView> {
       if (user.profilePicture?.isNotEmpty == true) {
         proPic = NetworkImage(user.profilePicture!);
       }
-      proPic = null;
     } catch (e) {
       proPic = null;
     }
