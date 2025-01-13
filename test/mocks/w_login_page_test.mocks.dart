@@ -1016,6 +1016,7 @@ class MockFirebaseMessaging extends _i1.Mock implements _i11.FirebaseMessaging {
     bool? badge = true,
     bool? carPlay = false,
     bool? criticalAlert = false,
+    bool? providesAppNotificationSettings = false,
     bool? provisional = false,
     bool? sound = true,
   }) =>

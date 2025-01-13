@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:dima_project/pages/follow/follow_page.dart';
 import 'package:dima_project/pages/movies/home_movies.dart';
 import 'package:dima_project/pages/watchlists/my_lists.dart';

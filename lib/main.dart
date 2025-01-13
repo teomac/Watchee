@@ -110,7 +110,7 @@ Future<void> initializeApp({AppDependencies? dependencies}) async {
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   var connectivityResult = await Connectivity().checkConnectivity();
-  if (connectivityResult == ConnectivityResult.none) {
+  if (connectivityResult.first == ConnectivityResult.none) {
     runApp(const NoInternetApp());
     return;
   }
@@ -237,7 +237,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   StreamSubscription? _linkSubscription;
   final Logger logger = Logger();
-  late StreamSubscription<ConnectivityResult> _connectivitySubscription;
+  late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
 
   @override
   void initState() {
@@ -246,7 +246,11 @@ class _MyAppState extends State<MyApp> {
     _handleInitialUri();
 
     _connectivitySubscription =
-        Connectivity().onConnectivityChanged.listen(_updateConnectionStatus);
+        Connectivity().onConnectivityChanged.listen((results) {
+      for (var result in results) {
+        _updateConnectionStatus(result);
+      }
+    });
   }
 
   void _setSystemUIOverlayStyle(BuildContext context, ThemeMode themeMode) {

@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:dima_project/api/constants.dart';
 import 'package:dima_project/models/person.dart';

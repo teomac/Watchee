@@ -48,7 +48,7 @@ class NoInternetPage extends StatelessWidget {
 
   Future<void> _retryConnection(BuildContext context) async {
     var connectivityResult = await Connectivity().checkConnectivity();
-    if (connectivityResult != ConnectivityResult.none) {
+    if (connectivityResult.first != ConnectivityResult.none) {
       //destroy previous app and initialize new app
       Restart.restartApp();
     } else {
