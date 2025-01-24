@@ -8,6 +8,7 @@ A modern, feature-rich movie tracking and social networking application built wi
   <img src="deliverables/movie_detail2.png" alt="test" width="200"/>
   <img src="deliverables/movie_detail3.png" alt="test" width="200"/>
 </p>
+
 ## Features ✨
 
 - **User Authentication**
