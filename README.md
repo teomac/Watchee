@@ -120,5 +120,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Matteo Laini - matteo.laini@mail.polimi.it
 - Matteo Macaluso - matteo.macaluso@mail.polimi.it
-
-Project Link: [https://github.com/teomac/watchee](https://github.com/teomac/watchee)
