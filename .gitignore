@@ -42,6 +42,7 @@ test/mocks/
 pubspec.lock
 /functions/key.json
 /lib/api/key.dart
+/lib/firebase_options.dart
 
 
 # Symbolication related
