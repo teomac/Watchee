@@ -2,6 +2,13 @@
 
 A modern, feature-rich movie tracking and social networking application built with Flutter. Track your favorite movies, share watchlists with friends, and discover new content.
 
+<p align="center">
+  <img src="deliverables/home_screen.png" alt="test" width="200"/>
+  <img src="deliverables/movie_detail1.png" alt="test" width="200"/>
+  <img src="deliverables/movie_detail2.png" alt="test" width="200"/>
+  <img src="deliverables/movie_detail3.png" alt="test" width="200"/>
+</p>
+
 ## Features ✨
 
 - **User Authentication**
@@ -114,5 +121,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Matteo Laini - matteo.laini@mail.polimi.it
 - Matteo Macaluso - matteo.macaluso@mail.polimi.it
-
-Project Link: [https://github.com/teomac/watchee](https://github.com/teomac/watchee)
