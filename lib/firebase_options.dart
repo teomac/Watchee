@@ -44,7 +44,7 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCnanfRcjPcNQLs2k0GArrpw9F5l7335ks',
+    apiKey: '', // add here your API key
     appId: '1:1036229847304:web:7276fa20be9c2d8ecd64bd',
     messagingSenderId: '1036229847304',
     projectId: 'dima-project-matteo',
@@ -54,7 +54,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyD1dzyvbwL4TK_I5sYYtNFilRfnNNuUXXE',
+    apiKey: '', // add here your API key
     appId: '1:1036229847304:android:c8c4a79f97d02ab6cd64bd',
     messagingSenderId: '1036229847304',
     projectId: 'dima-project-matteo',
@@ -62,7 +62,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBk0hjQlw-Li5J1jDwVFTwHuxDYZk9gdaU',
+    apiKey: '', // add here your API key
     appId: '1:1036229847304:ios:5f7cab6cbef78d0bcd64bd',
     messagingSenderId: '1036229847304',
     projectId: 'dima-project-matteo',
@@ -71,7 +71,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyBk0hjQlw-Li5J1jDwVFTwHuxDYZk9gdaU',
+    apiKey: '', // add here your API key
     appId: '1:1036229847304:ios:1e719649079161f3cd64bd',
     messagingSenderId: '1036229847304',
     projectId: 'dima-project-matteo',
